@@ -5,8 +5,6 @@ from . import api
 
 auth = HTTPBasicAuth()
 
-
-
 @auth.verify_password
 def verify_password(operatorname_or_token, password):
     if password == "":
@@ -14,21 +12,21 @@ def verify_password(operatorname_or_token, password):
         if operator is None:
             return False
         else:
-            g.current_operator = operator
+            g.current_user = operator
             return True
     else:
-        operator = Operator.query.filter_by(operator_name = operatorname_or_token).first()
+        operator = Operator.query.filter(Operator.tel == operatorname_or_token).first()
         if operator.verify_password(password):
-            g.current_operator = operator
+            g.current_user = operator
             return True
         else:
             return False
 
-@api.route('/login', methods = ['POST'])
+@api.route('/login')
 def operator_login():
-    operator_name = request.json['operator_name']
+    tel = request.args.get('tel')
     password = request.json['password']
-    operator = Operator.query.filter_by(operator_name = operator_name)
+    operator = Operator.query.filter(Operator.tel == tel)
     if operator.verify_password(password):
         return 200
     else:
@@ -37,14 +35,7 @@ def operator_login():
 @api.route('/tokens')
 @auth.login_required
 def get_auth_token():
-    token = g.current_operator.generate_auth_token()
+    token = g.current_user.generate_auth_token()
     return jsonify({'token':token})
 
-@api.route('/password', methods = ['POST'])
-@auth.login_required
-def operator_password():
-    password = request.json['password']
-    if g.current_operator.verify_password(password):
-        return 200
-    else:
-        return 404
+

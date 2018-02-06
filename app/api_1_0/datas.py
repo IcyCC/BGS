@@ -10,12 +10,31 @@ from sqlalchemy.exc import OperationalError
 @api.route('/datas', methods = ['POST'])
 @auth.login_required
 def new_data():
-    glucose = request.json['glucose']
-    sn = request.json['sn']
-    patient_name = request.json['patient_name']
+    data = Data()
+    for k in request.json:
+        if hasattr(data, k):
+            setattr(data, k, request.json[k])
+    if 'id_number' in request.json:
+        id_number = request.json['id_number']
+        patient = Patient.query.filter(Patient.id_number == id_number).first()
+        if patient is None:
+            patient = Patient()
+        for k in request.json:
+            if hasattr(patient, k):
+                setattr(patient, k, request.json[k])
+        try:
+            db.session.add(patient)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status': 'fail',
+                'reason': e,
+                'data': data.to_json()
+            })
     date = datetime.datetime.now().date()
     time = datetime.datetime.now().time()
-    data = Data(date=date, time=time, glucose=glucose, sn=sn, patient_name=patient_name)
+    data.date = date
+    data.time = time
     try:
         db.session.add(data)
         db.session.commit()
@@ -68,14 +87,18 @@ def get_data(id):
 @auth.login_required
 def change_data(id):
     data = Data.query.get_or_404(id)
-    if g.current_user.operator_name != data.patient.doctor_name:
+    if g.current_user.operator_id != data.patient.doctor_id:
         return jsonify({
             'status':'fail',
             'reason':'no root'
         })
+    id_number = data.id_number
+    if 'id_number' in request.json:
+        id_number = request.json['id_number']
     for k in request.json:
         if hasattr(data, k):
             setattr(data, k, request.json[k])
+    patient = Patient.query.filter(Patient.id_number == id_number).first()
     try:
         db.session.add(data)
         db.session.commit()
@@ -85,17 +108,26 @@ def change_data(id):
             'reason':e,
             'data':data.to_json()
         })
-    return jsonify(data.to_json())
+    return jsonify({
+        'url': url_for('api.get_data', id=data.data_id),
+        'patient': url_for('api.get_patient', id=patient.patient_id),
+        'sn': data.sn,
+        'id_number': data.id_number,
+        'time': str(data.time),
+        'date': str(data.date),
+        'glucose': data.glucose
+    }), 200
 
 @api.route('/datas/<int:id>', methods = ['DELETE'])
 @auth.login_required
 def delete_data(id):
     data = Data.query.get_or_404(id)
-    if g.current_user.operator_name != data.patient.doctor_name:
+    if g.current_user.operator_id != data.patient.doctor_id:
         return jsonify({
             'status':'fail',
             'reason':'no root'
         })
+    patient = data.patient
     try:
         db.session.delete(data)
         db.session.commit()
@@ -105,4 +137,12 @@ def delete_data(id):
             'reason':e,
             'data':data.to_json()
         })
-    return jsonify(data.to_json()), 200
+    return jsonify({
+            'url':url_for('api.get_data', id = data.data_id),
+            'patient':url_for('api.get_patient', id = patient.patient_id),
+            'sn':data.sn,
+            'id_number':data.id_number,
+            'time':str(data.time),
+            'date':str(data.date),
+            'glucose':data.glucose
+        }), 200

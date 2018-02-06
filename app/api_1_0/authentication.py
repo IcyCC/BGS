@@ -28,9 +28,14 @@ def operator_login():
     password = request.json['password']
     operator = Operator.query.filter(Operator.tel == tel)
     if operator.verify_password(password):
-        return 200
+        return jsonify({
+            'status':'success'
+        })
     else:
-        return 404
+        return jsonify({
+            'status':'fail',
+            'reason':'the password is wrong'
+        })
 
 @api.route('/tokens')
 @auth.login_required

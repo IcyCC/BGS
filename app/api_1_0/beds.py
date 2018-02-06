@@ -2,25 +2,23 @@ from . import api
 import os
 from .. import db
 from flask import request, jsonify, g, url_for, current_app
-from ..models import Operator, Bed, Patient, Data
+from ..models import Operator, Bed, Patient, Data, BedHistory
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
-
+import datetime
 
 @api.route('/beds')
 @auth.login_required
 def get_beds():
-    bed_fields = [i for i in Bed.__table__.c._data]
-    patient_fileds = [i for i in Patient.__table__.c.data]
-    fields = bed_fields + patient_fileds
-    beds = Bed.query.join(Patient, Patient.patient_name == Bed.patient_name)
+    fields = [i for i in Bed.__table__.c._data]
+    beds = Bed.query
     for k, v in request.args.items():
         if k in fields:
             beds = beds.filter_by(**{k: v})
     if beds:
         page = request.args.get('page', 1, type=int)
         pagination = beds.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        datas = pagination.items
+        beds = pagination.items
         prev = None
         if pagination.has_prev:
             prev = url_for('api.get_patients', page=page - 1)
@@ -28,23 +26,56 @@ def get_beds():
         if pagination.has_next:
             next = url_for('api.get_patients', page=page + 1)
         return jsonify({
-            'datas': [data.to_json_data() for data in datas],
+            'beds': [bed.to_json() for bed in beds],
             'prev': prev,
             'next': next,
             'count': pagination.total
         })
     else:
-        return 404
+        return jsonify({
+            'status':'fail',
+            'reason':'there is no data'
+        })
 
 @api.route('/beds', methods = ['POST'])
 @auth.login_required
 def new_bed():
+    bed = Bed()
+    bedhistory = BedHistory()
+    if 'sn' in request.json:
+        sn = request.json['sn']
+        bed = Bed.query.filter(Bed.sn == sn).first()
+        if bed:
+            return jsonify({
+                'status':'fail',
+                'reason':'the accu_chek has been used on the other bed'
+            })
+    if 'id_number' in request.json:
+        id_number = request.json['id_number']
+        bed = Bed.query.filter(Bed.id_number == id_number).first()
+        if bed:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the patient has been placed on the other bed'
+            })
+        else:
+            bedhistory.id_number = id_number
+            for k in request.json:
+                if hasattr(bedhistory, k):
+                    setattr(bedhistory, k, request.json[k])
     bed = Bed()
     for k in request.json:
         if hasattr(bed, k):
             setattr(bed, k, request.json[k])
     try:
         db.session.add(bed)
+        db.session.commit()
+        bedhistory.bed_id = bed.bed_id
+        date = datetime.datetime.now().date()
+        time = datetime.datetime.now().time()
+        bedhistory.date = date
+        bedhistory.time = time
+        db.session.add(bedhistory)
         db.session.commit()
     except OperationalError as e:
         return jsonify({
@@ -68,7 +99,7 @@ def delete_bed(id):
     bed = Bed.query.get_or_404(id)
     try:
         db.session.delete(bed)
-        db.session.commite()
+        db.session.commit()
     except OperationalError as e:
         return jsonify({
             'status':'fail',
@@ -81,9 +112,41 @@ def delete_bed(id):
 @auth.login_required
 def change_bed(id):
     bed = Bed.query.get_or_404(id)
-    if request.json['patient_name']:
-        bed.patient_name = request.json['patient_name']
+    bed_history = bed.bed_historys.order_by(Bed.bed_id.desc()).first()
+    if 'sn' in request.json and request.json['sn']:
+        sn = request.json['sn']
+        may_bed = Bed.query.filter(Bed.sn == sn).first()
+        if may_bed:
+            if may_bed.bed_id != bed.bed_id:
+                return jsonify({
+                    'status':'fail',
+                    'reason':'the accu_chek has been used on the other bed'
+                })
+    if 'id_number' in request.json and request.json['id_number']:
+        id_number = request.json['id_number']
+        may_bed = Bed.query.filter(Bed.id_number == id_number).first()
+        if may_bed and may_bed.bed_id != bed.bed_id:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the patient has been placed on the other bed'
+            })
+        if bed_history:
+            if bed_history.id_number == request.json['id_number'] and bed_history.bed_id == id:
+                for k in request.json:
+                    if hasattr(bed_history, k):
+                        setattr(bed_history, k, request.json[k])
+        else:
+            bed_history = BedHistory()
+            for k in request.json:
+                if hasattr(bed_history, k):
+                    setattr(bed_history, k, request.json[k])
+            date = datetime.datetime.now().date()
+            time = datetime.datetime.now().time()
+            bed_history.bed_id = id
+            bed_history.date = date
+            bed_history.time = time
         try:
+            db.session.add(bed_history)
             db.session.add(bed)
             db.session.commit()
         except OperationalError as e:
@@ -92,50 +155,73 @@ def change_bed(id):
                 'reason':e,
                 'data':bed.to_json()
             })
-        bed.patient.patient_name = request.json['patient_name']
-        bed.patient.sex = request.json['sex']
-        bed.patient.tel = request.json['tel']
-        bed.patient.age = request.json['age']
-        bed.patient.doctor_name = request.json['doctor_name']
-        db.session.add(bed.patient)
-        db.session.commit()
-    if request.json['sn']:
+        id_number = request.json['id_number']
+        patient = Patient.query.filter(Patient.id_number == id_number).first()
+        if patient is None:
+            patient = Patient()
+        for k in request.json:
+            if hasattr(patient, k):
+                    setattr(patient, k, request.json[k])
+        try:
+            db.session.add(patient)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status':'fail',
+                'reason':e,
+                'data':patient.to_json()
+            })
+    if 'sn' in request.json and request.json['sn']:
         bed.sn = request.json['sn']
-    db.session.add(bed)
-    db.session.commit()
-    return 200
+    for k in request.json:
+        if hasattr(bed, k):
+            setattr(bed, k, request.json[k])
+    try:
+        db.session.add(bed)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': bed.to_json()
+        })
+    return jsonify(bed.to_json())
 
 @api.route('/beds/<int:id>/more')
 @auth.login_required
 def get_bed_more(id):
     bed = Bed.query.get_or_404(id)
-    all_data = bed.all_datas()
     patient = bed.patient
     return jsonify({
         'patient':patient.to_json(),
-        'datas':[data.to_json() for data in all_data],
+        'datas':url_for('api.get_bed_moredatas', id=id),
         'bed':bed.to_json()
     })
 
-@api.route('/beds/<int:id>/more', methods = ['PUT'])
+@api.route('/beds/<int:id>/more_datas')
 @auth.login_required
-def change_bed_more(id):
+def get_bed_moredatas(id):
     bed = Bed.query.get_or_404(id)
-    all_data = bed.all_datas()
-    change_datas = request.json['change_datas']
-    for change_data in change_datas:
-        id = change_data['id']
-        time = change_data['time']
-        date = change_data['date']
-        glucose = change_data['glucose']
-        data = all_data.filter(Data.id == id).first()
-        if time:
-            data.time = time
-        if date:
-            data.date = date
-        if glucose:
-            data.glucose = glucose
-        db.session.add(data)
-        db.session.commit()
-    return 200
+    datas = bed.datas
+    if datas:
+        page = request.args.get('page', 1, type=int)
+        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
+        datas = pagination.items
+        prev = None
+        if pagination.has_prev:
+            prev = url_for('api.get_patients', page=page - 1)
+        next = None
+        if pagination.has_next:
+            next = url_for('api.get_patients', page=page + 1)
+        return jsonify({
+            'datas': [data.to_json() for data in datas],
+            'prev': prev,
+            'next': next,
+            'count': pagination.total
+        })
+    else:
+        return jsonify({
+            'status':'fail',
+            'reason':'there is no data'
+        })
 

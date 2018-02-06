@@ -52,7 +52,10 @@ def get_operators():
             'count': pagination.total
         })
     else:
-        return 404
+        return jsonify({
+            'status': 'fail',
+            'reason': 'there is no data'
+        })
 
 
 @api.route('/operators/<int:id>')
@@ -94,6 +97,9 @@ def change_operator(id):
     for k in request.json:
         if hasattr(operator, k):
             setattr(operator, k, request.json[k])
+    if 'password' in request.json:
+        password = request.json['password']
+        operator.password = password
     try:
         db.session.add(operator)
         db.session.commit()

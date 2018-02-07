@@ -1,0 +1,62 @@
+import asyncio
+import aiohttp
+from datetime import datetime
+
+
+loop = asyncio.get_event_loop()
+
+async def send_data(data):
+    async with aiohttp.ClientSession() as session:
+        async with session.post('',data=data) as response:
+            if response.status != 200:
+                print("Failed")
+
+class BgsServer(asyncio.Protocol):
+
+    def __init__(self, loop,connections=None):
+        if connections is None:
+            self.connections = dict()
+        self.loop = loop
+        self.transport = None
+
+    def connection_made(self, transport):
+        self.connections[self] = True
+        self.transport = transport
+
+    def connection_lost(self, exc):
+        del self.connections[self]
+
+    def data_received(self, data):
+        print("RECEIVE DATA : {}".format(data))
+        d = {'id': str(data[6:14], encoding="ascii"),
+             'time': datetime.strptime(str(data[17:21], encoding="ascii")+str(data[22:26], encoding="ascii"),
+                                       "%y%m%H%M").strftime("%Y-%m-%d %H:%M:%S"),
+             'value': str(data[27:31], encoding="ascii")}
+        print("PROCESS DATA :{}".format(data))
+        if d['value'] == 'LOW ':
+            d['value'] = 1.1
+        if d['value'] == 'HIGH':
+            d['value'] = 33.3
+        d['value'] = float(d['value'])
+        print("SEND DATA : {}".format(d))
+
+
+def server(host, port):
+
+    global loop
+
+    server_coroutine = loop.create_server(lambda: BgsServer(loop=loop),
+                                          host=host, port=port)
+    print("Server Start at {} ".format(str(host)+":"+str(port)))
+    bgs_server = loop.run_until_complete(server_coroutine)
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+        bgs_server.close()
+    loop.run_until_complete(bgs_server.wait_closed())
+    loop.close()
+
+if __name__ == '__main__':
+    server('0.0.0.0', 37621)

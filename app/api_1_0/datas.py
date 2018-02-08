@@ -7,7 +7,8 @@ from .authentication import auth
 import datetime
 from sqlalchemy.exc import OperationalError
 
-@api.route('/datas/auto', methods = ['POST'])
+
+@api.route('/datas/auto', methods=['POST'])
 @auth.login_required
 def new_data_auto():
     data = Data()
@@ -24,13 +25,40 @@ def new_data_auto():
         db.session.commit()
     except OperationalError as e:
         return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':data.to_json()
+            'status': 'fail',
+            'reason': e,
+            'data': data.to_json()
         })
     return jsonify(data.to_json())
 
-@api.route('/datas/artificial', methods = ['POST'])
+
+"""
+@api {POST} /api/v1.0/datas/auto 添加数据(不用手动输入病人数据)(json数据)
+@apiGroup datas
+@apiName 添加数据
+
+@apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Number} glucose 血糖值
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回新添加的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "date":"数据添加日期",
+        "time":"数据添加时间",
+        "id_number":"医疗卡号",
+        "patient":"病人地址",
+        "sn":"血糖仪sn码",
+        "url":"数据地址"
+    } 
+"""
+
+
+@api.route('/datas/artificial', methods=['POST'])
 def new_data_artificial():
     data = Data()
     for k in request.json:
@@ -63,6 +91,39 @@ def new_data_artificial():
         })
     return jsonify(data.to_json())
 
+
+"""
+@api {POST} /api/v1.0/datas/artificial 添加数据(不用手动输入病人数据)(json数据)
+@apiGroup datas
+@apiName 添加数据
+
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} patient_name 病人姓名
+@apiParam (params) {String} sex 病人性别
+@apiParam (params) {String} tel 病人电话
+@apiParam (params) {Number} age 病人年龄
+@apiParam (params) {Number} doctor_id 医生id
+@apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Number} glucose 血糖值
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回新添加的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "date":"数据添加日期",
+        "time":"数据添加时间",
+        "id_number":"医疗卡号",
+        "patient":"病人地址",
+        "sn":"血糖仪sn码",
+        "url":"数据地址"
+    } 
+"""
+
+
 @api.route('/datas')
 @auth.login_required
 def get_datas():
@@ -86,13 +147,48 @@ def get_datas():
             'datas': [data.to_json() for data in datas],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages': pagination.pages
         })
     else:
         return jsonify({
-            'status':'fail',
-            'reason':'there is no data'
+            'status': 'fail',
+            'reason': 'there is no data'
         })
+
+
+"""
+@api {GET} /api/v1.0/datas 获取所有数据信息
+@apiGroup datas
+@apiName 获取所有数据信息
+
+@apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Number} glucose 血糖值
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回新添加的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "operators":[{
+            "date":"数据添加日期",
+            "time":"数据添加时间",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址"
+        }],
+        "count":"总数量",
+        "prev":"上一页地址",
+        "next":"下一页地址".
+        "pages":'总页数"
+    } 
+
+"""
+
 
 @api.route('/datas/<int:id>')
 @auth.login_required
@@ -100,14 +196,39 @@ def get_data(id):
     data = Data.query.get_or_404(id)
     return jsonify(data.to_json())
 
-@api.route('/datas/<int:id>', methods = ['PUT'])
+
+"""
+@api {GET} /api/v1.0/datas/<int:id> 根据id获取数据信息
+@apiGroup datas
+@apiName 根据id获取数据信息
+
+@apiParam (params) {String} id 数据id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回id所代表数据信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "date":"数据添加日期",
+        "time":"数据添加时间",
+        "id_number":"医疗卡号",
+        "patient":"病人地址",
+        "sn":"血糖仪sn码",
+        "url":"数据地址"
+    }
+
+"""
+
+
+@api.route('/datas/<int:id>', methods=['PUT'])
 @auth.login_required
 def change_data(id):
     data = Data.query.get_or_404(id)
     if g.current_user.operator_id != data.patient.doctor_id:
         return jsonify({
-            'status':'fail',
-            'reason':'no root'
+            'status': 'fail',
+            'reason': 'no root'
         })
     id_number = data.id_number
     if 'id_number' in request.json:
@@ -121,9 +242,9 @@ def change_data(id):
         db.session.commit()
     except OperationalError as e:
         return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':data.to_json()
+            'status': 'fail',
+            'reason': e,
+            'data': data.to_json()
         })
     return jsonify({
         'url': url_for('api.get_data', id=data.data_id),
@@ -135,14 +256,52 @@ def change_data(id):
         'glucose': data.glucose
     }), 200
 
-@api.route('/datas/<int:id>', methods = ['DELETE'])
+
+"""
+@api {PUT} /api/v1.0/datas/<int:id> 更改id所代表的数据的信息
+@apiGroup datas
+@apiName 更改id所代表的数据的信息
+
+@apiParam (params) {String} id_number 医疗卡号(修改病人信息时添加)
+@apiParam (params) {String} patient_name 病人姓名(修改病人信息时添加)
+@apiParam (params) {String} sex 病人性别(修改病人信息时添加)
+@apiParam (params) {String} tel 病人电话(修改病人信息时添加)
+@apiParam (params) {Number} age 病人年龄(修改病人信息时添加)
+@apiParam (params) {Number} doctor_id 医生id(修改病人信息时添加)
+@apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Number} glucose 血糖值
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回id所代表数据信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "date":"数据添加日期",
+        "time":"数据添加时间",
+        "id_number":"医疗卡号",
+        "patient":"病人地址",
+        "sn":"血糖仪sn码",
+        "url":"数据地址"
+    }
+    不是本人主任医生修改
+    {
+        "status":"fail",
+        "reason":"no root"
+    }
+"""
+
+
+@api.route('/datas/<int:id>', methods=['DELETE'])
 @auth.login_required
 def delete_data(id):
     data = Data.query.get_or_404(id)
     if g.current_user.operator_id != data.patient.doctor_id:
         return jsonify({
-            'status':'fail',
-            'reason':'no root'
+            'status': 'fail',
+            'reason': 'no root'
         })
     patient = data.patient
     try:
@@ -150,16 +309,42 @@ def delete_data(id):
         db.session.commit()
     except OperationalError as e:
         return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':data.to_json()
+            'status': 'fail',
+            'reason': e,
+            'data': data.to_json()
         })
     return jsonify({
-            'url':url_for('api.get_data', id = data.data_id),
-            'patient':url_for('api.get_patient', id = patient.patient_id),
-            'sn':data.sn,
-            'id_number':data.id_number,
-            'time':str(data.time),
-            'date':str(data.date),
-            'glucose':data.glucose
-        }), 200
+        'url': url_for('api.get_data', id=data.data_id),
+        'patient': url_for('api.get_patient', id=patient.patient_id),
+        'sn': data.sn,
+        'id_number': data.id_number,
+        'time': str(data.time),
+        'date': str(data.date),
+        'glucose': data.glucose
+    }), 200
+
+
+"""
+
+@api {DELETE} /api/v1.0/datas/<int:id> 删除id所代表的数据的信息
+@apiGroup datas
+@apiName 删除id所代表的数据的信息
+
+@apiParam (params) {String} id 数据id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回删除的数据的信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "date":"数据添加日期",
+        "time":"数据添加时间",
+        "id_number":"医疗卡号",
+        "patient":"病人地址",
+        "sn":"血糖仪sn码",
+        "url":"数据地址"
+    }
+
+
+"""

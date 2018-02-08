@@ -88,7 +88,8 @@ def get_patients():
             'patients':[patient.to_json() for patient in patients],
             'prev':prev,
             'next':next,
-            'count':pagination.total
+            'count':pagination.total,
+            "pages":pagination.pages
         })
     else:
         return jsonify({
@@ -126,7 +127,8 @@ def get_patients():
         }],
         "prev":"上一页",
         "next":"下一页",
-        "count":"总页数"
+        "count":"总数量".
+        "pages":"总页数"
     }
 """
 
@@ -351,16 +353,55 @@ def get_patient_datas(id):
         if pagination.has_next:
             next = url_for('api.get_patients', page=page + 1)
         return jsonify({
-            'operators': [data.to_json() for data in datas],
+            'datas': [data.to_json() for data in datas],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages':pagination.pages
         })
     else:
         return jsonify({
             'status': 'fail',
             'reason': 'there is no data'
         })
+
+"""
+@api {GET} /api/v1.0/patients/<int:id>/datas 获取id所代表的病人的数据
+@apiGroup patients
+@apiName 获取id所代表的病人的数据
+
+@apiParam (params) {Number} id 病人id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回id所表示病人的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "datas":[{
+            "date":"数据日期",
+            "glucose":"血糖值",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址",
+            "time":"数据时间"
+        }]，
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        "count":"总数量",
+        "pages":"总页数"    
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在 
+"""
 
 
 @api.route('/patients/history')
@@ -379,7 +420,7 @@ def patients_history():
     begin_time = request.args.get('begin_time')
     end_time = request.args.get('end_time')
     begin_date = request.args.get('begin_date')
-    end_date = request.args.get('end_time')
+    end_date = request.args.get('end_date')
     if patient_name:
         datas = datas.filter(Patient.patient_name == patient_name)
     if sex:
@@ -420,12 +461,58 @@ def patients_history():
             'datas': [data.to_json() for data in datas],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages':pagination.pages
         })
     else:
         return jsonify({
             'status':'fail',
-            'reason':'there is no reason'
+            'reason':'there is no data'
         })
 
+"""
+@api {GET} /api/v1.0/patients/history 获取病人历史信息(浏览器栏筛选)
+@apiGroup patients
+@apiName 获取id所代表的病人的数据
+
+@apiParam (params) {String} id_number 医疗卡号 
+@apiParam (params) {String} patient_name 病人名字
+@apiParam (params) {String} sex 病人性别
+@apiParam (params) {String} tel 病人电话
+@apiParam (params) {Number} age 病人年龄
+@apiParam (params) {Number} max_age 病人最大年龄
+@apiParam (params) {Number} min_age 病人最小年龄
+@apiParam (params) {Number} max_glucose 病人最大血糖值
+@apiParam (params) {Number} min_glucose 病人最小血糖值
+@apiParam (params) {String} begin_time 开始时间_时间格式（00:00:00）
+@apiParam (params) {String} end_time 结束时间 
+@apiParam (params) {String} begin_date 开始日期_日期格式（0000-00-00）
+@apiParam (params) {String} end_date
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回筛选过的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "datas":[{
+            "date":"数据日期",
+            "glucose":"血糖值",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址",
+            "time":"数据时间"
+        }],
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        "count":"总数量",
+        "pages":"总页数"    
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
+    } 
+"""
 

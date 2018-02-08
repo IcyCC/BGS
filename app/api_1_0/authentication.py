@@ -24,7 +24,7 @@ def verify_password(operatorname_or_token, password):
 
 @api.route('/login')
 def operator_login():
-    tel = request.args.get('tel')
+    tel = request.json['tel']
     password = request.json['password']
     operator = Operator.query.filter(Operator.tel == tel)
     if operator.verify_password(password):
@@ -37,10 +37,49 @@ def operator_login():
             'reason':'the password is wrong'
         })
 
+"""
+@api {GET} /api/v1.0/login 通过得到的账号确定密码是否正确(json数据)
+@apiGroup authentication
+@apiName 通过得到的账号约定密码是否正确
+
+@apiParam (params) {String} tel 操作者的电话号码
+@apiParam (params) {String} password 操作者的密码
+
+@apiSuccess {Array} status 返回密码的正确与否
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "status":"success"
+    }
+    {
+        "status":"fail",
+        "reason":"the password is wrong"
+    }
+"""
+
+
 @api.route('/tokens')
 @auth.login_required
 def get_auth_token():
     token = g.current_user.generate_auth_token()
     return jsonify({'token':token})
+
+"""
+@api {GET} /api/v1.0/tokens 根据登陆的账号密码获得token
+@apiGroup authentication
+@apiName 根据登陆的账号密码获得token
+
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} token 返回相应账号的token
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "token":token
+    }
+
+"""
 
 

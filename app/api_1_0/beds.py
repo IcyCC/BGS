@@ -37,6 +37,33 @@ def get_beds():
             'reason':'there is no data'
         })
 
+"""
+
+@api {GET} /api/v1.0/beds 获取筛选beds信息
+@apiGroup beds
+@apiName 获取筛选beds信息
+
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} sn 血糖仪sn码  
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回经过筛选的beds信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "beds":[{
+            "id_number":"患者医疗卡号",
+            "sn":"血糖仪sn码",
+            "url":"bed数据地址"
+        }],
+        "count":"总数量",
+        "prev":"上一页地址",
+        "next":"下一页地址"
+    }
+
+"""
+
 @api.route('/beds', methods = ['POST'])
 @auth.login_required
 def new_bed():
@@ -85,13 +112,80 @@ def new_bed():
         })
     return jsonify(bed.to_json())
 
+"""
+
+@api {POST} /api/v1.0/beds 添加新的床位信息(json数据)
+@apiGroup beds
+@apiName 添加新的床位信息
+
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} sn 血糖仪sn码  
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回新添加的beds信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "id_number":"患者医疗卡号",
+        "sn":"血糖仪sn码",
+        "url":"床位数据地址"
+    }
+    病人已经被安排在其他床上
+    {
+        "status":"fail",
+        "reason":"the patient has been placed on the other bed"
+    }
+    血糖仪被用在其他床位
+    {
+        "status":"fail",
+        "reason":"the accu_chek has been used on the other bed"
+    }
+
+"""
+
+
 @api.route('/beds/<int:id>')
 @auth.login_required
 def get_bed(id):
     bed = Bed.query.get_or_404(id)
-    return jsonify({
-        'bed':bed.bed_information()
-    })
+    return jsonify(bed.bed_information())
+
+"""
+
+@api {GET} /api/v1.0/beds/<int:id> 获取id代表的beds信息
+@apiGroup beds
+@apiName 获取id代表的beds信息
+
+@apiParam (params) {Number} id bed的id  
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回id代表的bed的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "id_number":"患者医疗卡号",
+        "sn":"血糖仪sn码",
+        "url":"bed数据地址",
+        "tel":"患者电话",
+        "sex":"患者性别",
+        "patient_name":"患者姓名",
+        "doctor_id":"医生id",
+        "age":"患者年龄",
+        "current_datas":[{
+            "date":"数据日期",
+            "glucose":"血糖",
+            "id_number":"医疗卡号",
+            "patient":"患者地址",
+            "sn":"血糖仪sn码",
+            "time":"数据时间",
+            "url":"数据地址"
+        }](最新的10个数据)
+    }
+
+"""
+
 
 @api.route('/beds/<int:id>', methods = ['DELETE'])
 @auth.login_required
@@ -107,6 +201,28 @@ def delete_bed(id):
             'data':bed.to_json()
         })
     return jsonify(bed.to_json()), 200
+
+"""
+
+@api {DELETE} /api/v1.0/beds/<int:id> 删除id所代表的床位信息
+@apiGroup beds
+@apiName 删除id所代表的床位信息
+
+@apiParam (params) {Number} id 床位id
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回删除的beds信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "id_number":"患者医疗卡号",
+        "sn":"血糖仪sn码",
+        "url":"床位数据地址"
+    }
+
+"""
+
 
 @api.route('/beds/<int:id>', methods = ['PUT'])
 @auth.login_required
@@ -187,6 +303,44 @@ def change_bed(id):
         })
     return jsonify(bed.to_json())
 
+"""
+
+@api {PUT} /api/v1.0/beds/<int:id> 修改id所代表的床位的信息
+@apiGroup beds
+@apiName 修改id所代表的床位的信息
+
+@apiParam (params) {Number} id 床位号
+@apiParam (params) {String} sn 血糖仪sn码
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} patient_name 病人姓名
+@apiParam (params) {String} sex 病人性别
+@apiParam (params) {String} tel 病人电话
+@apiParam (params) {Number} age 病人年龄
+@apiParam (params) {Number} doctor_id 医生id  
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回更改后的beds信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "id_number":"患者医疗卡号",
+        "sn":"血糖仪sn码",
+        "url":"床位数据地址"
+    }
+    病人已经被安排在其他床
+    {
+        "status":"fail",
+        "reason":"the patient has been placed on the other bed"
+    }
+    血糖仪已经被用在其他床位
+    {
+        "status":"fail",
+        "reason":"the accu_chek has been used on the other bed"
+    }
+"""
+
+
 @api.route('/beds/<int:id>/more')
 @auth.login_required
 def get_bed_more(id):
@@ -194,11 +348,46 @@ def get_bed_more(id):
     patient = bed.patient
     return jsonify({
         'patient':patient.to_json(),
-        'datas':url_for('api.get_bed_moredatas', id=id),
+        'datas':url_for('api.get_bed_moredata', id=id),
         'bed':bed.to_json()
     })
 
-@api.route('/beds/<int:id>/more_datas')
+"""
+
+@api {GET} /api/v1.0/beds/<int:id>/more 获取id所代表床位的全部信息
+@apiGroup beds
+@apiName 获取id所代表床位的全部信息
+
+@apiParam (params) {Number} id 床位id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回id所代表床位的全部信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "bed":{
+            "id_number":"患者医疗卡号",
+            "sn":"血糖仪sn码",
+            "url":"床位信息地址"
+        },
+        "datas":"床位所有数据的信息的地址",
+        "patient":{
+            "age":"患者年龄",
+            "datas":"患者数据信息地址",
+            "doctor_id":"医生id",
+            "id_number":"医疗卡号",
+            "patient_name":"患者姓名",
+            "sex":"患者性别",
+            "tel":"患者手机号",
+            "url":"患者信息地址"
+        }
+    }
+
+"""
+
+
+@api.route('/beds/<int:id>/more_data')
 @auth.login_required
 def get_bed_moredatas(id):
     bed = Bed.query.get_or_404(id)
@@ -217,11 +406,44 @@ def get_bed_moredatas(id):
             'datas': [data.to_json() for data in datas],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages':pagination.pages
         })
     else:
         return jsonify({
             'status':'fail',
             'reason':'there is no data'
         })
+
+"""
+
+@api {GET} /api/v1.0/beds/<int:id>/more_data 获取id所代表床位的全部数据的信息
+@apiGroup beds
+@apiName 获取id所代表床位的全部数据的信息
+
+@apiParam (params) {Number} id 床位id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} beds 返回id所代表床位的全部数据的信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "datas":[{
+            "date":"数据创建日期",
+            "time":"数据创建时间",
+            "glucose":"血糖值",
+            "sn":"血糖仪sn码",
+            "patient":"患者信息地址",
+            "id_number":"医疗卡号",
+            "url":"数据信息地址"
+        }],
+        "count":"总数量",
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        "pages":"总页数"
+    }
+
+"""
+
 

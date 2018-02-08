@@ -71,12 +71,12 @@ class Operator(db.Model):
 class Patient(db.Model):
     __tablename__ = 'patients'
     patient_id = db.Column(db.Integer, primary_key=True)
-    patient_name = db.Column(db.String(64), nullable=False)
-    sex = db.Column(db.String(64), nullable=False)
-    tel = db.Column(db.String(16), nullable=False)
-    id_number = db.Column(db.String(32), nullable=False, unique=True)
-    age = db.Column(db.Integer, nullable=False)
-    doctor_id = db.Column(db.Integer, nullable=False)
+    patient_name = db.Column(db.String(64))
+    sex = db.Column(db.String(64))
+    tel = db.Column(db.String(16))
+    id_number = db.Column(db.String(32), unique=True)
+    age = db.Column(db.Integer)
+    doctor_id = db.Column(db.Integer)
 
     @property
     def bed(self):

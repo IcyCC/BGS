@@ -29,6 +29,43 @@ def new_patient():
         })
     return jsonify(patient.to_json())
 
+
+"""
+@api {POST} /api/v1.0/patients 新建病人信息(json数据)
+@apiGroup patients
+@apiName 新建病人信息
+
+@apiParam (params) {String} id_number 医保卡号
+@apiParam (params) {String} tel 病人电话号码
+@apiParam (params) {Number} doctor_id 医生号码
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {Number} age 患者年龄
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回新病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"
+    }
+    医保卡号如果被注册过了
+    {
+        "status":"fail",
+        "reason":"the id_number has been used"
+    }
+
+"""
+
+
 @api.route('/patients')
 @auth.login_required
 def get_patients():
@@ -59,13 +96,45 @@ def get_patients():
             'reason':'there is no data'
         })
 
+"""
+@api {GET} /api/v1.0/patients 获取所有病人数据信息(地址栏筛选)
+@apiGroup patients
+@apiName 获取所有病人数据
+
+@apiParam (params) {String} id_number 医保卡号
+@apiParam (params) {String} tel 病人电话号码
+@apiParam (params) {Number} doctor_id 医生号码
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {Number} age 患者年龄
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回查询到的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"    
+        }],
+        "prev":"上一页",
+        "next":"下一页",
+        "count":"总页数"
+    }
+"""
+
+
 @api.route('/patients/<int:id>', methods = ['PUT'])
 @auth.login_required
 def change_patient(id):
     patient = Patient.query.get_or_404(id)
-    doctor_id = patient.doctor_id
-    if 'doctor_id' in request.json:
-        doctor_id = request.json['doctor_id']
     if 'id_number' in request.json:
         id_number = request.json['id_number']
         may_patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -75,11 +144,6 @@ def change_patient(id):
                     'status':'fail',
                     'reason':'the id_number has been used'
                 })
-    if doctor_id != patient.doctor_id and g.current_user.operator_id != patient.doctor_id:
-        return jsonify({
-            'status':'fail',
-            'reason':'no root'
-        })
     for k in request.json:
         if hasattr(patient, k):
             setattr(patient, k, request.json[k])
@@ -94,11 +158,80 @@ def change_patient(id):
         })
     return jsonify(patient.to_json())
 
+"""
+@api {PUT} /api/v1.0/patients/<int:id> 修改id代表的病人信息(json数据)
+@apiGroup patients
+@apiName 修改id代表的病人信息
+
+@apiParam (params) {Number} id 病人id
+@apiParam (params) {String} id_number 医保卡号
+@apiParam (params) {String} tel 病人电话号码
+@apiParam (params) {Number} doctor_id 医生号码
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {Number} age 患者年龄
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回修改后的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    医保卡号已注册
+    {
+        "status":"fail",
+        "reason":"the id_number has been used"
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在   
+"""
+
+
 @api.route('/patients/<int:id>')
 @auth.login_required
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
     return jsonify(patient.to_json())
+
+"""
+@api {GET} /api/v1.0/patients/<int:id> 根据id获取病人信息
+@apiGroup patients
+@apiName 根据id获取病人信息
+
+@apiParam (params) {Number} id 病人id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回id所代表的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在   
+"""
+
 
 @api.route('/patients/<int:id>', methods = ['DELETE'])
 @auth.login_required
@@ -130,6 +263,35 @@ def delete_patients(id):
         })
     return jsonify(patient.to_json())
 
+"""
+@api {DELETE} /api/v1.0/patients/<int:id> 删除id所代表的病人信息
+@apiGroup patients
+@apiName 删除id所代表的病人信息
+
+@apiParam (params) {Number} id 病人id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回删除后的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在   
+"""
+
+
 @api.route('/patients/get-from-id')
 @auth.login_required
 def get_from_id():
@@ -139,8 +301,39 @@ def get_from_id():
         return jsonify(patient.to_json())
     else:
         return jsonify({
-            'status':'fail'
+            'status':'fail',
+            'reason':'the patient does not exist'
         })
+
+"""
+@api {GET} /api/v1.0/patients/get-from-id 根据医疗卡号获取病人信息
+@apiGroup patients
+@apiName 根据医疗卡号获取病人信息
+
+@apiParam (params) {String} id_number 医疗卡号 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回根据医疗卡号获取的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    这个医疗卡号没有注册过
+    {
+        "status":"fail",
+        "reason":"the patient does not exist"
+    }  
+"""
+
 
 @api.route('/patients/<int:id>/datas')
 @auth.login_required

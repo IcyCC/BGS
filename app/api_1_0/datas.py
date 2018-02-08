@@ -7,34 +7,18 @@ from .authentication import auth
 import datetime
 from sqlalchemy.exc import OperationalError
 
-@api.route('/datas', methods = ['POST'])
+@api.route('/datas/auto', methods = ['POST'])
 @auth.login_required
-def new_data():
+def new_data_auto():
     data = Data()
     for k in request.json:
         if hasattr(data, k):
             setattr(data, k, request.json[k])
-    if 'id_number' in request.json:
-        id_number = request.json['id_number']
-        patient = Patient.query.filter(Patient.id_number == id_number).first()
-        if patient is None:
-            patient = Patient()
-        for k in request.json:
-            if hasattr(patient, k):
-                setattr(patient, k, request.json[k])
-        try:
-            db.session.add(patient)
-            db.session.commit()
-        except OperationalError as e:
-            return jsonify({
-                'status': 'fail',
-                'reason': e,
-                'data': data.to_json()
-            })
-    date = datetime.datetime.now().date()
-    time = datetime.datetime.now().time()
-    data.date = date
-    data.time = time
+    accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
+    bed = accuchek.bed
+    patient = bed.patient
+    id_number = patient.id_number
+    data.id_number = id_number
     try:
         db.session.add(data)
         db.session.commit()
@@ -43,6 +27,39 @@ def new_data():
             'status':'fail',
             'reason':e,
             'data':data.to_json()
+        })
+    return jsonify(data.to_json())
+
+@api.route('/datas/artificial', methods = ['POST'])
+def new_data_artificial():
+    data = Data()
+    for k in request.json:
+        if hasattr(data, k):
+            setattr(data, k, request.json[k])
+    id_number = request.json['id_number']
+    patient = Patient.query.filter(Patient.id_number == id_number).first()
+    if patient is None:
+        patient = Patient()
+    for k in request.json:
+        if hasattr(patient, k):
+            setattr(patient, k, request.json[k])
+    try:
+        db.session.add(patient)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': data.to_json()
+        })
+    try:
+        db.session.add(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': data.to_json()
         })
     return jsonify(data.to_json())
 

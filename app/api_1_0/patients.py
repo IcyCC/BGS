@@ -27,7 +27,11 @@ def new_patient():
             'reason':e,
             'data':patient.to_json()
         })
-    return jsonify(patient.to_json())
+    return jsonify({
+        'patients':[patient.to_json()],
+        'status':'success',
+        'reason':'the data has been added'
+    })
 
 
 """
@@ -48,14 +52,18 @@ def new_patient():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url": "病人信息地址",
-        "patient_name":"病人姓名",
-        "sex":"病人性别",
-        "tel":"病人电话",
-        "age":"病人年龄",
-        "doctor_id":"医生号码",
-        "id_number":"医保卡号",
-        "datas":"病人数据地址"
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"
+        }],
+        "status":"success",
+        "reason":"the data has been added"
     }
     医保卡号如果被注册过了
     {
@@ -75,7 +83,7 @@ def get_patients():
     for k, v in request.args.items():
         if k in fields:
             patients = patients.filter_by(**{k: v})
-    if patients:
+    if patients.count()!=0:
         pagination = patients.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         patients = pagination.items
         prev = None
@@ -89,7 +97,9 @@ def get_patients():
             'prev':prev,
             'next':next,
             'count':pagination.total,
-            "pages":pagination.pages
+            "pages":pagination.pages,
+            'status':'success',
+            'reason':'there are the datas'
         })
     else:
         return jsonify({
@@ -127,8 +137,15 @@ def get_patients():
         }],
         "prev":"上一页",
         "next":"下一页",
-        "count":"总数量".
-        "pages":"总页数"
+        "count":"总数量",
+        "pages":"总页数",
+        "status":"success",
+        "reason":"there are the datas"
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
     }
 """
 
@@ -158,7 +175,11 @@ def change_patient(id):
             'reason':e,
             'data':patient.to_json()
         })
-    return jsonify(patient.to_json())
+    return jsonify({
+        'patients': [patient.to_json()],
+        'status': 'success',
+        'reason': 'the data has been changed'
+    })
 
 """
 @api {PUT} /api/v1.0/patients/<int:id> 修改id代表的病人信息(json数据)
@@ -179,14 +200,18 @@ def change_patient(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url": "病人信息地址",
-        "patient_name":"病人姓名",
-        "sex":"病人性别",
-        "tel":"病人电话",
-        "age":"病人年龄",
-        "doctor_id":"医生号码",
-        "id_number":"医保卡号",
-        "datas":"病人数据地址"    
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"
+        }],
+        "status":"success",
+        "reason":"the data has been changed"
     }
     医保卡号已注册
     {
@@ -204,7 +229,11 @@ def change_patient(id):
 @auth.login_required
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
-    return jsonify(patient.to_json())
+    return jsonify({
+        'patients': [patient.to_json()],
+        'status': 'success',
+        'reason': 'there is the data'
+    })
 
 """
 @api {GET} /api/v1.0/patients/<int:id> 根据id获取病人信息
@@ -219,14 +248,18 @@ def get_patient(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url": "病人信息地址",
-        "patient_name":"病人姓名",
-        "sex":"病人性别",
-        "tel":"病人电话",
-        "age":"病人年龄",
-        "doctor_id":"医生号码",
-        "id_number":"医保卡号",
-        "datas":"病人数据地址"    
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"
+        }],
+        "status":"success",
+        "reason":"there is the data"
     }
     @apiError (Error 4xx) 404 对应id的病人不存在
 
@@ -263,7 +296,11 @@ def delete_patients(id):
             'reason': e,
             'data': patient.to_json()
         })
-    return jsonify(patient.to_json())
+    return jsonify({
+        'patients':[patient.to_json()],
+        'status':'success',
+        'reason':'the data has been deleted'
+    })
 
 """
 @api {DELETE} /api/v1.0/patients/<int:id> 删除id所代表的病人信息
@@ -278,14 +315,18 @@ def delete_patients(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url": "病人信息地址",
-        "patient_name":"病人姓名",
-        "sex":"病人性别",
-        "tel":"病人电话",
-        "age":"病人年龄",
-        "doctor_id":"医生号码",
-        "id_number":"医保卡号",
-        "datas":"病人数据地址"    
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"
+        }],
+        "status":"success",
+        "reason":"the data has been deleted"
     }
     @apiError (Error 4xx) 404 对应id的病人不存在
 
@@ -300,7 +341,11 @@ def get_from_id():
     id_number = request.args.get('id_number')
     patient = Patient.query.filter(Patient.id_number == id_number).first()
     if patient:
-        return jsonify(patient.to_json())
+        return jsonify({
+            'patients': [patient.to_json()],
+            'status': 'success',
+            'reason': 'there is the data'
+        })
     else:
         return jsonify({
             'status':'fail',
@@ -320,14 +365,18 @@ def get_from_id():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url": "病人信息地址",
-        "patient_name":"病人姓名",
-        "sex":"病人性别",
-        "tel":"病人电话",
-        "age":"病人年龄",
-        "doctor_id":"医生号码",
-        "id_number":"医保卡号",
-        "datas":"病人数据地址"    
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"
+        }],
+        "status":"success",
+        "reason":"there is the data"
     }
     这个医疗卡号没有注册过
     {
@@ -342,7 +391,7 @@ def get_from_id():
 def get_patient_datas(id):
     patient = Patient.query.get_or_404(id)
     datas = patient.datas
-    if datas:
+    if datas.count()!=0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         datas = pagination.items
@@ -357,7 +406,9 @@ def get_patient_datas(id):
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages':pagination.pages
+            'pages':pagination.pages,
+            'status':'success',
+            'reason':'there are the datas'
         })
     else:
         return jsonify({
@@ -390,7 +441,9 @@ def get_patient_datas(id):
         "prev":"上一页地址",
         "next":"下一页地址",
         "count":"总数量",
-        "pages":"总页数"    
+        "pages":"总页数",
+        "status":"success",
+        "reason":"there are the datas"    
     }
     没有数据
     {
@@ -447,7 +500,7 @@ def patients_history():
         datas = datas.filter(Data.date <= end_date)
     if begin_date:
         datas = datas.filter(Data.date >= begin_date)
-    if datas:
+    if datas.count()!=0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         datas = pagination.items
@@ -462,7 +515,9 @@ def patients_history():
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages':pagination.pages
+            'pages':pagination.pages,
+            'status':'success',
+            'reason':'there are the datas'
         })
     else:
         return jsonify({
@@ -507,7 +562,9 @@ def patients_history():
         "prev":"上一页地址",
         "next":"下一页地址",
         "count":"总数量",
-        "pages":"总页数"    
+        "pages":"总页数",
+        "status":"success",
+        "reason":"there are the datas"    
     }
     没有数据
     {

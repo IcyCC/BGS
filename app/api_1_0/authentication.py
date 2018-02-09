@@ -29,7 +29,8 @@ def operator_login():
     operator = Operator.query.filter(Operator.tel == tel)
     if operator.verify_password(password):
         return jsonify({
-            'status':'success'
+            'status':'success',
+            'reason':'the password is true'
         })
     else:
         return jsonify({
@@ -50,8 +51,10 @@ def operator_login():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "status":"success"
+        "status":"success",
+        "reason":"the password is true"
     }
+    密码错误
     {
         "status":"fail",
         "reason":"the password is wrong"
@@ -63,7 +66,11 @@ def operator_login():
 @auth.login_required
 def get_auth_token():
     token = g.current_user.generate_auth_token()
-    return jsonify({'token':token})
+    return jsonify({
+        'token':token,
+        'status':'fail',
+        'reason':'the token has been gotten'
+    })
 
 """
 @api {GET} /api/v1.0/tokens 根据登陆的账号密码获得token
@@ -77,7 +84,9 @@ def get_auth_token():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "token":token
+        "token":token,
+        "status":"success",
+        "reason":"the token has been gotten"
     }
 
 """

@@ -28,7 +28,11 @@ def new_data_auto():
             'reason': e,
             'data': data.to_json()
         })
-    return jsonify(data.to_json())
+    return jsonify({
+        'datas': [data.to_json()],
+        'status': 'success',
+        'reason': 'the data has been added'
+    })
 
 
 """
@@ -47,12 +51,16 @@ def new_data_auto():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "date":"数据添加日期",
-        "time":"数据添加时间",
-        "id_number":"医疗卡号",
-        "patient":"病人地址",
-        "sn":"血糖仪sn码",
-        "url":"数据地址"
+        "datas":[{
+            "date":"数据添加日期",
+            "time":"数据添加时间",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址"
+        }],
+        "status":"success",
+        "reason":"the data has been added"
     } 
 """
 
@@ -88,7 +96,11 @@ def new_data_artificial():
             'reason': e,
             'data': data.to_json()
         })
-    return jsonify(data.to_json())
+    return jsonify({
+        'datas': [data.to_json()],
+        'status': 'success',
+        'reason': 'the data has been added'
+    })
 
 
 """
@@ -113,13 +125,17 @@ def new_data_artificial():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "date":"数据添加日期",
-        "time":"数据添加时间",
-        "id_number":"医疗卡号",
-        "patient":"病人地址",
-        "sn":"血糖仪sn码",
-        "url":"数据地址"
-    } 
+        "datas":[{
+            "date":"数据添加日期",
+            "time":"数据添加时间",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址"
+        }],
+        "status":"success",
+        "reason":"the data has been added"
+    }  
 """
 
 
@@ -132,7 +148,7 @@ def get_datas():
     for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
-    if datas:
+    if datas.count() != 0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         datas = pagination.items
@@ -147,7 +163,9 @@ def get_datas():
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages': pagination.pages
+            'pages': pagination.pages,
+            'status': 'success',
+            'reason': 'there are the reasons'
         })
     else:
         return jsonify({
@@ -172,7 +190,7 @@ def get_datas():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "operators":[{
+        "datas":[{
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
@@ -183,7 +201,14 @@ def get_datas():
         "count":"总数量",
         "prev":"上一页地址",
         "next":"下一页地址".
-        "pages":'总页数"
+        "pages":'总页数",
+        "status":"success",
+        "reason":"there are the datas"
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
     } 
 
 """
@@ -193,7 +218,11 @@ def get_datas():
 @auth.login_required
 def get_data(id):
     data = Data.query.get_or_404(id)
-    return jsonify(data.to_json())
+    return jsonify({
+        'datas': [data.to_json()],
+        'status': 'success',
+        'reason': 'the data has been added'
+    })
 
 
 """
@@ -209,12 +238,16 @@ def get_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "date":"数据添加日期",
-        "time":"数据添加时间",
-        "id_number":"医疗卡号",
-        "patient":"病人地址",
-        "sn":"血糖仪sn码",
-        "url":"数据地址"
+        "datas":[{
+            "date":"数据添加日期",
+            "time":"数据添加时间",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址"
+        }],
+        "status":"success",
+        "reason":"there is the data"
     }
 
 """
@@ -246,13 +279,17 @@ def change_data(id):
             'data': data.to_json()
         })
     return jsonify({
-        'url': url_for('api.get_data', id=data.data_id),
-        'patient': url_for('api.get_patient', id=patient.patient_id),
-        'sn': data.sn,
-        'id_number': data.id_number,
-        'time': str(data.time),
-        'date': str(data.date),
-        'glucose': data.glucose
+        'datas': [{
+            'url': url_for('api.get_data', id=data.data_id),
+            'patient': url_for('api.get_patient', id=patient.patient_id),
+            'sn': data.sn,
+            'id_number': data.id_number,
+            'time': str(data.time),
+            'date': str(data.date),
+            'glucose': data.glucose
+        }],
+        'status': 'success',
+        'reason': 'the data has been changed'
     }), 200
 
 
@@ -278,12 +315,16 @@ def change_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "date":"数据添加日期",
-        "time":"数据添加时间",
-        "id_number":"医疗卡号",
-        "patient":"病人地址",
-        "sn":"血糖仪sn码",
-        "url":"数据地址"
+        "datas":[{
+            "date":"数据添加日期",
+            "time":"数据添加时间",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址"
+        }],
+        "status":"success",
+        "reason":"the data has been changed"
     }
     不是本人主任医生修改
     {
@@ -313,13 +354,17 @@ def delete_data(id):
             'data': data.to_json()
         })
     return jsonify({
-        'url': url_for('api.get_data', id=data.data_id),
-        'patient': url_for('api.get_patient', id=patient.patient_id),
-        'sn': data.sn,
-        'id_number': data.id_number,
-        'time': str(data.time),
-        'date': str(data.date),
-        'glucose': data.glucose
+        'datas': [{
+            'url': url_for('api.get_data', id=data.data_id),
+            'patient': url_for('api.get_patient', id=patient.patient_id),
+            'sn': data.sn,
+            'id_number': data.id_number,
+            'time': str(data.time),
+            'date': str(data.date),
+            'glucose': data.glucose
+        }],
+        'status': 'success',
+        'reason': 'the data has been deleted'
     }), 200
 
 
@@ -337,13 +382,22 @@ def delete_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "date":"数据添加日期",
-        "time":"数据添加时间",
-        "id_number":"医疗卡号",
-        "patient":"病人地址",
-        "sn":"血糖仪sn码",
-        "url":"数据地址"
+        'datas':[{
+            'url': url_for('api.get_data', id=data.data_id),
+            'patient': url_for('api.get_patient', id=patient.patient_id),
+            'sn': data.sn,
+            'id_number': data.id_number,
+            'time': str(data.time),
+            'date': str(data.date),
+            'glucose': data.glucose
+        }],
+        'status':'success',
+        'reason':'the data has been deleted'
     }
-
+    非主治医师删除
+    {   
+        'status':'fail',
+        'reason':'no root'
+    }
 
 """

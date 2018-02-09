@@ -29,13 +29,49 @@ def get_histories():
             'bedhistorys': [bedhistory.to_json() for bedhistory in bedhistorys],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages':pagination.pages
         })
     else:
         return jsonify({
             'status': 'fail',
             'reason': 'there is no data'
         })
+
+"""
+
+@api {GET} /api/v1.0/bedhistorys 获取筛选所有的床位历史信息
+@apiGroup bedhistorys
+@apiName 获取筛选所有的床位历史信息
+
+@apiParam (params) {Number} bed_id 床位id
+@apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} sn 血糖仪sn码
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} bedhistorys 返回筛选过的床位历史信息信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        “bedhistorys”:[{
+            "url":"历史信息地址",
+            "bed_id":"床位号",
+            "time":"历史信息时间",
+            "date":"历史信息日期",
+            "sn":"血糖仪sn码",
+            "id_number":"医疗卡号"
+        }],
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        "count":"总数量",
+        "pages":"总页数"
+    }
+
+"""
+
 
 @api.route('/bedhistorys', methods = ['POST'])
 @auth.login_required
@@ -58,11 +94,65 @@ def new_history():
         })
     return jsonify(bedhistory.to_json())
 
+"""
+
+@api {POST} /api/v1.0/bedhistorys 新建床位历史信息
+@apiGroup bedhistorys
+@apiName 新建床位历史信息
+
+@apiParam (params) {Number} bed_id 床位id
+@apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} sn 血糖仪sn码
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} bedhistorys 返回新建的床位历史信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url":"历史信息地址",
+        "bed_id":"床位号",
+        "time":"历史信息时间",
+        "date":"历史信息日期",
+        "sn":"血糖仪sn码",
+        "id_number":"医疗卡号"
+    }
+
+"""
+
+
 @api.route('/bedhistorys/<int:id>')
 @auth.login_required
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
     return jsonify(bedhistory.to_json())
+
+"""
+
+@api {GET} /api/v1.0/bedhistorys/<int:id> 获取id所代表的床位历史的信息
+@apiGroup bedhistorys
+@apiName 获取id所代表的床位历史的信息
+
+@apiParam (params) {Number} id 床位历史信息id
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} bedhistorys 返回id所代表的床位历史信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url":"历史信息地址",
+        "bed_id":"床位号",
+        "time":"历史信息时间",
+        "date":"历史信息日期",
+        "sn":"血糖仪sn码",
+        "id_number":"医疗卡号"
+    }
+
+"""
+
 
 @api.route('/bedhistorys/<int:id>', methods = ['PUT'])
 @auth.login_required
@@ -86,6 +176,40 @@ def change_history(id):
         })
     return jsonify(bedhistory.to_json())
 
+"""
+
+@api {PUT} /api/v1.0/bedhistorys/<int:id> 更改id所代表的床位历史的信息
+@apiGroup bedhistorys
+@apiName 更改id所代表的床位历史的信息
+
+@apiParam (params) {Number} bed_id 床位id
+@apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
+@apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {String} sn 血糖仪sn码
+@apiParam (params) {Number} id 床位历史信息id
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} bedhistorys 返回更改的床位历史信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url":"历史信息地址",
+        "bed_id":"床位号",
+        "time":"历史信息时间",
+        "date":"历史信息日期",
+        "sn":"血糖仪sn码",
+        "id_number":"医疗卡号"
+    }
+    不是主治医师修改
+    {
+        "status":"fail",
+        "reason":"no root"
+    }
+"""
+
+
 @api.route('/bedhistorys/<int:id>', methods = ['DELETE'])
 @auth.login_required
 def delete_history(id):
@@ -104,3 +228,27 @@ def delete_history(id):
             'reason': e
         })
     return jsonify(bedhistory.to_json())
+
+"""
+
+@api {DELETE} /api/v1.0/bedhistorys/<int:id> 删除id所代表的床位历史的信息
+@apiGroup bedhistorys
+@apiName 删除id所代表的床位历史的信息
+
+@apiParam (params) {Number} id 床位历史信息id
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} bedhistorys 返回删除的的床位历史的信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url":"历史信息地址",
+        "bed_id":"床位号",
+        "time":"历史信息时间",
+        "date":"历史信息日期",
+        "sn":"血糖仪sn码",
+        "id_number":"医疗卡号"
+    }
+
+"""

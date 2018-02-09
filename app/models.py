@@ -71,12 +71,12 @@ class Operator(db.Model):
 class Patient(db.Model):
     __tablename__ = 'patients'
     patient_id = db.Column(db.Integer, primary_key=True)
-    patient_name = db.Column(db.String(64), nullable=False)
-    sex = db.Column(db.String(64), nullable=False)
-    tel = db.Column(db.String(16), nullable=False)
-    id_number = db.Column(db.String(32), nullable=False, unique=True)
-    age = db.Column(db.Integer, nullable=False)
-    doctor_id = db.Column(db.Integer, nullable=False)
+    patient_name = db.Column(db.String(64))
+    sex = db.Column(db.String(64))
+    tel = db.Column(db.String(16))
+    id_number = db.Column(db.String(32), unique=True)
+    age = db.Column(db.Integer)
+    doctor_id = db.Column(db.Integer)
 
     @property
     def bed(self):
@@ -210,11 +210,12 @@ class Bed(db.Model):
     def bed_information(self):
         patient = self.patient
         json_bed_information = {
-            'id':self.bed_id,
+            'url':url_for('api.get_bed', id=self.bed_id),
             'sn':self.sn,
             'sex': patient.sex,
             'tel': patient.tel,
             'age': patient.age,
+            'patient_name':patient.patient_name,
             'doctor_id': patient.doctor_id,
             'id_number':patient.id_number,
             'current_datas':[current_data.to_json() for current_data in self.current_datas]
@@ -234,9 +235,9 @@ class BedHistory(db.Model):
     history_id = db.Column(db.Integer, primary_key=True)
     time = db.Column(db.Time, nullable=True)
     date = db.Column(db.Date, nullable=True)
-    bed_id = db.Column(db.Integer)
-    sn = db.Column(db.String(32))
-    id_number = db.Column(db.String(64))
+    bed_id = db.Column(db.Integer, nullable=True)
+    sn = db.Column(db.String(32), nullable=True)
+    id_number = db.Column(db.String(64), nullable=True)
 
     @property
     def bed(self):

@@ -7,10 +7,18 @@ import os
 from flask_migrate import Migrate, upgrade, MigrateCommand
 from flask_cors import CORS
 import pymysql
+import json
+
 pymysql.install_as_MySQLdb()
 from app.fake import operators, man_patients, woman_patients, accucheks, datas
 
 app = create_app(os.getenv('FLASK_CONFIG')or 'default')
+
+with open("config.json",'r+') as f:
+    app.custom_net_setting = json.load(f).get('net')
+    print(app.custom_net_setting)
+
+
 manager = Manager(app)
 migrate = Migrate(app, db)
 CORS(app)

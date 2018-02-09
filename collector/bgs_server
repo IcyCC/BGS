@@ -1,7 +1,6 @@
 import asyncio
 import aiohttp
-from datetime import datetime
-
+from datetime import date, time, datetime
 
 loop = asyncio.get_event_loop()
 
@@ -28,16 +27,18 @@ class BgsServer(asyncio.Protocol):
 
     def data_received(self, data):
         print("RECEIVE DATA : {}".format(data))
-        d = {'id': str(data[6:14], encoding="ascii"),
-             'time': datetime.strptime(str(data[17:21], encoding="ascii")+str(data[22:26], encoding="ascii"),
-                                       "%y%m%H%M").strftime("%Y-%m-%d %H:%M:%S"),
-             'value': str(data[27:31], encoding="ascii")}
+        timestamp = datetime.strptime(str(data[17:21], encoding="ascii")+str(data[22:26], encoding="ascii"),
+                                       "%y%m%H%M")
+        d = {'sn': str(data[6:14], encoding="ascii"),
+             'date': timestamp.date().strftime("%m-%d"),
+             'time': timestamp.time().strftime("%H:%M:%S"),
+             'glucose': str(data[27:31], encoding="ascii")}
         print("PROCESS DATA :{}".format(data))
-        if d['value'] == 'LOW ':
-            d['value'] = 1.1
-        if d['value'] == 'HIGH':
-            d['value'] = 33.3
-        d['value'] = float(d['value'])
+        if d['glucose'] == 'LOW ':
+            d['glucose'] = 1.0
+        if d['glucose'] == 'HIGH':
+            d['glucose'] = 34
+        d['glucose'] = float(d['glucose'])
         print("SEND DATA : {}".format(d))
 
 

@@ -56,4 +56,4 @@ def doc_ser():
     return redirect(url_for("static", filename="apidoc/index.html", _external=True))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=8080)

@@ -4,6 +4,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')or 'hard to guess string'
     PATIENTS_PRE_PAGE = 20
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+
+    # some about net
+
     @staticmethod
     def init_app(app):
         pass

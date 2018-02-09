@@ -7,6 +7,7 @@ from .authentication import auth
 from sqlalchemy.exc import OperationalError
 import datetime
 
+
 @api.route('/beds')
 @auth.login_required
 def get_beds():
@@ -29,13 +30,16 @@ def get_beds():
             'beds': [bed.to_json() for bed in beds],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'status': 'success',
+            'reason': 'there are the datas'
         })
     else:
         return jsonify({
-            'status':'fail',
-            'reason':'there is no data'
+            'status': 'fail',
+            'reason': 'there is no data'
         })
+
 
 """
 
@@ -59,12 +63,20 @@ def get_beds():
         }],
         "count":"总数量",
         "prev":"上一页地址",
-        "next":"下一页地址"
+        "next":"下一页地址",
+        "reason":"there are the datas",
+        "status":"success"
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
     }
 
 """
 
-@api.route('/beds', methods = ['POST'])
+
+@api.route('/beds', methods=['POST'])
 @auth.login_required
 def new_bed():
     bed = Bed()
@@ -74,8 +86,8 @@ def new_bed():
         bed = Bed.query.filter(Bed.sn == sn).first()
         if bed:
             return jsonify({
-                'status':'fail',
-                'reason':'the accu_chek has been used on the other bed'
+                'status': 'fail',
+                'reason': 'the accu_chek has been used on the other bed'
             })
     if 'id_number' in request.json:
         id_number = request.json['id_number']
@@ -106,11 +118,16 @@ def new_bed():
         db.session.commit()
     except OperationalError as e:
         return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':bed.to_json()
+            'status': 'fail',
+            'reason': e,
+            'data': bed.to_json()
         })
-    return jsonify(bed.to_json())
+    return jsonify({
+        'beds': [bed.to_json()],
+        'status': 'success',
+        'reason': 'the data has been added'
+    })
+
 
 """
 
@@ -127,9 +144,13 @@ def new_bed():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "id_number":"患者医疗卡号",
-        "sn":"血糖仪sn码",
-        "url":"床位数据地址"
+        "beds":[{
+            "id_number":"患者医疗卡号",
+            "sn":"血糖仪sn码",
+            "url":"床位数据地址"  
+        }],
+        "status":"success",
+        "reason":"the data has been added"
     }
     病人已经被安排在其他床上
     {
@@ -149,7 +170,12 @@ def new_bed():
 @auth.login_required
 def get_bed(id):
     bed = Bed.query.get_or_404(id)
-    return jsonify(bed.bed_information())
+    return jsonify({
+        'bed_information': [bed.bed_information()],
+        'status': 'success',
+        'reason': 'there is the data'
+    })
+
 
 """
 
@@ -165,29 +191,35 @@ def get_bed(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "id_number":"患者医疗卡号",
-        "sn":"血糖仪sn码",
-        "url":"bed数据地址",
-        "tel":"患者电话",
-        "sex":"患者性别",
-        "patient_name":"患者姓名",
-        "doctor_id":"医生id",
-        "age":"患者年龄",
-        "current_datas":[{
-            "date":"数据日期",
-            "glucose":"血糖",
-            "id_number":"医疗卡号",
-            "patient":"患者地址",
+        "bed_informaition":[{
+            "id_number":"患者医疗卡号",
             "sn":"血糖仪sn码",
-            "time":"数据时间",
-            "url":"数据地址"
-        }](最新的10个数据)
+            "url":"bed数据地址",
+            "tel":"患者电话",
+            "sex":"患者性别",
+            "patient_name":"患者姓名",
+            "doctor_id":"医生id",
+            "age":"患者年龄",
+            "current_datas":[{
+                "date":"数据日期",
+                "glucose":"血糖",
+                "id_number":"医疗卡号",
+                "patient":"患者地址",
+                "sn":"血糖仪sn码",
+                "time":"数据时间",
+                "url":"数据地址"
+            }](最新的10个数据)
+        }],
+        "status":"success",
+        "reason":"there is the data"
+
+
     }
 
 """
 
 
-@api.route('/beds/<int:id>', methods = ['DELETE'])
+@api.route('/beds/<int:id>', methods=['DELETE'])
 @auth.login_required
 def delete_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -196,11 +228,16 @@ def delete_bed(id):
         db.session.commit()
     except OperationalError as e:
         return jsonify({
-            'status':'fail',
-            'season':e,
-            'data':bed.to_json()
+            'status': 'fail',
+            'season': e,
+            'data': bed.to_json()
         })
-    return jsonify(bed.to_json()), 200
+    return jsonify({
+        'beds': [bed.to_json()],
+        'status': 'success',
+        'reason': 'the data has been deleted'
+    }), 200
+
 
 """
 
@@ -216,15 +253,19 @@ def delete_bed(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "id_number":"患者医疗卡号",
-        "sn":"血糖仪sn码",
-        "url":"床位数据地址"
+        "beds":[{
+            "id_number":"患者医疗卡号",
+            "sn":"血糖仪sn码",
+            "url":"床位数据地址"  
+        }],
+        "status":"success",
+        "reason":"the data has been deleted"
     }
 
 """
 
 
-@api.route('/beds/<int:id>', methods = ['PUT'])
+@api.route('/beds/<int:id>', methods=['PUT'])
 @auth.login_required
 def change_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -235,8 +276,8 @@ def change_bed(id):
         if may_bed:
             if may_bed.bed_id != bed.bed_id:
                 return jsonify({
-                    'status':'fail',
-                    'reason':'the accu_chek has been used on the other bed'
+                    'status': 'fail',
+                    'reason': 'the accu_chek has been used on the other bed'
                 })
     if 'id_number' in request.json and request.json['id_number']:
         id_number = request.json['id_number']
@@ -267,9 +308,9 @@ def change_bed(id):
             db.session.commit()
         except OperationalError as e:
             return jsonify({
-                'status':'fail',
-                'reason':e,
-                'data':bed.to_json()
+                'status': 'fail',
+                'reason': e,
+                'data': bed.to_json()
             })
         id_number = request.json['id_number']
         patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -277,15 +318,15 @@ def change_bed(id):
             patient = Patient()
         for k in request.json:
             if hasattr(patient, k):
-                    setattr(patient, k, request.json[k])
+                setattr(patient, k, request.json[k])
         try:
             db.session.add(patient)
             db.session.commit()
         except OperationalError as e:
             return jsonify({
-                'status':'fail',
-                'reason':e,
-                'data':patient.to_json()
+                'status': 'fail',
+                'reason': e,
+                'data': patient.to_json()
             })
     if 'sn' in request.json and request.json['sn']:
         bed.sn = request.json['sn']
@@ -301,7 +342,12 @@ def change_bed(id):
             'reason': e,
             'data': bed.to_json()
         })
-    return jsonify(bed.to_json())
+    return jsonify({
+        'beds': [bed.to_json()],
+        'status': 'success',
+        'reason': 'the data has been changed'
+    })
+
 
 """
 
@@ -324,9 +370,13 @@ def change_bed(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "id_number":"患者医疗卡号",
-        "sn":"血糖仪sn码",
-        "url":"床位数据地址"
+        "beds":[{
+            "id_number":"患者医疗卡号",
+            "sn":"血糖仪sn码",
+            "url":"床位数据地址"  
+        }],
+        "status":"success",
+        "reason":"the data has been changed"
     }
     病人已经被安排在其他床
     {
@@ -347,10 +397,13 @@ def get_bed_more(id):
     bed = Bed.query.get_or_404(id)
     patient = bed.patient
     return jsonify({
-        'patient':patient.to_json(),
-        'datas':url_for('api.get_bed_moredata', id=id),
-        'bed':bed.to_json()
+        'patient': patient.to_json(),
+        'datas': url_for('api.get_bed_moredata', id=id),
+        'beds': bed.to_json(),
+        'status': 'success',
+        'reason': 'there is the data'
     })
+
 
 """
 
@@ -381,7 +434,9 @@ def get_bed_more(id):
             "sex":"患者性别",
             "tel":"患者手机号",
             "url":"患者信息地址"
-        }
+        },
+        "reason":"there is the data",
+        "status":"success"
     }
 
 """
@@ -407,13 +462,16 @@ def get_bed_moredatas(id):
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages':pagination.pages
+            'pages': pagination.pages,
+            'status': 'success',
+            'reason': 'there is the data'
         })
     else:
         return jsonify({
-            'status':'fail',
-            'reason':'there is no data'
+            'status': 'fail',
+            'reason': 'there is no data'
         })
+
 
 """
 
@@ -441,7 +499,9 @@ def get_bed_moredatas(id):
         "count":"总数量",
         "prev":"上一页地址",
         "next":"下一页地址",
-        "pages":"总页数"
+        "pages":"总页数",
+        "status":"success",
+        "reason":"there is the data"
     }
 
 """

@@ -25,7 +25,11 @@ def new_operator():
             'reason':e,
             'data':operator.to_json()
         })
-    return jsonify(operator.to_json())
+    return jsonify({
+        'operators':[operator.to_json()],
+        'status':'success',
+        'reason':'the data has been added'
+    })
 
 """
 @api {POST} /api/v1.0/operators 新建操作者(医生)信息(json数据)
@@ -46,11 +50,15 @@ def new_operator():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url":"医生地址",
-        "hospital":"医生医院名称",
-        "office":"医生科室",
-        "lesion":"医生分区",
-        "operator_name":"医生姓名"
+        operators:[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":"the data has been added"
     }
     电话已经被注册
     {
@@ -68,7 +76,7 @@ def get_operators():
     for k, v in request.args.items():
         if k in fields:
             operators = operators.filter_by(**{k: v})
-    if operators:
+    if operators.count()!=0:
         page = request.args.get('page', 1, type=int)
         pagination = operators.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         operators = pagination.items
@@ -83,7 +91,9 @@ def get_operators():
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages':pagination.pages
+            'pages':pagination.pages,
+            'status':'success',
+            'reason':'there are the datas'
         })
     else:
         return jsonify({
@@ -119,7 +129,14 @@ def get_operators():
         "count":"总数量",
         "prev":"上一页地址",
         "next":"下一页地址",
-        "pages":"总页数"
+        "pages":"总页数",
+        "status":"success",
+        "reason":"there are the datas"
+    }
+    没有数据
+    {
+        "status"："fail",
+        "reason":"there is no data"
     }
 """
 
@@ -129,7 +146,11 @@ def get_operators():
 @auth.login_required
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
-    return jsonify(operator.to_json())
+    return jsonify({
+        'operators': [operator.to_json()],
+        'status': 'success',
+        'reason': 'there is the data'
+    })
 
 """
 @api {GET} /api/v1.0/operators/<int:id> 根据id查询操作者
@@ -144,11 +165,15 @@ def get_operator(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "hospital":"医生医院",
-        "lesion":"医生分区",
-        "office":"医生科室",
-        "operator_name":"医生姓名",
-        "url":"医生地址"
+        operators:[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":"there is the data"
     }
     @apiError (Error 4xx) 404 对应id的医生不存在
 
@@ -174,7 +199,11 @@ def delete_operator(id):
             'reason':e,
             'data':operator.to_json()
         })
-    return jsonify(operator.to_json()), 200
+    return jsonify({
+        'operators': [operator.to_json()],
+        'status': 'success',
+        'reason': 'the data has been deleted'
+    }), 200
 
 """
 @api {DELETE} /api/v1.0/operators/<int:id> 根据id删除操作者
@@ -189,11 +218,20 @@ def delete_operator(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "hospital":"医生医院",
-        "lesion":"医生分区",
-        "office":"医生科室",
-        "operator_name":"医生姓名",
-        "url":"医生地址"
+        operators:[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":"the data has been deleted"
+    }
+    不是本人删除
+    {
+        "status":"fail",
+        "root":"no root"
     }
     @apiError (Error 4xx) 404 对应id的医生不存在
 
@@ -226,7 +264,11 @@ def change_operator(id):
             'reason':e,
             'data':operator.to_json()
         })
-    return jsonify(operator.to_json()), 200
+    return jsonify({
+        'operators': [operator.to_json()],
+        'status': 'success',
+        'reason': 'the data has been changed'
+    }), 200
 
 """
 @api {PUT} /api/v1.0/operators 根据id修改操作者信息(json数据)
@@ -241,16 +283,20 @@ def change_operator(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "hospital":"医生医院",
-        "lesion":"医生分区",
-        "office":"医生科室",
-        "operator_name":"医生姓名",
-        "url":"医生地址"
+        operators:[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":"the data has been changed"
     }
-    电话已被用于注册
+    不是本人修改
     {
         "status":"fail",
-        "reason":"the tel or the mail has been used"    
+        "root":"no root"
     }
     @apiError (Error 4xx) 404 对应id的医生不存在
 
@@ -263,7 +309,11 @@ def change_operator(id):
 @auth.login_required
 def get_operator_now():
     operator = g.current_user
-    return jsonify(operator.to_json())
+    return jsonify({
+        'operators': [operator.to_json()],
+        'status': 'success',
+        'reason': 'there is the data'
+    })
 
 """
 @api {GET} /api/v1.0/operators/now 返回现在操作者的信息
@@ -277,11 +327,15 @@ def get_operator_now():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "hospital":"医生医院",
-        "lesion":"医生分区",
-        "office":"医生科室",
-        "operator_name":"医生姓名",
-        "url":"医生地址"
+        operators:[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":"there is the data"
     } 
 """
 
@@ -291,7 +345,11 @@ def get_operator_now():
 def operator_password():
     password = request.args.get('password')
     if g.current_user.verify_password(password):
-        return jsonify(g.current_user.to_json()), 200
+        return jsonify({
+        'operators': [g.current_user.to_json()],
+        'status': 'success',
+        'reason': 'the password is right'
+    }), 200
     else:
         return jsonify({
             'status':'fail',
@@ -310,11 +368,15 @@ def operator_password():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "hospital":"医生医院",
-        "lesion":"医生分区",
-        "office":"医生科室",
-        "operator_name":"医生姓名",
-        "url":"医生地址"
+        operators:[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":"the password is right"
     }
     密码错误
     {

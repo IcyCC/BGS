@@ -16,7 +16,7 @@ def get_histories():
     for k, v in request.args.items():
         if k in fields:
             bedhistorys = bedhistorys.filter_by(**{k: v})
-    if bedhistorys:
+    if bedhistorys.count()!=0:
         pagination = bedhistorys.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         bedhistorys = pagination.items
         prev = None
@@ -30,7 +30,9 @@ def get_histories():
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages':pagination.pages
+            'pages':pagination.pages,
+            'status':'success',
+            'reason':'there are the datas'
         })
     else:
         return jsonify({
@@ -67,9 +69,15 @@ def get_histories():
         "prev":"上一页地址",
         "next":"下一页地址",
         "count":"总数量",
-        "pages":"总页数"
+        "pages":"总页数",
+        "status":"success":
+        "reason":"there are the datas"
     }
-
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
+    }
 """
 
 
@@ -92,7 +100,11 @@ def new_history():
             'status':'fail',
             'reason':e
         })
-    return jsonify(bedhistory.to_json())
+    return jsonify({
+        "bedhistorys":bedhistory.to_json(),
+        "status":"success",
+        "reason":"the data has been added"
+    })
 
 """
 
@@ -112,12 +124,16 @@ def new_history():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url":"历史信息地址",
-        "bed_id":"床位号",
-        "time":"历史信息时间",
-        "date":"历史信息日期",
-        "sn":"血糖仪sn码",
-        "id_number":"医疗卡号"
+        "bedhistorys":[{
+            "url":"历史信息地址",
+            "bed_id":"床位号",
+            "time":"历史信息时间",
+            "date":"历史信息日期",
+            "sn":"血糖仪sn码",
+            "id_number":"医疗卡号"  
+        }],
+        "status":"success",
+        "reason":"the data has been added"
     }
 
 """
@@ -127,7 +143,11 @@ def new_history():
 @auth.login_required
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
-    return jsonify(bedhistory.to_json())
+    return jsonify({
+        "bedhistorys": bedhistory.to_json(),
+        "status": "success",
+        "reason": "there is the data"
+    })
 
 """
 
@@ -143,12 +163,16 @@ def get_history(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url":"历史信息地址",
-        "bed_id":"床位号",
-        "time":"历史信息时间",
-        "date":"历史信息日期",
-        "sn":"血糖仪sn码",
-        "id_number":"医疗卡号"
+        "bedhistorys":[{
+            "url":"历史信息地址",
+            "bed_id":"床位号",
+            "time":"历史信息时间",
+            "date":"历史信息日期",
+            "sn":"血糖仪sn码",
+            "id_number":"医疗卡号"  
+        }],
+        "status":"success",
+        "reason":"there is the data"
     }
 
 """
@@ -174,7 +198,11 @@ def change_history(id):
             'status':'fail',
             'reason':e
         })
-    return jsonify(bedhistory.to_json())
+    return jsonify({
+        "bedhistorys": bedhistory.to_json(),
+        "status": "success",
+        "reason": "the data has been changed"
+    })
 
 """
 
@@ -195,12 +223,16 @@ def change_history(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url":"历史信息地址",
-        "bed_id":"床位号",
-        "time":"历史信息时间",
-        "date":"历史信息日期",
-        "sn":"血糖仪sn码",
-        "id_number":"医疗卡号"
+        "bedhistorys":[{
+            "url":"历史信息地址",
+            "bed_id":"床位号",
+            "time":"历史信息时间",
+            "date":"历史信息日期",
+            "sn":"血糖仪sn码",
+            "id_number":"医疗卡号"  
+        }],
+        "status":"success",
+        "reason":"the data has been changed"
     }
     不是主治医师修改
     {
@@ -227,7 +259,12 @@ def delete_history(id):
             'status': 'fail',
             'reason': e
         })
-    return jsonify(bedhistory.to_json())
+    return jsonify({
+        "bedhistorys": bedhistory.to_json(),
+        "status": "success",
+        "reason": "the data has been deleted"
+    })
+
 
 """
 
@@ -243,12 +280,21 @@ def delete_history(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "url":"历史信息地址",
-        "bed_id":"床位号",
-        "time":"历史信息时间",
-        "date":"历史信息日期",
-        "sn":"血糖仪sn码",
-        "id_number":"医疗卡号"
+        "bedhistorys":[{
+            "url":"历史信息地址",
+            "bed_id":"床位号",
+            "time":"历史信息时间",
+            "date":"历史信息日期",
+            "sn":"血糖仪sn码",
+            "id_number":"医疗卡号"  
+        }],
+        "status":"success",
+        "reason":"the data has been deleted"
+    }
+    不是主治医师删除
+    {
+        "status":"fail",
+        "reason":"no root"
     }
 
 """

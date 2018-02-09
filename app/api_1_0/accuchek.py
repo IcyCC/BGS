@@ -14,7 +14,7 @@ def get_accunckes():
     for k, v in request.args.items():
         if k in fields:
             accunckes = accunckes.filter_by(**{k: v})
-    if accunckes:
+    if accunckes.count()!=0:
         page = request.args.get('page', 1, type=int)
         pagination = accunckes.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         accunckes = pagination.items
@@ -29,7 +29,9 @@ def get_accunckes():
             'prev': prev,
             'next': next,
             'count': pagination.total,
-            'pages': pagination.pages
+            'pages': pagination.pages,
+            'status':'success',
+            'reason':'there are datas'
         })
     else:
         return jsonify({
@@ -59,7 +61,14 @@ def get_accunckes():
         "prev":"上一页地址",
         "next":"下一页地址",
         "count":"总数量",
-        "pages":"总页数"
+        "pages":"总页数",
+        "status":"success",
+        "reason":"there are datas"
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
     }
 """
 
@@ -93,7 +102,11 @@ def new_accuchek():
             'reason':e,
             'data':accuchek.to_json()
         })
-    return jsonify(accuchek.to_json())
+    return jsonify({
+        "accukces":[accuchek.to_json()],
+        "status":"success",
+        "reason":"the data has been added"
+    })
 
 """
 @api {POST} /api/v1.0/accucheks 添加一个新的血糖仪(json数据)
@@ -109,9 +122,13 @@ def new_accuchek():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "bed_id":"床位号",
-        "sn":"血糖仪sn码",
-        "url":"血糖仪地址"
+        "accucheks":[{
+            "bed_id":"床位号",
+            "sn":"血糖仪sn码",
+            "url":"血糖仪地址"   
+        }],
+        "status":"success",
+        "reason":"the data has been added"
     }
     {
         "status":"fail",
@@ -123,7 +140,11 @@ def new_accuchek():
 @auth.login_required
 def get_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
-    return jsonify(accuchek.to_json())
+    return jsonify({
+        "accukces":[accuchek.to_json()],
+        "status":"success",
+        "reason":"there is the data"
+    })
 
 """
 @api {GET} /api/v1.0/accucheks/<int:id> 根据id获取血糖仪信息
@@ -138,9 +159,13 @@ def get_accuchek(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "bed_id":"床位号",
-        "sn":"血糖仪sn码",
-        "url":"血糖仪地址"
+        "accucheks":[{
+            "bed_id":"床位号",
+            "sn":"血糖仪sn码",
+            "url":"血糖仪地址"   
+        }],
+        "status":"success",
+        "reason":"there is the data"
     }
 
 @apiError (Error 4xx) 404 对应id的血糖仪不存在
@@ -161,7 +186,11 @@ def delete_accuchek(id):
             'status':'fail',
             'reason':e
         })
-    return jsonify(accuchek.to_json())
+    return jsonify({
+        "accukces": [accuchek.to_json()],
+        "status": "success",
+        "reason": "the data has been deleted"
+    })
 
 """
 @api {DELETE} /api/v1.0/accucheks/<int:id> 删除id所代表的血糖仪
@@ -176,9 +205,13 @@ def delete_accuchek(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "bed_id":"床位号",
-        "sn":"血糖仪sn码",
-        "url":"血糖仪地址"
+        "accucheks":[{
+            "bed_id":"床位号",
+            "sn":"血糖仪sn码",
+            "url":"血糖仪地址"   
+        }],
+        "status":"success",
+        "reason":"the data has been deleted"
     }
 
 @apiError (Error 4xx) 404 对应id的血糖仪不存在
@@ -210,7 +243,11 @@ def change_accuchek(id):
             'status':'fail',
             'reason':e
         })
-    return jsonify(accuchek.to_json())
+    return jsonify({
+        "accukces": [accuchek.to_json()],
+        "status": "success",
+        "reason": "the data has been changed"
+    })
 
 """
 @api {PUT} /api/v1.0/accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
@@ -225,10 +262,15 @@ def change_accuchek(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "bed_id":"床位号",
-        "sn":"血糖仪sn码",
-        "url":"血糖仪地址"
+        "accucheks":[{
+            "bed_id":"床位号",
+            "sn":"血糖仪sn码",
+            "url":"血糖仪地址"   
+        }],
+        "status":"success",
+        "reason":"the data has been changed"
     }
+
 
 @apiError (Error 4xx) 404 对应id的血糖仪不存在
 

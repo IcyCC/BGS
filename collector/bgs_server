@@ -6,7 +6,7 @@ loop = asyncio.get_event_loop()
 
 async def send_data(data):
     async with aiohttp.ClientSession() as session:
-        async with session.post('',data=data) as response:
+        async with session.post('/api/v1.0/datas/auto',data=data) as response:
             if response.status != 200:
                 print("Failed")
 

@@ -9,7 +9,6 @@ from sqlalchemy.exc import OperationalError
 
 
 @api.route('/datas/auto', methods=['POST'])
-@auth.login_required
 def new_data_auto():
     data = Data()
     for k in request.json:

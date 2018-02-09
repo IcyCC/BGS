@@ -29,6 +29,43 @@ def new_patient():
         })
     return jsonify(patient.to_json())
 
+
+"""
+@api {POST} /api/v1.0/patients 新建病人信息(json数据)
+@apiGroup patients
+@apiName 新建病人信息
+
+@apiParam (params) {String} id_number 医保卡号
+@apiParam (params) {String} tel 病人电话号码
+@apiParam (params) {Number} doctor_id 医生号码
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {Number} age 患者年龄
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回新病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"
+    }
+    医保卡号如果被注册过了
+    {
+        "status":"fail",
+        "reason":"the id_number has been used"
+    }
+
+"""
+
+
 @api.route('/patients')
 @auth.login_required
 def get_patients():
@@ -51,7 +88,8 @@ def get_patients():
             'patients':[patient.to_json() for patient in patients],
             'prev':prev,
             'next':next,
-            'count':pagination.total
+            'count':pagination.total,
+            "pages":pagination.pages
         })
     else:
         return jsonify({
@@ -59,13 +97,46 @@ def get_patients():
             'reason':'there is no data'
         })
 
+"""
+@api {GET} /api/v1.0/patients 获取所有病人数据信息(地址栏筛选)
+@apiGroup patients
+@apiName 获取所有病人数据
+
+@apiParam (params) {String} id_number 医保卡号
+@apiParam (params) {String} tel 病人电话号码
+@apiParam (params) {Number} doctor_id 医生号码
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {Number} age 患者年龄
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回查询到的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "patients":[{
+            "url": "病人信息地址",
+            "patient_name":"病人姓名",
+            "sex":"病人性别",
+            "tel":"病人电话",
+            "age":"病人年龄",
+            "doctor_id":"医生号码",
+            "id_number":"医保卡号",
+            "datas":"病人数据地址"    
+        }],
+        "prev":"上一页",
+        "next":"下一页",
+        "count":"总数量".
+        "pages":"总页数"
+    }
+"""
+
+
 @api.route('/patients/<int:id>', methods = ['PUT'])
 @auth.login_required
 def change_patient(id):
     patient = Patient.query.get_or_404(id)
-    doctor_id = patient.doctor_id
-    if 'doctor_id' in request.json:
-        doctor_id = request.json['doctor_id']
     if 'id_number' in request.json:
         id_number = request.json['id_number']
         may_patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -75,11 +146,6 @@ def change_patient(id):
                     'status':'fail',
                     'reason':'the id_number has been used'
                 })
-    if doctor_id != patient.doctor_id and g.current_user.operator_id != patient.doctor_id:
-        return jsonify({
-            'status':'fail',
-            'reason':'no root'
-        })
     for k in request.json:
         if hasattr(patient, k):
             setattr(patient, k, request.json[k])
@@ -94,11 +160,80 @@ def change_patient(id):
         })
     return jsonify(patient.to_json())
 
+"""
+@api {PUT} /api/v1.0/patients/<int:id> 修改id代表的病人信息(json数据)
+@apiGroup patients
+@apiName 修改id代表的病人信息
+
+@apiParam (params) {Number} id 病人id
+@apiParam (params) {String} id_number 医保卡号
+@apiParam (params) {String} tel 病人电话号码
+@apiParam (params) {Number} doctor_id 医生号码
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {Number} age 患者年龄
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回修改后的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    医保卡号已注册
+    {
+        "status":"fail",
+        "reason":"the id_number has been used"
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在   
+"""
+
+
 @api.route('/patients/<int:id>')
 @auth.login_required
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
     return jsonify(patient.to_json())
+
+"""
+@api {GET} /api/v1.0/patients/<int:id> 根据id获取病人信息
+@apiGroup patients
+@apiName 根据id获取病人信息
+
+@apiParam (params) {Number} id 病人id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回id所代表的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在   
+"""
+
 
 @api.route('/patients/<int:id>', methods = ['DELETE'])
 @auth.login_required
@@ -130,6 +265,35 @@ def delete_patients(id):
         })
     return jsonify(patient.to_json())
 
+"""
+@api {DELETE} /api/v1.0/patients/<int:id> 删除id所代表的病人信息
+@apiGroup patients
+@apiName 删除id所代表的病人信息
+
+@apiParam (params) {Number} id 病人id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回删除后的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在   
+"""
+
+
 @api.route('/patients/get-from-id')
 @auth.login_required
 def get_from_id():
@@ -139,8 +303,39 @@ def get_from_id():
         return jsonify(patient.to_json())
     else:
         return jsonify({
-            'status':'fail'
+            'status':'fail',
+            'reason':'the patient does not exist'
         })
+
+"""
+@api {GET} /api/v1.0/patients/get-from-id 根据医疗卡号获取病人信息
+@apiGroup patients
+@apiName 根据医疗卡号获取病人信息
+
+@apiParam (params) {String} id_number 医疗卡号 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} patients 返回根据医疗卡号获取的病人信息
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "url": "病人信息地址",
+        "patient_name":"病人姓名",
+        "sex":"病人性别",
+        "tel":"病人电话",
+        "age":"病人年龄",
+        "doctor_id":"医生号码",
+        "id_number":"医保卡号",
+        "datas":"病人数据地址"    
+    }
+    这个医疗卡号没有注册过
+    {
+        "status":"fail",
+        "reason":"the patient does not exist"
+    }  
+"""
+
 
 @api.route('/patients/<int:id>/datas')
 @auth.login_required
@@ -158,16 +353,55 @@ def get_patient_datas(id):
         if pagination.has_next:
             next = url_for('api.get_patients', page=page + 1)
         return jsonify({
-            'operators': [data.to_json() for data in datas],
+            'datas': [data.to_json() for data in datas],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages':pagination.pages
         })
     else:
         return jsonify({
             'status': 'fail',
             'reason': 'there is no data'
         })
+
+"""
+@api {GET} /api/v1.0/patients/<int:id>/datas 获取id所代表的病人的数据
+@apiGroup patients
+@apiName 获取id所代表的病人的数据
+
+@apiParam (params) {Number} id 病人id 
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回id所表示病人的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "datas":[{
+            "date":"数据日期",
+            "glucose":"血糖值",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址",
+            "time":"数据时间"
+        }]，
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        "count":"总数量",
+        "pages":"总页数"    
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
+    }
+    @apiError (Error 4xx) 404 对应id的病人不存在
+
+    @apiErrorExample Error-Resopnse:
+    HTTP/1.1 404 对应的病人信息不存在 
+"""
 
 
 @api.route('/patients/history')
@@ -186,7 +420,7 @@ def patients_history():
     begin_time = request.args.get('begin_time')
     end_time = request.args.get('end_time')
     begin_date = request.args.get('begin_date')
-    end_date = request.args.get('end_time')
+    end_date = request.args.get('end_date')
     if patient_name:
         datas = datas.filter(Patient.patient_name == patient_name)
     if sex:
@@ -227,12 +461,58 @@ def patients_history():
             'datas': [data.to_json() for data in datas],
             'prev': prev,
             'next': next,
-            'count': pagination.total
+            'count': pagination.total,
+            'pages':pagination.pages
         })
     else:
         return jsonify({
             'status':'fail',
-            'reason':'there is no reason'
+            'reason':'there is no data'
         })
 
+"""
+@api {GET} /api/v1.0/patients/history 获取病人历史信息(浏览器栏筛选)
+@apiGroup patients
+@apiName 获取id所代表的病人的数据
+
+@apiParam (params) {String} id_number 医疗卡号 
+@apiParam (params) {String} patient_name 病人名字
+@apiParam (params) {String} sex 病人性别
+@apiParam (params) {String} tel 病人电话
+@apiParam (params) {Number} age 病人年龄
+@apiParam (params) {Number} max_age 病人最大年龄
+@apiParam (params) {Number} min_age 病人最小年龄
+@apiParam (params) {Number} max_glucose 病人最大血糖值
+@apiParam (params) {Number} min_glucose 病人最小血糖值
+@apiParam (params) {String} begin_time 开始时间_时间格式（00:00:00）
+@apiParam (params) {String} end_time 结束时间 
+@apiParam (params) {String} begin_date 开始日期_日期格式（0000-00-00）
+@apiParam (params) {String} end_date
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} datas 返回筛选过的数据
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+        "datas":[{
+            "date":"数据日期",
+            "glucose":"血糖值",
+            "id_number":"医疗卡号",
+            "patient":"病人地址",
+            "sn":"血糖仪sn码",
+            "url":"数据地址",
+            "time":"数据时间"
+        }],
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        "count":"总数量",
+        "pages":"总页数"    
+    }
+    没有数据
+    {
+        "status":"fail",
+        "reason":"there is no data"
+    } 
+"""
 

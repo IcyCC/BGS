@@ -5,8 +5,9 @@ from flask import request, jsonify, g, url_for, current_app
 from ..models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
-
+from ..decorators import allow_cross_domain
 @api.route('/operators', methods = ['POST'])
+@allow_cross_domain
 def new_operator():
     tel = request.json['tel']
     operator = Operator.query.filter(Operator.tel == tel).first()
@@ -70,6 +71,7 @@ def new_operator():
 
 @api.route('/operators')
 @auth.login_required
+@allow_cross_domain
 def get_operators():
     operators = Operator.query
     fields = [i for i in Operator.__table__.c._data]
@@ -144,6 +146,7 @@ def get_operators():
 
 @api.route('/operators/<int:id>')
 @auth.login_required
+@allow_cross_domain
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
     return jsonify({
@@ -183,6 +186,7 @@ def get_operator(id):
 
 @api.route('/operators/<int:id>', methods = ['DELETE'])
 @auth.login_required
+@allow_cross_domain
 def delete_operator(id):
     operator = Operator.query.get_or_404(id)
     if g.current_user.tel != operator.tel:
@@ -242,6 +246,7 @@ def delete_operator(id):
 
 @api.route('/operators/<int:id>', methods = ['PUT'])
 @auth.login_required
+@allow_cross_domain
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
     if g.current_user.tel != operator.tel:
@@ -307,6 +312,7 @@ def change_operator(id):
 
 @api.route('/operators/now')
 @auth.login_required
+@allow_cross_domain
 def get_operator_now():
     operator = g.current_user
     return jsonify({
@@ -342,6 +348,7 @@ def get_operator_now():
 
 @api.route('/operators/now/password')
 @auth.login_required
+@allow_cross_domain
 def operator_password():
     password = request.args.get('password')
     if g.current_user.verify_password(password):

@@ -6,9 +6,11 @@ from ..models import Patient, Operator, Data, Bed, Accuchek, BedHistory
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 import datetime
+from ..decorators import allow_cross_domain
 
 @api.route('/bedhistorys')
 @auth.login_required
+@allow_cross_domain
 def get_histories():
     page = request.args.get('page', 1, type=int)
     fields = [i for i in BedHistory.__table__.c._data]
@@ -83,6 +85,7 @@ def get_histories():
 
 @api.route('/bedhistorys', methods = ['POST'])
 @auth.login_required
+@allow_cross_domain
 def new_history():
     bedhistory = BedHistory()
     for k in request.json:
@@ -141,6 +144,7 @@ def new_history():
 
 @api.route('/bedhistorys/<int:id>')
 @auth.login_required
+@allow_cross_domain
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
     return jsonify({
@@ -180,6 +184,7 @@ def get_history(id):
 
 @api.route('/bedhistorys/<int:id>', methods = ['PUT'])
 @auth.login_required
+@allow_cross_domain
 def change_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
     if bedhistory.patient.doctor_id != g.current_user.operator_id:
@@ -244,6 +249,7 @@ def change_history(id):
 
 @api.route('/bedhistorys/<int:id>', methods = ['DELETE'])
 @auth.login_required
+@allow_cross_domain
 def delete_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
     if bedhistory.patient.doctor_id != g.current_user.operator_id:

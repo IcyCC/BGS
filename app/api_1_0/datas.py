@@ -6,9 +6,12 @@ from ..models import Patient, Operator, Data, Bed, Accuchek
 from .authentication import auth
 import datetime
 from sqlalchemy.exc import OperationalError
-
+from ..decorators import allow_cross_domain
+from .authentication import auth
 
 @api.route('/datas/auto', methods=['POST'])
+@auth.login_required
+@allow_cross_domain
 def new_data_auto():
     data = Data()
     for k in request.json:
@@ -66,6 +69,8 @@ def new_data_auto():
 
 
 @api.route('/datas/artificial', methods=['POST'])
+@auth.login_required
+@allow_cross_domain
 def new_data_artificial():
     data = Data()
     for k in request.json:
@@ -141,6 +146,7 @@ def new_data_artificial():
 
 @api.route('/datas')
 @auth.login_required
+@allow_cross_domain
 def get_datas():
     data_fields = [i for i in Data.__table__.c._data]
     fields = data_fields
@@ -216,6 +222,7 @@ def get_datas():
 
 @api.route('/datas/<int:id>')
 @auth.login_required
+@allow_cross_domain
 def get_data(id):
     data = Data.query.get_or_404(id)
     return jsonify({
@@ -255,6 +262,7 @@ def get_data(id):
 
 @api.route('/datas/<int:id>', methods=['PUT'])
 @auth.login_required
+@allow_cross_domain
 def change_data(id):
     data = Data.query.get_or_404(id)
     if g.current_user.operator_id != data.patient.doctor_id:
@@ -336,6 +344,7 @@ def change_data(id):
 
 @api.route('/datas/<int:id>', methods=['DELETE'])
 @auth.login_required
+@allow_cross_domain
 def delete_data(id):
     data = Data.query.get_or_404(id)
     if g.current_user.operator_id != data.patient.doctor_id:

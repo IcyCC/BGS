@@ -6,10 +6,12 @@ from ..models import Operator, Bed, Patient, Data, BedHistory
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 import datetime
+from ..decorators import allow_cross_domain
 
 
 @api.route('/beds')
 @auth.login_required
+@allow_cross_domain
 def get_beds():
     fields = [i for i in Bed.__table__.c._data]
     beds = Bed.query
@@ -78,6 +80,7 @@ def get_beds():
 
 @api.route('/beds', methods=['POST'])
 @auth.login_required
+@allow_cross_domain
 def new_bed():
     bed = Bed()
     bedhistory = BedHistory()
@@ -168,6 +171,7 @@ def new_bed():
 
 @api.route('/beds/<int:id>')
 @auth.login_required
+@allow_cross_domain
 def get_bed(id):
     bed = Bed.query.get_or_404(id)
     return jsonify({
@@ -221,6 +225,7 @@ def get_bed(id):
 
 @api.route('/beds/<int:id>', methods=['DELETE'])
 @auth.login_required
+@allow_cross_domain
 def delete_bed(id):
     bed = Bed.query.get_or_404(id)
     try:
@@ -267,6 +272,7 @@ def delete_bed(id):
 
 @api.route('/beds/<int:id>', methods=['PUT'])
 @auth.login_required
+@allow_cross_domain
 def change_bed(id):
     bed = Bed.query.get_or_404(id)
     bed_history = bed.bed_historys.order_by(Bed.bed_id.desc()).first()
@@ -393,6 +399,7 @@ def change_bed(id):
 
 @api.route('/beds/<int:id>/more')
 @auth.login_required
+@allow_cross_domain
 def get_bed_more(id):
     bed = Bed.query.get_or_404(id)
     patient = bed.patient
@@ -444,6 +451,7 @@ def get_bed_more(id):
 
 @api.route('/beds/<int:id>/more_data')
 @auth.login_required
+@allow_cross_domain
 def get_bed_moredatas(id):
     bed = Bed.query.get_or_404(id)
     datas = bed.datas

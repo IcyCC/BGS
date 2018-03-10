@@ -2,7 +2,7 @@ from flask import g, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 from ..models import Operator
 from . import api
-
+from ..decorators import allow_cross_domain
 auth = HTTPBasicAuth()
 
 @auth.verify_password
@@ -23,6 +23,7 @@ def verify_password(operatorname_or_token, password):
             return False
 
 @api.route('/login')
+@allow_cross_domain
 def operator_login():
     tel = request.json['tel']
     password = request.json['password']
@@ -64,6 +65,7 @@ def operator_login():
 
 @api.route('/tokens')
 @auth.login_required
+@allow_cross_domain
 def get_auth_token():
     token = g.current_user.generate_auth_token()
     return jsonify({

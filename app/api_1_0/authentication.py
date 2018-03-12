@@ -136,6 +136,12 @@ def login():
     if operator is None or not operator.verify_password(password=password):
         return jsonify(status="fail", reason="no this user or password error", data=[])
 
+    if operator.active is not True:
+        return jsonify({
+            'status':'fail',
+            'reason':'the user does not been actived'
+        })
+
     login_user(operator, remember=False)
 
     return jsonify(status="success", reason="", data=[operator.to_json()])

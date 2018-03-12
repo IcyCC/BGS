@@ -7,10 +7,11 @@ from .authentication import auth
 from sqlalchemy.exc import OperationalError
 import datetime
 from ..decorators import allow_cross_domain
+from flask_login import login_required, current_user
 
 
 @api.route('/beds')
-
+@login_required
 @allow_cross_domain
 def get_beds():
     fields = [i for i in Bed.__table__.c._data]
@@ -79,7 +80,7 @@ def get_beds():
 
 
 @api.route('/beds', methods=['POST'])
-
+@login_required
 @allow_cross_domain
 def new_bed():
     bed = Bed()
@@ -170,7 +171,7 @@ def new_bed():
 
 
 @api.route('/beds/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -224,7 +225,7 @@ def get_bed(id):
 
 
 @api.route('/beds/<int:id>', methods=['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -271,7 +272,7 @@ def delete_bed(id):
 
 
 @api.route('/beds/<int:id>', methods=['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -398,7 +399,7 @@ def change_bed(id):
 
 
 @api.route('/beds/<int:id>/more')
-
+@login_required
 @allow_cross_domain
 def get_bed_more(id):
     bed = Bed.query.get_or_404(id)
@@ -450,11 +451,11 @@ def get_bed_more(id):
 
 
 @api.route('/beds/<int:id>/more_data')
-
+@login_required
 @allow_cross_domain
 def get_bed_moredatas(id):
     bed = Bed.query.get_or_404(id)
-    datas = bed.datas
+    datas = bed.datas.order_by(Data.date.desc(), Data.time.desc())
     if datas:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)

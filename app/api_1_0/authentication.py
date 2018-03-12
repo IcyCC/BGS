@@ -1,7 +1,9 @@
 from flask import g, jsonify, request
 from flask_httpauth import HTTPBasicAuth
+from flask_login import login_user
 from ..models import Operator
 from . import api
+from flask_login import current_user, login_required, logout_user
 from ..decorators import allow_cross_domain
 auth = HTTPBasicAuth()
 
@@ -92,5 +94,25 @@ def get_auth_token():
     }
 
 """
+
+@api.route('/login', methods=['POST'])
+def login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    operator = Operator.query.filter(Operator.operator_name==username).first()
+
+    if operator is None or not operator.verify_password(password=password):
+        return jsonify(status="fail", reason="no this user or password error", data=[])
+
+    login_user(operator, remember=False)
+
+    return jsonify(status="success", reason="", data=[operator.to_json()])
+
+@api.route("/logout", methods=["GET"])
+@login_required
+def logout():
+    if request.method == "GET":
+        logout_user()
+        return jsonify(status="success", reason="", data=[])
 
 

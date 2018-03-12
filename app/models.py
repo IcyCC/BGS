@@ -1,12 +1,15 @@
 from . import db
-from flask import url_for, g, current_app
+from flask import url_for, g, current_app, jsonify
+from sqlalchemy.exc import OperationalError,IntegrityError
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask_login import UserMixin, AnonymousUserMixin,current_user
+from app import login_manager
 
-class Operator(db.Model):
+class Operator(db.Model, UserMixin):
     __tablename__ = 'operators'
-    operator_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     operator_name = db.Column(db.String(64), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     hospital = db.Column(db.String(128), nullable=False)
@@ -14,6 +17,7 @@ class Operator(db.Model):
     lesion = db.Column(db.String(128))
     tel = db.Column(db.String(16), nullable=False, unique=True)
     mail = db.Column(db.String(64))
+    active = db.Column(db.Boolean, default=False)
 
     @property
     def password(self):
@@ -25,49 +29,37 @@ class Operator(db.Model):
 
     @property
     def patients(self):
-        patients = Patient.query.join(Operator, Operator.operator_id == Patient.doctor_id).filter(Operator.operator_id == self.operator_id)
+        patients = Patient.query.join(Operator, Operator.id == Patient.doctor_id).filter(Operator.id == self.id)
         return patients
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_auth_token(self, expiration = 3600):
-        s = Serializer(current_app.config['SECRET_KEY'])
-        return s.dumps({'operator_id':self.operator_id}).decode('utf-8')
-
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token.encode('utf-8'))
-        except:
-            return None
-        operator = Operator.query.get_or_404(data['operator_id'])
-        return operator
-
     @staticmethod
     def from_json(json_post):
-        hospital = json_post['hospital']
-        office = json_post['office']
-        lesion = json_post['lesion']
-        operator_name = json_post['operator_name']
-        tel = json_post['tel']
-        mail = json_post['mail']
-        password = json_post['password']
-        operator = Operator(hospital = hospital, office = office, operator_name = operator_name, lesion = lesion, tel = tel, mail = mail)
-        operator.password = password
+        operator = Operator()
+        for k in json_post:
+            if hasattr(operator, k):
+                try:
+                    setattr(operator, k, json_post[k])
+                except IntegrityError as e:
+                    return jsonify({
+                        'status': 'fail',
+                        'reason': str(e)
+                    })
+        operator.password = json_post['password']
         return operator
 
     def to_json(self):
         json_operator = {
-            'url':url_for('api.get_operator', id = self.operator_id),
+            'url':url_for('api.get_operator', id = self.id),
             'hospital':self.hospital,
             'office':self.office,
             'lesion':self.lesion,
             'operator_name':self.operator_name
         }
         return json_operator
-
+login_manager.anonymous_user = AnonymousUserMixin
 class Patient(db.Model):
     __tablename__ = 'patients'
     patient_id = db.Column(db.Integer, primary_key=True)
@@ -85,12 +77,12 @@ class Patient(db.Model):
 
     @property
     def doctor(self):
-        doctor = Operator.query.filter(Operator.operator_id == self.doctor_id).first()
+        doctor = Operator.query.filter(Operator.id == self.doctor_id).first()
         return doctor
 
     @property
     def datas(self):
-        datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Patient.patient_id == self.patient_id).filter(Data.hidden != True)
+        datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Patient.patient_id == self.patient_id).filter(Data.hidden != True).order_by(Data.date.desc(), Data.time.desc())
         return datas
 
     @staticmethod
@@ -163,7 +155,7 @@ class Accuchek(db.Model):
 
     @property
     def datas(self):
-        datas = Data.query.join(Accuchek, Accuchek.sn == Data.sn).filter(Accuchek.accuchek_id == self.accuchek_id)
+        datas = Data.query.join(Accuchek, Accuchek.sn == Data.sn).filter(Accuchek.accuchek_id == self.accuchek_id).order_by(Data.date.desc(), Data.time.desc())
         return datas
 
     def to_json(self):
@@ -199,12 +191,12 @@ class Bed(db.Model):
 
     @property
     def current_datas(self):
-        current_datas = self.datas.order_by(Data.data_id.desc()).limit(10)
+        current_datas = self.datas.order_by(Data.date.desc(), Data.time.desc()).limit(10)
         return current_datas
 
     @property
     def bed_historys(self):
-        bed_historys = BedHistory.query.join(Bed, Bed.bed_id == BedHistory.bed_id).filter(Bed.bed_id == self.bed_id)
+        bed_historys = BedHistory.query.join(Bed, Bed.bed_id == BedHistory.bed_id).filter(Bed.bed_id == self.bed_id).order_by(BedHistory.date.desc(), BedHistory.time.desc())
         return bed_historys
 
     def bed_information(self):
@@ -264,5 +256,9 @@ class BedHistory(db.Model):
             'id_number':self.id_number
         }
         return json_history
+
+@login_manager.user_loader
+def load_user(id):
+    return Operator.query.get(int(id))
 
 

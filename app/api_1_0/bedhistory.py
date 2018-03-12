@@ -7,9 +7,10 @@ from .authentication import auth
 from sqlalchemy.exc import OperationalError
 import datetime
 from ..decorators import allow_cross_domain
+from flask_login import login_required, current_user
 
 @api.route('/bedhistorys')
-
+@login_required
 @allow_cross_domain
 def get_histories():
     page = request.args.get('page', 1, type=int)
@@ -18,6 +19,7 @@ def get_histories():
     for k, v in request.args.items():
         if k in fields:
             bedhistorys = bedhistorys.filter_by(**{k: v})
+    bedhistorys = bedhistorys.order_by(BedHistory.date.desc(), BedHistory.time.desc())
     if bedhistorys.count()!=0:
         pagination = bedhistorys.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         bedhistorys = pagination.items
@@ -84,7 +86,7 @@ def get_histories():
 
 
 @api.route('/bedhistorys', methods = ['POST'])
-
+@login_required
 @allow_cross_domain
 def new_history():
     bedhistory = BedHistory()
@@ -143,7 +145,7 @@ def new_history():
 
 
 @api.route('/bedhistorys/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
@@ -183,11 +185,11 @@ def get_history(id):
 
 
 @api.route('/bedhistorys/<int:id>', methods = ['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
-    if bedhistory.patient.doctor_id != g.current_user.operator_id:
+    if bedhistory.patient.doctor_id != current_user.id:
         return jsonify({
             'status':'fail',
             'reason':'no root'
@@ -248,11 +250,11 @@ def change_history(id):
 
 
 @api.route('/bedhistorys/<int:id>', methods = ['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
-    if bedhistory.patient.doctor_id != g.current_user.operator_id:
+    if bedhistory.patient.doctor_id != current_user.id:
         return jsonify({
             'status': 'fail',
             'reason': 'no root'

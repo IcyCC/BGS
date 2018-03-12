@@ -6,8 +6,10 @@ from ..models import Patient, Operator, Data, Bed, Accuchek
 from .authentication import auth
 from sqlalchemy.exc import OperationalError,IntegrityError
 from ..decorators import allow_cross_domain
+from flask_login import login_required
 
 @api.route('/accucheks')
+@login_required
 @allow_cross_domain
 def get_accunckes():
     fields = [i for i in Accuchek.__table__.c._data]
@@ -74,7 +76,7 @@ def get_accunckes():
 """
 
 @api.route('/accucheks', methods = ['POST'])
-
+@login_required
 @allow_cross_domain
 def new_accuchek():
     accuchek = Accuchek()
@@ -139,7 +141,7 @@ def new_accuchek():
 """
 
 @api.route('/accucheks/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
@@ -178,7 +180,7 @@ def get_accuchek(id):
 """
 
 @api.route('/accucheks/<int:id>', methods = ['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
@@ -225,7 +227,7 @@ def delete_accuchek(id):
 """
 
 @api.route('/accucheks/<int:id>', methods = ['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)

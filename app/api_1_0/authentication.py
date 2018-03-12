@@ -31,6 +31,7 @@ def verify_password(operatorname_or_token, password):
 @api.route('/active')
 @allow_cross_domain
 def operator_active():
+    print('ping begin')
     req = requests.session()
     try:
         res = req.get('http://www.baidu.com')

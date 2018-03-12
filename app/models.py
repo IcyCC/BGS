@@ -13,7 +13,7 @@ class Operator(db.Model):
     office = db.Column(db.String(128), nullable=False)
     lesion = db.Column(db.String(128))
     tel = db.Column(db.String(16), nullable=False, unique=True)
-    mail = db.Column(db.String(64), unique=True)
+    mail = db.Column(db.String(64))
 
     @property
     def password(self):
@@ -119,9 +119,9 @@ class Data(db.Model):
     data_id = db.Column(db.Integer, primary_key=True)
     sn = db.Column(db.String(32), nullable=False)
     id_number = db.Column(db.String(32))
-    time = db.Column(db.Time, nullable=True)
-    date = db.Column(db.Date, nullable=True)
-    glucose = db.Column(db.Float, nullable=True)
+    time = db.Column(db.Time, nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    glucose = db.Column(db.Float, nullable=False)
     hidden = db.Column(db.Boolean, nullable=False, default=False)
 
     @property

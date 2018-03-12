@@ -70,7 +70,7 @@ def new_operator():
 
 
 @api.route('/operators')
-@auth.login_required
+
 @allow_cross_domain
 def get_operators():
     operators = Operator.query
@@ -145,7 +145,7 @@ def get_operators():
 
 
 @api.route('/operators/<int:id>')
-@auth.login_required
+
 @allow_cross_domain
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -185,7 +185,7 @@ def get_operator(id):
 """
 
 @api.route('/operators/<int:id>', methods = ['DELETE'])
-@auth.login_required
+
 @allow_cross_domain
 def delete_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -245,7 +245,7 @@ def delete_operator(id):
 
 
 @api.route('/operators/<int:id>', methods = ['PUT'])
-@auth.login_required
+
 @allow_cross_domain
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -311,7 +311,7 @@ def change_operator(id):
 
 
 @api.route('/operators/now')
-@auth.login_required
+
 @allow_cross_domain
 def get_operator_now():
     operator = g.current_user
@@ -347,7 +347,7 @@ def get_operator_now():
 
 
 @api.route('/operators/now/password')
-@auth.login_required
+
 @allow_cross_domain
 def operator_password():
     password = request.args.get('password')

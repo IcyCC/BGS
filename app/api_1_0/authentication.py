@@ -31,6 +31,7 @@ def verify_password(operatorname_or_token, password):
 @api.route('/active')
 @allow_cross_domain
 def operator_active():
+    print('ping begin')
     req = requests.session()
     try:
         res = req.get('http://www.baidu.com')
@@ -44,6 +45,7 @@ def operator_active():
             'status': 'fail',
             'reason': 'the web does not connect to the outer net'
         })
+    print('ping successful')
     name = request.args['name']
     operator = Operator.query.filter(Operator.operator_name == name).first()
     msg = Message('Operator active', sender='1468767640@qq.com', recipients=['1468767640@qq.com'])
@@ -57,6 +59,7 @@ def operator_active():
             'reason':'the mail has been posted failed',
             'data':[]
         })
+    print('send mail successful')
     try:
         operator.active = True
         db.session.add(operator)

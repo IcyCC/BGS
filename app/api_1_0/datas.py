@@ -8,9 +8,9 @@ import datetime
 from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
 from .authentication import auth
-
+from flask_login import current_user, login_required
 @api.route('/datas/auto', methods=['POST'])
-
+@login_required
 @allow_cross_domain
 def new_data_auto():
     data = Data()
@@ -69,7 +69,7 @@ def new_data_auto():
 
 
 @api.route('/datas/artificial', methods=['POST'])
-
+@login_required
 @allow_cross_domain
 def new_data_artificial():
     data = Data()
@@ -145,7 +145,7 @@ def new_data_artificial():
 
 
 @api.route('/datas')
-
+@login_required
 @allow_cross_domain
 def get_datas():
     data_fields = [i for i in Data.__table__.c._data]
@@ -154,6 +154,7 @@ def get_datas():
     for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
+    datas = datas.order_by(Data.date.desc(), Data.time.desc())
     if datas.count() != 0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
@@ -221,7 +222,7 @@ def get_datas():
 
 
 @api.route('/datas/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_data(id):
     data = Data.query.get_or_404(id)
@@ -261,11 +262,11 @@ def get_data(id):
 
 
 @api.route('/datas/<int:id>', methods=['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_data(id):
     data = Data.query.get_or_404(id)
-    if g.current_user.operator_id != data.patient.doctor_id:
+    if current_user.id != data.patient.doctor_id:
         return jsonify({
             'status': 'fail',
             'reason': 'no root'
@@ -343,11 +344,11 @@ def change_data(id):
 
 
 @api.route('/datas/<int:id>', methods=['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_data(id):
     data = Data.query.get_or_404(id)
-    if g.current_user.operator_id != data.patient.doctor_id:
+    if current_user.id != data.patient.doctor_id:
         return jsonify({
             'status': 'fail',
             'reason': 'no root'

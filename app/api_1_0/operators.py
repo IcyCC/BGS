@@ -6,6 +6,7 @@ from ..models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
+from flask_login import login_required, current_user
 @api.route('/operators', methods = ['POST'])
 @allow_cross_domain
 def new_operator():
@@ -70,7 +71,7 @@ def new_operator():
 
 
 @api.route('/operators')
-
+@login_required
 @allow_cross_domain
 def get_operators():
     operators = Operator.query
@@ -145,7 +146,7 @@ def get_operators():
 
 
 @api.route('/operators/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -185,11 +186,11 @@ def get_operator(id):
 """
 
 @api.route('/operators/<int:id>', methods = ['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_operator(id):
     operator = Operator.query.get_or_404(id)
-    if g.current_user.tel != operator.tel:
+    if current_user.tel != operator.tel:
         return jsonify({
             'status':'fail',
             'reason':'no root'
@@ -245,11 +246,11 @@ def delete_operator(id):
 
 
 @api.route('/operators/<int:id>', methods = ['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
-    if g.current_user.tel != operator.tel:
+    if current_user.tel != operator.tel:
         return jsonify({
             'status': 'fail',
             'reason': 'no root'
@@ -311,10 +312,10 @@ def change_operator(id):
 
 
 @api.route('/operators/now')
-
+@login_required
 @allow_cross_domain
 def get_operator_now():
-    operator = g.current_user
+    operator = current_user
     return jsonify({
         'operators': [operator.to_json()],
         'status': 'success',
@@ -347,13 +348,13 @@ def get_operator_now():
 
 
 @api.route('/operators/now/password')
-
+@login_required
 @allow_cross_domain
 def operator_password():
     password = request.args.get('password')
-    if g.current_user.verify_password(password):
+    if current_user.verify_password(password):
         return jsonify({
-        'operators': [g.current_user.to_json()],
+        'operators': [current_user.to_json()],
         'status': 'success',
         'reason': 'the password is right'
     }), 200

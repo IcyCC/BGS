@@ -1,10 +1,14 @@
-from flask import g, jsonify, request
+from flask import g, jsonify, request, url_for
 from flask_httpauth import HTTPBasicAuth
 from flask_login import login_user
 from ..models import Operator
+import requests
 from . import api
+from sqlalchemy.exc import OperationalError
 from flask_login import current_user, login_required, logout_user
 from ..decorators import allow_cross_domain
+from flask_mail import Mail, Message
+from .. import mail, db
 auth = HTTPBasicAuth()
 
 @auth.verify_password
@@ -27,19 +31,47 @@ def verify_password(operatorname_or_token, password):
 @api.route('/active')
 @allow_cross_domain
 def operator_active():
-    tel = request.json['tel']
-    password = request.json['password']
-    operator = Operator.query.filter(Operator.tel == tel)
-    if operator.verify_password(password):
+    req = requests.session()
+    try:
+        res = req.get('http://www.baidu.com')
+        if res.status_code !=200:
+            return jsonify({
+                'status':'fail',
+                'reason':'the web does not connect to the outer net'
+            })
+    except:
         return jsonify({
-            'status':'success',
-            'reason':'the password is true'
+            'status': 'fail',
+            'reason': 'the web does not connect to the outer net'
         })
-    else:
+    name = request.args['name']
+    operator = Operator.query.filter(Operator.operator_name == name).first()
+    msg = Message('Operator active', sender='1468767640@qq.com', recipients=['1468767640@qq.com'])
+    host = 'http://101.200.52.233:8080'
+    msg.body = 'the operator name is %s, the operator id is%id, the operator url is %s%s'%(operator.operator_name, operator.id, host, url_for('api.get_operator', id=operator.id))
+    try:
+        mail.send(msg)
+    except:
         return jsonify({
             'status':'fail',
-            'reason':'the password is wrong'
+            'reason':'the mail has been posted failed',
+            'data':[]
         })
+    try:
+        operator.active = True
+        db.session.add(operator)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status':'fail',
+            'reason':str(e),
+            'data':[]
+        })
+    return jsonify({
+        'status':'success',
+        'reason':'the operator has been actived',
+        'data':[operator.to_json()]
+    })
 
 """
 @api {GET} /api/v1.0/login 通过得到的账号确定密码是否正确(json数据)

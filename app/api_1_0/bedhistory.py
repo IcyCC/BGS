@@ -10,7 +10,7 @@ from ..decorators import allow_cross_domain
 from flask_login import login_required, current_user
 
 @api.route('/bedhistorys')
-
+@login_required
 @allow_cross_domain
 def get_histories():
     page = request.args.get('page', 1, type=int)
@@ -86,7 +86,7 @@ def get_histories():
 
 
 @api.route('/bedhistorys', methods = ['POST'])
-
+@login_required
 @allow_cross_domain
 def new_history():
     bedhistory = BedHistory()
@@ -145,7 +145,7 @@ def new_history():
 
 
 @api.route('/bedhistorys/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
@@ -185,7 +185,7 @@ def get_history(id):
 
 
 @api.route('/bedhistorys/<int:id>', methods = ['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
@@ -250,7 +250,7 @@ def change_history(id):
 
 
 @api.route('/bedhistorys/<int:id>', methods = ['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_history(id):
     bedhistory = BedHistory.query.get_or_404(id)

@@ -4,9 +4,14 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')or 'hard to guess string'
     PATIENTS_PRE_PAGE = 20
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-
-    # some about net
-
+    THREADED = True
+    MAIL_SERVER = 'smtp.qq.com',
+    MAIL_PROT = 25,
+    MAIL_USE_TLS = True,
+    MAIL_USE_SSL = False,
+    MAIL_USERNAME = "1468767640@qq.com",
+    MAIL_PASSWORD = "ldundwdlgoopgdgi",
+    MAIL_DEBUG = True
     @staticmethod
     def init_app(app):
         pass

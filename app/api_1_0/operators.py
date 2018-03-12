@@ -8,6 +8,7 @@ from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
 from flask_login import login_required, current_user
 @api.route('/operators', methods = ['POST'])
+@login_required
 @allow_cross_domain
 def new_operator():
     tel = request.json['tel']
@@ -71,7 +72,7 @@ def new_operator():
 
 
 @api.route('/operators')
-
+@login_required
 @allow_cross_domain
 def get_operators():
     operators = Operator.query
@@ -146,7 +147,7 @@ def get_operators():
 
 
 @api.route('/operators/<int:id>')
-
+@login_required
 @allow_cross_domain
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -186,7 +187,7 @@ def get_operator(id):
 """
 
 @api.route('/operators/<int:id>', methods = ['DELETE'])
-
+@login_required
 @allow_cross_domain
 def delete_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -246,7 +247,7 @@ def delete_operator(id):
 
 
 @api.route('/operators/<int:id>', methods = ['PUT'])
-
+@login_required
 @allow_cross_domain
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -312,7 +313,7 @@ def change_operator(id):
 
 
 @api.route('/operators/now')
-
+@login_required
 @allow_cross_domain
 def get_operator_now():
     operator = current_user
@@ -348,7 +349,7 @@ def get_operator_now():
 
 
 @api.route('/operators/now/password')
-
+@login_required
 @allow_cross_domain
 def operator_password():
     password = request.args.get('password')

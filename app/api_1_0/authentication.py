@@ -22,9 +22,9 @@ def verify_password(operatorname_or_token, password):
         else:
             return False
 
-@api.route('/login')
+@api.route('/active')
 @allow_cross_domain
-def operator_login():
+def operator_active():
     tel = request.json['tel']
     password = request.json['password']
     operator = Operator.query.filter(Operator.tel == tel)

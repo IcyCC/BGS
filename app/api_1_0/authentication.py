@@ -132,8 +132,8 @@ def get_auth_token():
 
 @api.route('/login', methods=['POST'])
 def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = request.json.get("username")
+    password = request.json.get("password")
     operator = Operator.query.filter(Operator.operator_name==username).first()
 
     if operator is None or not operator.verify_password(password=password):

@@ -8,7 +8,6 @@ from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
 from flask_login import login_required, current_user
 @api.route('/operators', methods = ['POST'])
-@login_required
 @allow_cross_domain
 def new_operator():
     tel = request.json['tel']

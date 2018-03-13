@@ -29,7 +29,7 @@ def verify_password(operatorname_or_token, password):
             return False
 
 @api.route('/active')
-@allow_cross_domain
+
 def operator_active():
     print('ping begin')
     req = requests.session()
@@ -102,7 +102,7 @@ def operator_active():
 
 @api.route('/tokens')
 @auth.login_required
-@allow_cross_domain
+
 def get_auth_token():
     token = g.current_user.generate_auth_token()
     return jsonify({

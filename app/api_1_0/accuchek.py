@@ -228,7 +228,7 @@ def delete_accuchek(id):
 
 @api.route('/accucheks/<int:id>', methods = ['PUT'])
 @login_required
-@allow_cross_domain
+
 def change_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
     if 'sn' in request.json:

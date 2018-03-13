@@ -25,12 +25,12 @@ def get_beds():
         beds = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_beds', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_beds', page=page + 1)
         return jsonify({
-            'beds': [bed.to_json() for bed in beds],
+            'beds': [bed.to_full_information() for bed in beds],
             'prev': prev,
             'next': next,
             'count': pagination.total,

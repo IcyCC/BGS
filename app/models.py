@@ -222,6 +222,38 @@ class Bed(db.Model):
         }
         return json_bed
 
+    def to_full_information(self):
+        patient_name = ''
+        tel = ''
+        sex = ''
+        age = ''
+        operator_name = ''
+        datas = []
+
+        if self.id_number is not None:
+            patient = Patient.query.filter(Patient.id_number == self.id_number).first()
+            patient_name = patient.patient_name
+            tel = patient.tel
+            sex = patient.sex
+            age = patient.age
+            operator_name = patient.doctor.operator_name
+            current_datas = patient.datas.limit(10)
+            datas = [data.to_json() for data in current_datas]
+
+        json_bed = {
+            'url': url_for('api.get_bed', id=self.bed_id),
+            'id_number': self.id_number,
+            'sn': self.sn,
+            'bed_id': self.bed_id,
+            'patient_name': patient_name,
+            'tel': tel,
+            'sex': sex,
+            'age': age,
+            'doctor_name': operator_name,
+            'datas': datas
+        }
+        return json_bed
+
 class BedHistory(db.Model):
     __tablename__ = 'bedhistory'
     history_id = db.Column(db.Integer, primary_key=True)

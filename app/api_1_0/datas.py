@@ -11,7 +11,7 @@ from .authentication import auth
 from flask_login import current_user, login_required
 @api.route('/datas/auto', methods=['POST'])
 @login_required
-
+@allow_cross_domain
 def new_data_auto():
     data = Data()
     for k in request.json:
@@ -70,7 +70,7 @@ def new_data_auto():
 
 @api.route('/datas/artificial', methods=['POST'])
 @login_required
-
+@allow_cross_domain
 def new_data_artificial():
     data = Data()
     for k in request.json:
@@ -146,7 +146,7 @@ def new_data_artificial():
 
 @api.route('/datas')
 @login_required
-
+@allow_cross_domain
 def get_datas():
     data_fields = [i for i in Data.__table__.c._data]
     fields = data_fields
@@ -223,7 +223,7 @@ def get_datas():
 
 @api.route('/datas/<int:id>')
 @login_required
-
+@allow_cross_domain
 def get_data(id):
     data = Data.query.get_or_404(id)
     return jsonify({
@@ -263,7 +263,7 @@ def get_data(id):
 
 @api.route('/datas/<int:id>', methods=['PUT'])
 @login_required
-
+@allow_cross_domain
 def change_data(id):
     data = Data.query.get_or_404(id)
     if current_user.id != data.patient.doctor_id:
@@ -345,7 +345,7 @@ def change_data(id):
 
 @api.route('/datas/<int:id>', methods=['DELETE'])
 @login_required
-
+@allow_cross_domain
 def delete_data(id):
     data = Data.query.get_or_404(id)
     if current_user.id != data.patient.doctor_id:

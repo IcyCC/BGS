@@ -9,7 +9,7 @@ from ..decorators import allow_cross_domain
 from flask_login import login_required, current_user
 @api.route('/patients', methods = ['POST'])
 @login_required
-
+@allow_cross_domain
 def new_patient():
     id_number = request.json['id_number']
     patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -77,7 +77,7 @@ def new_patient():
 
 @api.route('/patients')
 @login_required
-
+@allow_cross_domain
 def get_patients():
     page = request.args.get('page', 1, type=int)
     fields = [i for i in Patient.__table__.c._data]
@@ -154,7 +154,7 @@ def get_patients():
 
 @api.route('/patients/<int:id>', methods = ['PUT'])
 @login_required
-
+@allow_cross_domain
 def change_patient(id):
     patient = Patient.query.get_or_404(id)
     if 'id_number' in request.json:
@@ -230,7 +230,7 @@ def change_patient(id):
 
 @api.route('/patients/<int:id>')
 @login_required
-
+@allow_cross_domain
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
     return jsonify({
@@ -274,7 +274,7 @@ def get_patient(id):
 
 @api.route('/patients/<int:id>', methods = ['DELETE'])
 @login_required
-
+@allow_cross_domain
 def delete_patients(id):
     patient = Patient.query.get_or_404(id)
     if current_user.id != patient.doctor_id:
@@ -342,7 +342,7 @@ def delete_patients(id):
 
 @api.route('/patients/get-from-id')
 @login_required
-
+@allow_cross_domain
 def get_from_id():
     id_number = request.args.get('id_number')
     patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -394,7 +394,7 @@ def get_from_id():
 
 @api.route('/patients/<int:id>/datas')
 @login_required
-
+@allow_cross_domain
 def get_patient_datas(id):
     patient = Patient.query.get_or_404(id)
     datas = patient.datas
@@ -466,7 +466,7 @@ def get_patient_datas(id):
 
 @api.route('/patients/history')
 @login_required
-
+@allow_cross_domain
 def patients_history():
     datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
     patient_name = request.args.get('patient_name')

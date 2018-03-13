@@ -17,11 +17,11 @@ def create_app(config_name):
     config[config_name].init_app(app)
     app.config.update(
         MAIL_SERVER='smtp.qq.com',
-        MAIL_PROT=25,
-        MAIL_USE_TLS=True,
-        MAIL_USE_SSL=False,
+        MAIL_PROT=465,
+        MAIL_USE_TLS=False,
+        MAIL_USE_SSL=True,
         MAIL_USERNAME="1468767640@qq.com",
-        MAIL_PASSWORD="ldundwdlgoopgdgi",
+        MAIL_PASSWORD="uhieluellzqwhaea",
         MAIL_DEBUG=True
     )
     login_manager.init_app(app)

@@ -249,7 +249,7 @@ class Bed(db.Model):
             'tel': tel,
             'sex': sex,
             'age': age,
-            'doctor_name': operator_name,
+            'doctor': operator_name,
             'datas': datas
         }
         return json_bed

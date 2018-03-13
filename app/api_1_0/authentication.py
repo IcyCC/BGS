@@ -29,9 +29,8 @@ def verify_password(operatorname_or_token, password):
             return False
 
 @api.route('/active')
-
+@allow_cross_domain
 def operator_active():
-    print('ping begin')
     req = requests.session()
     try:
         res = req.get('http://www.baidu.com')
@@ -45,7 +44,6 @@ def operator_active():
             'status': 'fail',
             'reason': 'the web does not connect to the outer net'
         })
-    print('ping successful')
     name = request.args['name']
     operator = Operator.query.filter(Operator.operator_name == name).first()
     msg = Message('Operator active', sender='1468767640@qq.com', recipients=['1468767640@qq.com'])
@@ -59,7 +57,6 @@ def operator_active():
             'reason':'the mail has been posted failed',
             'data':[]
         })
-    print('send mail successful')
     try:
         operator.active = True
         db.session.add(operator)
@@ -102,7 +99,7 @@ def operator_active():
 
 @api.route('/tokens')
 @auth.login_required
-
+@allow_cross_domain
 def get_auth_token():
     token = g.current_user.generate_auth_token()
     return jsonify({
@@ -131,6 +128,7 @@ def get_auth_token():
 """
 
 @api.route('/login', methods=['POST'])
+@allow_cross_domain
 def login():
     username = request.json.get("username")
     password = request.json.get("password")
@@ -139,18 +137,13 @@ def login():
     if operator is None or not operator.verify_password(password=password):
         return jsonify(status="fail", reason="no this user or password error", data=[])
 
-    if operator.active is not True:
-        return jsonify({
-            'status':'fail',
-            'reason':'the user does not been actived'
-        })
-
     login_user(operator, remember=False)
 
     return jsonify(status="success", reason="", data=[operator.to_json()])
 
 @api.route("/logout", methods=["GET"])
 @login_required
+@allow_cross_domain
 def logout():
     if request.method == "GET":
         logout_user()

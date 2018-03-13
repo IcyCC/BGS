@@ -137,7 +137,7 @@ def login():
     if operator is None or not operator.verify_password(password=password):
         return jsonify(status="fail", reason="no this user or password error", data=[])
 
-    login_user(operator, remember=False)
+    login_user(operator, remember=True)
 
     return jsonify(status="success", reason="", data=[operator.to_json()])
 

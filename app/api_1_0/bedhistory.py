@@ -25,10 +25,10 @@ def get_histories():
         bedhistorys = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_histories', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_histories', page=page + 1)
         return jsonify({
             'bedhistorys': [bedhistory.to_json() for bedhistory in bedhistorys],
             'prev': prev,

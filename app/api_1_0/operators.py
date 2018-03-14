@@ -85,10 +85,10 @@ def get_operators():
         operators = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_operators', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_operators', page=page + 1)
         return jsonify({
             'operators': [operator.to_json() for operator in operators],
             'prev': prev,
@@ -246,7 +246,6 @@ def delete_operator(id):
 
 
 @api.route('/operators/<int:id>', methods = ['PUT'])
-@login_required
 @allow_cross_domain
 def change_operator(id):
     operator = Operator.query.get_or_404(id)

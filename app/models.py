@@ -91,6 +91,10 @@ class Patient(db.Model):
         for k in json_post:
             if hasattr(patient, k):
                 setattr(patient, k, json_post[k])
+        operator_name = json_post['doctor']
+        doctor = Operator.query.filter(Operator.operator_name == operator_name).first()
+        doctor_id = doctor.id
+        patient.doctor_id = doctor_id
         return patient
 
     def to_json(self):

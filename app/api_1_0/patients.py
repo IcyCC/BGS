@@ -12,6 +12,7 @@ from flask_login import login_required, current_user
 @allow_cross_domain
 def new_patient():
     id_number = request.json['id_number']
+    bed_id = request.json['bed_id']
     patient = Patient.query.filter(Patient.id_number == id_number).first()
     if patient:
         return jsonify({
@@ -19,6 +20,7 @@ def new_patient():
             'reason': 'the id_number has been used'
         })
     patient = Patient.from_json(request.json)
+    bed = Bed.query.filter(Bed.bed_id==bed_id).first()
     try:
         db.session.add(patient)
         db.session.commit()
@@ -27,6 +29,16 @@ def new_patient():
             'status':'fail',
             'reason':e,
             'data':patient.to_json()
+        })
+    bed.id_number = id_number
+    try:
+        db.session.add(bed)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status':'fail',
+            'reason':e,
+            'data':bed.to_json()
         })
     return jsonify({
         'patients':[patient.to_json()],

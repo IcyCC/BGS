@@ -154,17 +154,17 @@ def get_datas():
     for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
-    datas = datas.order_by(Data.date.desc(), Data.time.desc())
+    datas = datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden == 0)
     if datas.count() != 0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         datas = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_datas', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_datas', page=page + 1)
         return jsonify({
             'datas': [data.to_json() for data in datas],
             'prev': prev,

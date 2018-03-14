@@ -155,7 +155,7 @@ class Accuchek(db.Model):
 
     @property
     def datas(self):
-        datas = Data.query.join(Accuchek, Accuchek.sn == Data.sn).filter(Accuchek.accuchek_id == self.accuchek_id).order_by(Data.date.desc(), Data.time.desc())
+        datas = Data.query.join(Accuchek, Accuchek.sn == Data.sn).filter(Accuchek.accuchek_id == self.accuchek_id).order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden!=True)
         return datas
 
     def to_json(self):
@@ -249,7 +249,7 @@ class Bed(db.Model):
             'tel': tel,
             'sex': sex,
             'age': age,
-            'doctor_name': operator_name,
+            'doctor': operator_name,
             'datas': datas
         }
         return json_bed

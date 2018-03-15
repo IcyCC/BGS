@@ -1,13 +1,14 @@
 #-*- coding=utf-8 -*-
-from flask import Flask
+from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from config import config
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_mail import Mail
+from datetime import timedelta
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.session_protection = 'strong'
+login_manager.session_protection = 'None'
 mail = Mail()
 
 
@@ -24,7 +25,11 @@ def create_app(config_name):
         MAIL_PASSWORD="uhieluellzqwhaea",
         MAIL_DEBUG=True
     )
+
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=1000)
     login_manager.init_app(app)
+    login_manager.remember_cookie_duration = timedelta(days=1000)
 
 
 

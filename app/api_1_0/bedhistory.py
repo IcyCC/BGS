@@ -189,11 +189,6 @@ def get_history(id):
 @allow_cross_domain
 def change_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
-    if bedhistory.patient.doctor_id != current_user.id:
-        return jsonify({
-            'status':'fail',
-            'reason':'no root'
-        })
     for k in request.json:
         if hasattr(bedhistory, k):
             setattr(bedhistory, k ,request.json[k])
@@ -254,11 +249,6 @@ def change_history(id):
 @allow_cross_domain
 def delete_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
-    if bedhistory.patient.doctor_id != current_user.id:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'no root'
-        })
     try:
         db.session.delete(bedhistory)
         db.session.commit()

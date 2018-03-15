@@ -1,7 +1,7 @@
 from . import api
 import os
 from .. import db
-from flask import request, jsonify, g, url_for, current_app
+from flask import request, jsonify, g, url_for, current_app, make_response
 from ..models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
@@ -346,17 +346,26 @@ def get_operator_now():
 """
 
 
-@api.route('/operators/now/password')
+@api.route('/operators/now/password', methods = ['POST'])
 @login_required
 @allow_cross_domain
 def operator_password():
-    password = request.args.get('password')
-    if current_user.verify_password(password):
-        return jsonify({
-        'operators': [current_user.to_json()],
-        'status': 'success',
-        'reason': 'the password is right'
-    }), 200
+    operator_name = ''
+    if 'password' in request.json:
+        password = request.json.get('password')
+    if 'operator_name' in request.cookies:
+        operator_name = request.cookies.get('operator_name')
+        password = request.cookies.get('password')
+    operator = current_user if operator_name is None else Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator.verify_password(password):
+        json = {
+            'operators': [operator.to_json()],
+            'status': 'success',
+            'reason': 'the password is right'
+        }
+        res = make_response(jsonify(json))
+        res.set_cookie('operator_name', operator.operator_name)
+        res.set_cookie('password', password)
     else:
         return jsonify({
             'status':'fail',

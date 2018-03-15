@@ -68,17 +68,13 @@ class Patient(db.Model):
     tel = db.Column(db.String(16))
     id_number = db.Column(db.String(32), unique=True)
     age = db.Column(db.Integer)
-    doctor_id = db.Column(db.Integer)
+    doctor_name = db.Column(db.String(32))
 
     @property
     def bed(self):
         bed = Bed.query.join(Patient, Patient.id_number == Bed.id_number).filter(Patient.patient_id == self.patient_id).first()
         return bed
 
-    @property
-    def doctor(self):
-        doctor = Operator.query.filter(Operator.id == self.doctor_id).first()
-        return doctor
 
     @property
     def datas(self):
@@ -91,10 +87,6 @@ class Patient(db.Model):
         for k in json_post:
             if hasattr(patient, k):
                 setattr(patient, k, json_post[k])
-        operator_name = json_post['doctor']
-        doctor = Operator.query.filter(Operator.operator_name == operator_name).first()
-        doctor_id = doctor.id
-        patient.doctor_id = doctor_id
         return patient
 
     def to_json(self):
@@ -104,7 +96,7 @@ class Patient(db.Model):
             'sex':self.sex,
             'tel':self.tel,
             'age':self.age,
-            'doctor_id':self.doctor_id,
+            'doctor':self.doctor_name,
             'id_number':self.id_number,
             'datas':url_for('api.get_patient_datas', id = self.patient_id)
         }
@@ -212,7 +204,7 @@ class Bed(db.Model):
             'tel': patient.tel,
             'age': patient.age,
             'patient_name':patient.patient_name,
-            'doctor_id': patient.doctor_id,
+            'doctor': patient.doctor_name,
             'id_number':patient.id_number,
             'current_datas':[current_data.to_json() for current_data in self.current_datas]
         }
@@ -240,7 +232,7 @@ class Bed(db.Model):
             tel = patient.tel
             sex = patient.sex
             age = patient.age
-            operator_name = patient.doctor.operator_name
+            operator_name = patient.doctor_name
             current_datas = patient.datas.limit(10)
             datas = [data.to_json() for data in current_datas]
 

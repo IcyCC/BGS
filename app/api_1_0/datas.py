@@ -266,11 +266,6 @@ def get_data(id):
 @allow_cross_domain
 def change_data(id):
     data = Data.query.get_or_404(id)
-    if current_user.id != data.patient.doctor_id:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'no root'
-        })
     id_number = data.id_number
     if 'id_number' in request.json:
         id_number = request.json['id_number']
@@ -348,11 +343,6 @@ def change_data(id):
 @allow_cross_domain
 def delete_data(id):
     data = Data.query.get_or_404(id)
-    if current_user.id != data.patient.doctor_id:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'no root'
-        })
     patient = data.patient
     try:
         db.session.delete(data)

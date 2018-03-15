@@ -289,11 +289,6 @@ def get_patient(id):
 @allow_cross_domain
 def delete_patients(id):
     patient = Patient.query.get_or_404(id)
-    if current_user.id != patient.doctor_id:
-        return jsonify({
-            'status':'fail',
-            'reason':'no root'
-        })
     for data in patient.datas:
         try:
             db.session.delete(data)

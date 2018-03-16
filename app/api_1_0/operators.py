@@ -356,7 +356,9 @@ def operator_password():
     if 'operator_name' in request.cookies:
         operator_name = request.cookies.get('operator_name')
         password = request.cookies.get('password')
-    operator = current_user if operator_name is None else Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator_name is None:
+        print('sssss')
+    operator = current_user if operator_name is '' else Operator.query.filter(Operator.operator_name == operator_name).first()
     if operator.verify_password(password):
         json = {
             'operators': [operator.to_json()],
@@ -364,8 +366,9 @@ def operator_password():
             'reason': 'the password is right'
         }
         res = make_response(jsonify(json))
-        res.set_cookie('operator_name', operator.operator_name)
-        res.set_cookie('password', password)
+        res.set_cookie('operator_name', operator.operator_name,max_age=60)
+        res.set_cookie('password', password, max_age=60)
+        return res
     else:
         return jsonify({
             'status':'fail',

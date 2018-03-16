@@ -26,8 +26,6 @@ def create_app(config_name):
         MAIL_DEBUG=True
     )
 
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(days=1000)
     login_manager.init_app(app)
     login_manager.remember_cookie_duration = timedelta(days=1000)
 

@@ -37,7 +37,7 @@ def man_patients(count=50):
             tel = fake.phone_number(),
             id_number = fake.phone_number(),
             age = randint(20, 80),
-            doctor_id = o.id
+            doctor_name = fake.name()
         )
         db.session.add(p)
         try:
@@ -58,7 +58,7 @@ def woman_patients(count=50):
             tel=fake.phone_number(),
             id_number=fake.phone_number(),
             age=randint(20, 80),
-            doctor_id=o.id
+            doctor_name=fake.name()
         )
         db.session.add(p)
         try:

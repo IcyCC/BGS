@@ -7,7 +7,7 @@ import os
 from flask_migrate import Migrate, upgrade, MigrateCommand
 import pymysql
 pymysql.install_as_MySQLdb()
-from app.fake import operators, man_patients, woman_patients, accucheks, datas
+from app.fake import operators, man_patients, woman_patients, accucheks, datas, guard_datas
 
 app = create_app(os.getenv('FLASK_CONFIG')or 'default')
 manager = Manager(app)
@@ -33,6 +33,7 @@ def create_all():
     woman_patients()
     accucheks()
     datas()
+    guard_datas()
 
 def make_shell_context():
     return dict(app=app, db=db, create_all= create_all, Operator=Operator)

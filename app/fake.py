@@ -116,3 +116,20 @@ def datas(count=1000):
             i += 1
         except IntegrityError:
             db.session.rollback()
+
+def guard_datas(count=200):
+    fake = Faker(locale='zh_CN')
+    i = 0
+    while i<count:
+        d = Data(
+            sn = '00000',
+            time = fake.time(),
+            date = fake.date(),
+            glucose=randint(10,20)
+        )
+        db.session.add(d)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()

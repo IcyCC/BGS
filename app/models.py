@@ -138,6 +138,17 @@ class Data(db.Model):
         }
         return json_data
 
+    def to_guard_json(self):
+        json_data = {
+            'url': url_for('api.get_data', id=self.data_id),
+            'sn': self.sn,
+            'id_number': self.id_number,
+            'time': str(self.time),
+            'date': str(self.date),
+            'glucose': self.glucose
+        }
+        return json_data
+
 class Accuchek(db.Model):
     __tablename__ = 'accucheks'
     accuchek_id = db.Column(db.Integer, primary_key=True)

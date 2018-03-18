@@ -214,7 +214,7 @@ def get_datas_guard():
     for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
-    datas = datas.order_by(GuargData.date.desc(), GuargData.time.desc()).filter(GuargData.hidden == 0)
+    datas = datas.order_by(GuargData.date.desc(), GuargData.time.desc()).filter(GuargData.hidden == 0).filter(GuargData.sn == sn)
     if datas.count() != 0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
@@ -318,6 +318,44 @@ def get_data(id):
 
 """
 
+@api.route('/datas/guard/<int:id>', methods=['PUT'])
+@login_required
+@allow_cross_domain
+def change_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    for k in request.json:
+        if hasattr(data, k):
+            setattr(data, k, request.json[k])
+    try:
+        db.session.add(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': []
+        })
+    return jsonify(data.to_full_json())
+
+@api.route('/datas/guard/<int:id>', methods=['DELETE'])
+@login_required
+@allow_cross_domain
+def delete_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    try:
+        db.session.delete(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': []
+        })
+    return jsonify({
+        'status':'success',
+        'reason':''
+    })
+
 
 @api.route('/datas/<int:id>', methods=['PUT'])
 @login_required
@@ -417,7 +455,7 @@ def delete_data(id):
             'patient': url_for('api.get_patient', id=patient.patient_id),
             'sn': data.sn,
             'id_number': data.id_number,
-            'time': str(data.time),
+            'time': str(data.time)[0:5],
             'date': str(data.date),
             'glucose': data.glucose
         }],

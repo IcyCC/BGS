@@ -404,3 +404,25 @@ def operator_password():
     } 
 """
 
+@api.route('/oeprators/change_password')
+def change_password():
+    hospital = request.json['hospital']
+    section = request.json['section']
+    password = request.json['password']
+    operators = Operator.query.filter(Operator.hospital == hospital).filter(Operator.office == section)
+    for operator in operators:
+        operator.password = password
+        try:
+            db.session.delete(operator)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status': 'fail',
+                'season': e,
+                'data': []
+            })
+    return jsonify({
+        'status':'success',
+        'reason':[],
+        'datas':[operator.to_json() for operator in operators]
+    })

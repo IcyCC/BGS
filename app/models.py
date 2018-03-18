@@ -132,7 +132,7 @@ class Data(db.Model):
             'patient':url_for('api.get_patient', id = self.patient.patient_id),
             'sn':self.sn,
             'id_number':self.id_number,
-            'time':str(self.time),
+            'time':str(self.time)[0:5],
             'date':str(self.date),
             'glucose':self.glucose
         }
@@ -143,7 +143,7 @@ class Data(db.Model):
             'url': url_for('api.get_data', id=self.data_id),
             'sn': self.sn,
             'id_number': self.id_number,
-            'time': str(self.time),
+            'time': str(self.time)[0:5],
             'date': str(self.date),
             'glucose': self.glucose
         }
@@ -158,7 +158,7 @@ class Data(db.Model):
             'doctor': patient.doctor_name,
             'id_number': self.id_number,
             'date': str(self.date),
-            'time': str(self.time),
+            'time': str(self.time)[0:5],
             'glucose': self.glucose
 
         }
@@ -304,7 +304,7 @@ class BedHistory(db.Model):
         json_history = {
             'url':url_for('api.get_history', id = self.history_id),
             'bed_id':self.bed_id,
-            'time':str(self.time),
+            'time':str(self.time)[0:5],
             'date':str(self.date),
             'sn':self.sn,
             'id_number':self.id_number
@@ -337,7 +337,7 @@ class GuargData(db.Model):
             'doctor': self.doctor,
             'id_number': self.id_number,
             'date': str(self.date),
-            'time': str(self.time),
+            'time': str(self.time)[0:5],
             'glucose': self.glucose
 
         }

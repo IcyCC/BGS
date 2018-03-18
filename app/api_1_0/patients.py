@@ -476,7 +476,7 @@ def get_patient_datas(id):
 @login_required
 @allow_cross_domain
 def patients_history():
-    datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Data.id_number!=None)
+    datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
     patient_name = request.args.get('patient_name')
     sex = request.args.get('sex')
     age = request.args.get('age')
@@ -487,9 +487,9 @@ def patients_history():
     max_glucose = request.args.get('max_glucose')
     min_glucose = request.args.get('min_glucose')
     begin_time = request.args.get('begin_time')
-    begin_time = str(begin_time)[0:6]+'00'
+    begin_time1 = str(begin_time)[0:6]+'00'
     end_time = request.args.get('end_time')
-    end_time = str(end_time)[0:6]+'59'
+    end_time1 = str(end_time)[0:6]+'59'
     begin_date = request.args.get('begin_date')
     end_date = request.args.get('end_date')
     if patient_name:
@@ -511,13 +511,14 @@ def patients_history():
     if min_glucose:
         datas = datas.filter(Data.glucose >= min_glucose)
     if begin_time:
-        datas = datas.filter(Data.time >= begin_time)
+        datas = datas.filter(Data.time >= begin_time1)
     if end_time:
-        datas = datas.filter(Data.time <= end_time)
+        datas = datas.filter(Data.time <= end_time1)
     if end_date:
         datas = datas.filter(Data.date <= end_date)
     if begin_date:
         datas = datas.filter(Data.date >= begin_date)
+    print(datas.count())
     if datas.count()!=0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)

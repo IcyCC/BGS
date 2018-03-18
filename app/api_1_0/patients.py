@@ -1,4 +1,5 @@
 from . import api
+import datetime
 import os
 from .. import db
 from flask import request, jsonify, g, url_for, current_app
@@ -475,7 +476,7 @@ def get_patient_datas(id):
 @login_required
 @allow_cross_domain
 def patients_history():
-    datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
+    datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Data.id_number!=None)
     patient_name = request.args.get('patient_name')
     sex = request.args.get('sex')
     age = request.args.get('age')
@@ -486,7 +487,9 @@ def patients_history():
     max_glucose = request.args.get('max_glucose')
     min_glucose = request.args.get('min_glucose')
     begin_time = request.args.get('begin_time')
+    begin_time = str(begin_time)[0:6]+'00'
     end_time = request.args.get('end_time')
+    end_time = str(end_time)[0:6]+'59'
     begin_date = request.args.get('begin_date')
     end_date = request.args.get('end_date')
     if patient_name:
@@ -526,7 +529,7 @@ def patients_history():
         if pagination.has_next:
             next = url_for('api.patients_history', page=page + 1)
         return jsonify({
-            'datas': [data.to_json() for data in datas],
+            'datas': [data.to_full_json() for data in datas],
             'prev': prev,
             'next': next,
             'count': pagination.total,

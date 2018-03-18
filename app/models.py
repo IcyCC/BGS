@@ -149,6 +149,21 @@ class Data(db.Model):
         }
         return json_data
 
+    def to_full_json(self):
+        patient = self.patient
+        json_data = {
+            'patient_name': patient.patient_name,
+            'age': patient.age,
+            'tel': patient.tel,
+            'doctor': patient.doctor_name,
+            'id_number': self.id_number,
+            'date': str(self.date),
+            'time': str(self.time),
+            'glucose': self.glucose
+
+        }
+        return json_data
+
 class Accuchek(db.Model):
     __tablename__ = 'accucheks'
     accuchek_id = db.Column(db.Integer, primary_key=True)
@@ -295,6 +310,36 @@ class BedHistory(db.Model):
             'id_number':self.id_number
         }
         return json_history
+
+class GuargData(db.Model):
+    __tablename__ = 'guarddatas'
+    data_id = db.Column(db.Integer, primary_key=True)
+    sn = db.Column(db.String(32), nullable=False)
+    id_number = db.Column(db.String(32))
+    patient_name = db.Column(db.String(32))
+    sex = db.Column(db.String(4))
+    age = db.Column(db.Integer)
+    tel = db.Column(db.String(32))
+    doctor = db.Column(db.String(64))
+    time = db.Column(db.Time, nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    glucose = db.Column(db.Float, nullable=False)
+    hidden = db.Column(db.Boolean, nullable=False, default=False)
+
+    def to_full_json(self):
+        patient = self.patient
+        json_data = {
+            'patient_name': patient.patient_name,
+            'age': patient.age,
+            'tel': patient.tel,
+            'doctor': patient.doctor_name,
+            'id_number': self.id_number,
+            'date': str(self.date),
+            'time': str(self.time),
+            'glucose': self.glucose
+
+        }
+        return json_data
 
 @login_manager.user_loader
 def load_user(id):

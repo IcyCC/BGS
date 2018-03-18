@@ -184,13 +184,15 @@ def get_datas():
 @login_required
 @allow_cross_domain
 def get_datas_guard():
+    if 'sn' in request.args:
+        sn = request.args['sn']
     data_fields = [i for i in Data.__table__.c._data]
     fields = data_fields
     datas = Data.query
     for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
-    datas = datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden == 0).filter(Data.id_number==None)
+    datas = datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden == 0).filter(Data.id_number==None).filter(Data.sn == sn)
     if datas.count() != 0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)

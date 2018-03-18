@@ -327,12 +327,14 @@ class GuargData(db.Model):
     hidden = db.Column(db.Boolean, nullable=False, default=False)
 
     def to_full_json(self):
-        patient = self.patient
         json_data = {
-            'patient_name': patient.patient_name,
-            'age': patient.age,
-            'tel': patient.tel,
-            'doctor': patient.doctor_name,
+            'data_id': self.data_id,
+            'patient_name': self.patient_name,
+            'age': self.age,
+            'sex':self.sex,
+            'tel': self.tel,
+            'sn': self.sn,
+            'doctor': self.doctor,
             'id_number': self.id_number,
             'date': str(self.date),
             'time': str(self.time),

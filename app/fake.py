@@ -2,7 +2,7 @@ from random import randint
 from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from . import db
-from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory
+from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory, GuargData
 
 def operators(count=25):
     fake = Faker(locale='zh_CN')
@@ -121,11 +121,30 @@ def guard_datas(count=200):
     fake = Faker(locale='zh_CN')
     i = 0
     while i<count:
-        d = Data(
+        d = GuargData(
             sn = '00000',
             time = fake.time(),
             date = fake.date(),
             glucose=randint(10,20)
+        )
+        db.session.add(d)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()
+    i = 0
+    while i <count:
+        d = GuargData(
+            sn = '00000',
+            time = fake.time(),
+            date = fake.date(),
+            glucose=randint(10, 20),
+            id_number = fake.phone_number(),
+            patient_name=fake.name(),
+            sex = 'nan',
+            age = randint(20, 60),
+            doctor=fake.name()
         )
         db.session.add(d)
         try:

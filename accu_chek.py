@@ -6,6 +6,9 @@ from app.models import Operator
 import os
 from flask_migrate import Migrate, upgrade, MigrateCommand
 import pymysql
+
+import json
+
 pymysql.install_as_MySQLdb()
 from app.fake import operators, man_patients, woman_patients, accucheks, datas
 
@@ -13,6 +16,8 @@ app = create_app(os.getenv('FLASK_CONFIG')or 'default')
 manager = Manager(app)
 migrate = Migrate(app, db)
 
+with open('./config.json', 'r') as f:
+    app.custom_net_setting = json.loads(f.read())["net"]
 
 def create_all():
     db.drop_all()
@@ -33,6 +38,7 @@ def create_all():
     woman_patients()
     accucheks()
     datas()
+
 
 def make_shell_context():
     return dict(app=app, db=db, create_all= create_all, Operator=Operator)

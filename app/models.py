@@ -132,9 +132,35 @@ class Data(db.Model):
             'patient':url_for('api.get_patient', id = self.patient.patient_id),
             'sn':self.sn,
             'id_number':self.id_number,
-            'time':str(self.time),
+            'time':str(self.time)[0:5],
             'date':str(self.date),
             'glucose':self.glucose
+        }
+        return json_data
+
+    def to_guard_json(self):
+        json_data = {
+            'url': url_for('api.get_data', id=self.data_id),
+            'sn': self.sn,
+            'id_number': self.id_number,
+            'time': str(self.time)[0:5],
+            'date': str(self.date),
+            'glucose': self.glucose
+        }
+        return json_data
+
+    def to_full_json(self):
+        patient = self.patient
+        json_data = {
+            'patient_name': patient.patient_name,
+            'age': patient.age,
+            'tel': patient.tel,
+            'doctor': patient.doctor_name,
+            'id_number': self.id_number,
+            'date': str(self.date),
+            'time': str(self.time)[0:5],
+            'glucose': self.glucose
+
         }
         return json_data
 
@@ -278,12 +304,44 @@ class BedHistory(db.Model):
         json_history = {
             'url':url_for('api.get_history', id = self.history_id),
             'bed_id':self.bed_id,
-            'time':str(self.time),
+            'time':str(self.time)[0:5],
             'date':str(self.date),
             'sn':self.sn,
             'id_number':self.id_number
         }
         return json_history
+
+class GuargData(db.Model):
+    __tablename__ = 'guarddatas'
+    data_id = db.Column(db.Integer, primary_key=True)
+    sn = db.Column(db.String(32), nullable=False)
+    id_number = db.Column(db.String(32))
+    patient_name = db.Column(db.String(32))
+    sex = db.Column(db.String(4))
+    age = db.Column(db.Integer)
+    tel = db.Column(db.String(32))
+    doctor = db.Column(db.String(64))
+    time = db.Column(db.Time, nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    glucose = db.Column(db.Float, nullable=False)
+    hidden = db.Column(db.Boolean, nullable=False, default=False)
+
+    def to_full_json(self):
+        json_data = {
+            'data_id': self.data_id,
+            'patient_name': self.patient_name,
+            'age': self.age,
+            'sex':self.sex,
+            'tel': self.tel,
+            'sn': self.sn,
+            'doctor': self.doctor,
+            'id_number': self.id_number,
+            'date': str(self.date),
+            'time': str(self.time)[0:5],
+            'glucose': self.glucose
+
+        }
+        return json_data
 
 @login_manager.user_loader
 def load_user(id):

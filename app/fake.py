@@ -2,27 +2,7 @@ from random import randint
 from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from . import db
-from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory
-
-def operators(count=25):
-    fake = Faker(locale='zh_CN')
-    i = 0
-    while i < count:
-        u = Operator(
-            operator_name=fake.name(),
-            password = 'password',
-            hospital = '空军总院',
-            office = '牙科',
-            lesion = '无所谓',
-            tel = fake.phone_number(),
-            mail = fake.email()
-        )
-        db.session.add(u)
-        try:
-            db.session.commit()
-            i += 1
-        except IntegrityError:
-            db.session.rollback()
+from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory, GuargData
 
 
 def man_patients(count=50):
@@ -37,7 +17,7 @@ def man_patients(count=50):
             tel = fake.phone_number(),
             id_number = fake.phone_number(),
             age = randint(20, 80),
-            doctor_id = o.id
+            doctor_name = fake.name()
         )
         db.session.add(p)
         try:
@@ -58,7 +38,7 @@ def woman_patients(count=50):
             tel=fake.phone_number(),
             id_number=fake.phone_number(),
             age=randint(20, 80),
-            doctor_id=o.id
+            doctor_name=fake.name()
         )
         db.session.add(p)
         try:
@@ -109,6 +89,42 @@ def datas(count=1000):
             date = fake.date(),
             id_number=p.id_number,
             glucose=randint(10, 20)
+        )
+        db.session.add(d)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()
+
+def guard_datas(count=200):
+    fake = Faker(locale='zh_CN')
+    i = 0
+    while i<count:
+        d = GuargData(
+            sn = '00000',
+            time = fake.time(),
+            date = fake.date(),
+            glucose=randint(10,20)
+        )
+        db.session.add(d)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()
+    i = 0
+    while i <count:
+        d = GuargData(
+            sn = '00000',
+            time = fake.time(),
+            date = fake.date(),
+            glucose=randint(10, 20),
+            id_number = fake.phone_number(),
+            patient_name=fake.name(),
+            sex = 'nan',
+            age = randint(20, 60),
+            doctor=fake.name()
         )
         db.session.add(d)
         try:

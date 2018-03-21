@@ -2,7 +2,7 @@ from . import api
 import os
 from .. import db
 from flask import request, jsonify, g, url_for, current_app
-from ..models import Patient, Operator, Data, Bed, Accuchek
+from ..models import Patient, Operator, Data, Bed, Accuchek, GuargData
 from .authentication import auth
 import datetime
 from sqlalchemy.exc import OperationalError
@@ -33,6 +33,28 @@ def new_data_auto():
         })
     return jsonify({
         'datas': [data.to_json()],
+        'status': 'success',
+        'reason': 'the data has been added'
+    })
+
+@api.route('/datas/guard', methods=['POST'])
+@login_required
+@allow_cross_domain
+def new_data_guard():
+    data = GuargData()
+    for k in request.json:
+        if hasattr(data, k):
+            setattr(data, k, request.json[k])
+    try:
+        db.session.add(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
+    return jsonify({
+        'datas': [data.to_full_json()],
         'status': 'success',
         'reason': 'the data has been added'
     })
@@ -180,7 +202,43 @@ def get_datas():
             'reason': 'there is no data'
         })
 
-
+@api.route('/datas/guard')
+@login_required
+@allow_cross_domain
+def get_datas_guard():
+    if 'sn' in request.args:
+        sn = request.args['sn']
+    data_fields = [i for i in GuargData.__table__.c._data]
+    fields = data_fields
+    datas = GuargData.query
+    for k, v in request.args.items():
+        if k in fields:
+            datas = datas.filter_by(**{k: v})
+    datas = datas.order_by(GuargData.date.desc(), GuargData.time.desc()).filter(GuargData.hidden == 0).filter(GuargData.sn == sn)
+    if datas.count() != 0:
+        page = request.args.get('page', 1, type=int)
+        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
+        datas = pagination.items
+        prev = None
+        if pagination.has_prev:
+            prev = url_for('api.get_datas_guard', page=page - 1)
+        next = None
+        if pagination.has_next:
+            next = url_for('api.get_datas_guard', page=page + 1)
+        return jsonify({
+            'datas': [data.to_full_json() for data in datas],
+            'prev': prev,
+            'next': next,
+            'count': pagination.total,
+            'pages': pagination.pages,
+            'status': 'success',
+            'reason': 'there are the reasons'
+        })
+    else:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'there is no data'
+        })
 """
 @api {GET} /api/v1.0/datas 获取所有数据信息
 @apiGroup datas
@@ -259,6 +317,55 @@ def get_data(id):
     }
 
 """
+
+@api.route('/datas/guard/<int:id>', methods=['PUT'])
+@login_required
+@allow_cross_domain
+def change_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    for k in request.json:
+        if hasattr(data, k):
+            setattr(data, k, request.json[k])
+    try:
+        db.session.add(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': []
+        })
+    return jsonify(data.to_full_json())
+
+@api.route('/datas/guard/<int:id>', methods=['DELETE'])
+@login_required
+@allow_cross_domain
+def delete_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    try:
+        db.session.delete(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': []
+        })
+    return jsonify({
+        'status':'success',
+        'reason':''
+    })
+
+@api.route('/datas/guard/<int:id>')
+@login_required
+@allow_cross_domain
+def get_guard_data(id):
+    data = GuargData.query.filter(GuargData.data_id == id).first()
+    return jsonify({
+        'status':'success',
+        'reason':'',
+        'data': [data.to_full_json()]
+    })
 
 
 @api.route('/datas/<int:id>', methods=['PUT'])
@@ -359,7 +466,7 @@ def delete_data(id):
             'patient': url_for('api.get_patient', id=patient.patient_id),
             'sn': data.sn,
             'id_number': data.id_number,
-            'time': str(data.time),
+            'time': str(data.time)[0:5],
             'date': str(data.date),
             'glucose': data.glucose
         }],

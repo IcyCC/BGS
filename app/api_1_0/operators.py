@@ -6,7 +6,7 @@ from ..models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 @api.route('/operators', methods = ['POST'])
 @allow_cross_domain
 def new_operator():
@@ -356,7 +356,9 @@ def operator_password():
     if 'operator_name' in request.cookies:
         operator_name = request.cookies.get('operator_name')
         password = request.cookies.get('password')
-    operator = current_user if operator_name is None else Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator_name is None:
+        print('sssss')
+    operator = current_user if operator_name is '' else Operator.query.filter(Operator.operator_name == operator_name).first()
     if operator.verify_password(password):
         json = {
             'operators': [operator.to_json()],
@@ -364,8 +366,9 @@ def operator_password():
             'reason': 'the password is right'
         }
         res = make_response(jsonify(json))
-        res.set_cookie('operator_name', operator.operator_name)
-        res.set_cookie('password', password)
+        res.set_cookie('operator_name', operator.operator_name,max_age=60)
+        res.set_cookie('password', password, max_age=60)
+        return res
     else:
         return jsonify({
             'status':'fail',
@@ -401,3 +404,35 @@ def operator_password():
     } 
 """
 
+@api.route('/operators/change_password', methods = ['POST'])
+def change_password():
+    hospital = request.json['hospital']
+    section = request.json['section']
+    password = request.json['password']
+    operator = Operator.query.first()
+    if hospital != operator.hospital:
+        return jsonify({
+            'status':'fail',
+            'reason':'the hospital is wrong'
+        })
+    if section != operator.office:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'the office is wrong'
+        })
+    operator.password = password
+    try:
+        db.session.delete(operator)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'season': e,
+            'data': []
+        })
+    logout_user()
+    return jsonify({
+        'status':'success',
+        'reason':[],
+        'datas':[operator.to_json()]
+    })

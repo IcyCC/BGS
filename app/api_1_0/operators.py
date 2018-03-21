@@ -6,7 +6,7 @@ from ..models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 @api.route('/operators', methods = ['POST'])
 @allow_cross_domain
 def new_operator():
@@ -404,7 +404,7 @@ def operator_password():
     } 
 """
 
-@api.route('/oeprators/change_password')
+@api.route('/operators/change_password', methods = ['POST'])
 def change_password():
     hospital = request.json['hospital']
     section = request.json['section']
@@ -430,6 +430,7 @@ def change_password():
             'season': e,
             'data': []
         })
+    logout_user()
     return jsonify({
         'status':'success',
         'reason':[],

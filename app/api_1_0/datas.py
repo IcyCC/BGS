@@ -360,7 +360,7 @@ def delete_guard_data(id):
 @login_required
 @allow_cross_domain
 def get_guard_data(id):
-    data = GuargData.query.get_or_404(id)
+    data = GuargData.query.filter(GuargData.data_id == id).first()
     return jsonify({
         'status':'success',
         'reason':'',

@@ -356,6 +356,17 @@ def delete_guard_data(id):
         'reason':''
     })
 
+@api.route('/datas/guard/<int:id>')
+@login_required
+@allow_cross_domain
+def get_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    return jsonify({
+        'status':'success',
+        'reason':'',
+        'data': [data.to_full_json()]
+    })
+
 
 @api.route('/datas/<int:id>', methods=['PUT'])
 @login_required

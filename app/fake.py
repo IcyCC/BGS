@@ -4,26 +4,6 @@ from faker import Faker
 from . import db
 from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory, GuargData
 
-def operators(count=25):
-    fake = Faker(locale='zh_CN')
-    i = 0
-    while i < count:
-        u = Operator(
-            operator_name=fake.name(),
-            password = 'password',
-            hospital = '空军总院',
-            office = '牙科',
-            lesion = '无所谓',
-            tel = fake.phone_number(),
-            mail = fake.email()
-        )
-        db.session.add(u)
-        try:
-            db.session.commit()
-            i += 1
-        except IntegrityError:
-            db.session.rollback()
-
 
 def man_patients(count=50):
     fake = Faker(locale='zh_CN')

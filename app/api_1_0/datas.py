@@ -9,55 +9,55 @@ from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
 from .authentication import auth
 from flask_login import current_user, login_required
+
+sn_numbers = ['00000', '11111']
 @api.route('/datas/auto', methods=['POST'])
 @login_required
 @allow_cross_domain
 def new_data_auto():
-    data = Data()
-    for k in request.json:
-        if hasattr(data, k):
-            setattr(data, k, request.json[k])
-    accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
-    bed = accuchek.bed
-    patient = bed.patient
-    id_number = patient.id_number
-    data.id_number = id_number
-    try:
-        db.session.add(data)
-        db.session.commit()
-    except OperationalError as e:
+    if request.json['sn'] not in sn_numbers:
+        data = Data()
+        for k in request.json:
+            if hasattr(data, k):
+                setattr(data, k, request.json[k])
+        accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
+        bed = accuchek.bed
+        patient = bed.patient
+        id_number = patient.id_number
+        data.id_number = id_number
+        try:
+            db.session.add(data)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status': 'fail',
+                'reason': e,
+                'data': data.to_json()
+            })
         return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': data.to_json()
+            'datas': [data.to_json()],
+            'status': 'success',
+            'reason': 'the data has been added'
         })
-    return jsonify({
-        'datas': [data.to_json()],
-        'status': 'success',
-        'reason': 'the data has been added'
-    })
+    else:
+        data = GuargData()
+        for k in request.json:
+            if hasattr(data, k):
+                setattr(data, k, request.json[k])
+        try:
+            db.session.add(data)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status': 'fail',
+                'reason': str(e)
+            })
+        return jsonify({
+            'datas': [data.to_full_json()],
+            'status': 'success',
+            'reason': 'the data has been added'
+        })
 
-@api.route('/datas/guard', methods=['POST'])
-@login_required
-@allow_cross_domain
-def new_data_guard():
-    data = GuargData()
-    for k in request.json:
-        if hasattr(data, k):
-            setattr(data, k, request.json[k])
-    try:
-        db.session.add(data)
-        db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': str(e)
-        })
-    return jsonify({
-        'datas': [data.to_full_json()],
-        'status': 'success',
-        'reason': 'the data has been added'
-    })
 
 
 """

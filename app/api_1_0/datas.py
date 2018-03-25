@@ -10,7 +10,7 @@ from ..decorators import allow_cross_domain
 from .authentication import auth
 from flask_login import current_user, login_required
 
-sn_numbers = ['00000', '11111']
+sn_numbers = ['00000000', '11111111']
 @api.route('/datas/auto', methods=['POST'])
 def new_data_auto():
     if request.json['sn'] not in sn_numbers:

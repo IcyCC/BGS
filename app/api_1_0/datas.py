@@ -12,8 +12,6 @@ from flask_login import current_user, login_required
 
 sn_numbers = ['00000', '11111']
 @api.route('/datas/auto', methods=['POST'])
-@login_required
-@allow_cross_domain
 def new_data_auto():
     if request.json['sn'] not in sn_numbers:
         data = Data()

@@ -159,7 +159,8 @@ class Data(db.Model):
             'id_number': self.id_number,
             'date': str(self.date),
             'time': str(self.time)[0:5],
-            'glucose': self.glucose
+            'glucose': self.glucose,
+            'sex': patient.sex
 
         }
         return json_data

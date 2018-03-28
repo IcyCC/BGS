@@ -47,14 +47,14 @@ def woman_patients(count=50):
         except IntegrityError:
             db.session.rollback()
 
-def accucheks(count=70):
+def accucheks(count=112):
     fake = Faker(locale='zh_CN')
-    i = 0
+    i = 1
     p_count = Patient.query.count()
-    while i <count:
+    while i <count+1:
         p = Patient.query.offset(randint(0, p_count - 1)).first()
         a = Accuchek(
-            bed_id=randint(1, 70),
+            bed_id=i,
             sn = fake.phone_number()
         )
         db.session.add(a)
@@ -71,7 +71,6 @@ def accucheks(count=70):
         db.session.add(b)
         try:
             db.session.commit()
-            i += 1
         except IntegrityError:
             db.session.rollback()
 
@@ -117,6 +116,39 @@ def guard_datas(count=200):
     while i <count:
         d = GuargData(
             sn = '00000',
+            time = fake.time(),
+            date = fake.date(),
+            glucose=randint(10, 20),
+            id_number = fake.phone_number(),
+            patient_name=fake.name(),
+            sex = 'nan',
+            age = randint(20, 60),
+            doctor=fake.name()
+        )
+        db.session.add(d)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()
+    i = 0
+    while i<count:
+        d = GuargData(
+            sn = '11111',
+            time = fake.time(),
+            date = fake.date(),
+            glucose=randint(10,20)
+        )
+        db.session.add(d)
+        try:
+            db.session.commit()
+            i += 1
+        except IntegrityError:
+            db.session.rollback()
+    i = 0
+    while i <count:
+        d = GuargData(
+            sn = '11111',
             time = fake.time(),
             date = fake.date(),
             glucose=randint(10, 20),

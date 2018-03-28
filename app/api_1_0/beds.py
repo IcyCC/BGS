@@ -21,7 +21,7 @@ def get_beds():
             beds = beds.filter_by(**{k: v})
     if beds:
         page = request.args.get('page', 1, type=int)
-        pagination = beds.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
+        pagination = beds.paginate(page, per_page=28, error_out=False)
         beds = pagination.items
         prev = None
         if pagination.has_prev:

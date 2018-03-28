@@ -422,7 +422,7 @@ def change_password():
         })
     operator.password = password
     try:
-        db.session.delete(operator)
+        db.session.add(operator)
         db.session.commit()
     except OperationalError as e:
         return jsonify({
@@ -430,7 +430,6 @@ def change_password():
             'season': e,
             'data': []
         })
-    logout_user()
     return jsonify({
         'status':'success',
         'reason':[],

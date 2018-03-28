@@ -1,11 +1,12 @@
 from . import api
 import os
 from .. import db
-from flask import request, jsonify, g, url_for, current_app
+from flask import request, jsonify, g, url_for, current_app, make_response
 from ..models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
+from flask_login import login_required, current_user, logout_user
 @api.route('/operators', methods = ['POST'])
 @allow_cross_domain
 def new_operator():
@@ -70,7 +71,7 @@ def new_operator():
 
 
 @api.route('/operators')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_operators():
     operators = Operator.query
@@ -84,10 +85,10 @@ def get_operators():
         operators = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_operators', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_operators', page=page + 1)
         return jsonify({
             'operators': [operator.to_json() for operator in operators],
             'prev': prev,
@@ -145,7 +146,7 @@ def get_operators():
 
 
 @api.route('/operators/<int:id>')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -185,11 +186,11 @@ def get_operator(id):
 """
 
 @api.route('/operators/<int:id>', methods = ['DELETE'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def delete_operator(id):
     operator = Operator.query.get_or_404(id)
-    if g.current_user.tel != operator.tel:
+    if current_user.tel != operator.tel:
         return jsonify({
             'status':'fail',
             'reason':'no root'
@@ -245,11 +246,10 @@ def delete_operator(id):
 
 
 @api.route('/operators/<int:id>', methods = ['PUT'])
-@auth.login_required
 @allow_cross_domain
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
-    if g.current_user.tel != operator.tel:
+    if current_user.tel != operator.tel:
         return jsonify({
             'status': 'fail',
             'reason': 'no root'
@@ -311,10 +311,10 @@ def change_operator(id):
 
 
 @api.route('/operators/now')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_operator_now():
-    operator = g.current_user
+    operator = current_user
     return jsonify({
         'operators': [operator.to_json()],
         'status': 'success',
@@ -346,17 +346,29 @@ def get_operator_now():
 """
 
 
-@api.route('/operators/now/password')
-@auth.login_required
+@api.route('/operators/now/password', methods = ['POST'])
+@login_required
 @allow_cross_domain
 def operator_password():
-    password = request.args.get('password')
-    if g.current_user.verify_password(password):
-        return jsonify({
-        'operators': [g.current_user.to_json()],
-        'status': 'success',
-        'reason': 'the password is right'
-    }), 200
+    operator_name = ''
+    if 'password' in request.json:
+        password = request.json.get('password')
+    if 'operator_name' in request.cookies:
+        operator_name = request.cookies.get('operator_name')
+        password = request.cookies.get('password')
+    if operator_name is None:
+        print('sssss')
+    operator = current_user if operator_name is '' else Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator.verify_password(password):
+        json = {
+            'operators': [operator.to_json()],
+            'status': 'success',
+            'reason': 'the password is right'
+        }
+        res = make_response(jsonify(json))
+        res.set_cookie('operator_name', operator.operator_name,max_age=60)
+        res.set_cookie('password', password, max_age=60)
+        return res
     else:
         return jsonify({
             'status':'fail',
@@ -392,3 +404,34 @@ def operator_password():
     } 
 """
 
+@api.route('/operators/change_password', methods = ['POST'])
+def change_password():
+    hospital = request.json['hospital']
+    section = request.json['section']
+    password = request.json['password']
+    operator = Operator.query.first()
+    if hospital != operator.hospital:
+        return jsonify({
+            'status':'fail',
+            'reason':'the hospital is wrong'
+        })
+    if section != operator.office:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'the office is wrong'
+        })
+    operator.password = password
+    try:
+        db.session.add(operator)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'season': e,
+            'data': []
+        })
+    return jsonify({
+        'status':'success',
+        'reason':[],
+        'datas':[operator.to_json()]
+    })

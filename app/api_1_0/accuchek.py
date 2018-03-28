@@ -6,11 +6,12 @@ from ..models import Patient, Operator, Data, Bed, Accuchek
 from .authentication import auth
 from sqlalchemy.exc import OperationalError,IntegrityError
 from ..decorators import allow_cross_domain
+from flask_login import login_required
 
 @api.route('/accucheks')
-@auth.login_required
+@login_required
 @allow_cross_domain
-def get_accunckes():
+def get_accucheks():
     fields = [i for i in Accuchek.__table__.c._data]
     accunckes = Accuchek.query
     for k, v in request.args.items():
@@ -22,10 +23,10 @@ def get_accunckes():
         accunckes = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_accucheks', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_accucheks', page=page + 1)
         return jsonify({
             'accunckes': [accuncke.to_json() for accuncke in accunckes],
             'prev': prev,
@@ -75,7 +76,7 @@ def get_accunckes():
 """
 
 @api.route('/accucheks', methods = ['POST'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def new_accuchek():
     accuchek = Accuchek()
@@ -140,7 +141,7 @@ def new_accuchek():
 """
 
 @api.route('/accucheks/<int:id>')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
@@ -179,7 +180,7 @@ def get_accuchek(id):
 """
 
 @api.route('/accucheks/<int:id>', methods = ['DELETE'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def delete_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
@@ -226,7 +227,7 @@ def delete_accuchek(id):
 """
 
 @api.route('/accucheks/<int:id>', methods = ['PUT'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def change_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)

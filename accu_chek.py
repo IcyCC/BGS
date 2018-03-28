@@ -10,7 +10,7 @@ import pymysql
 import json
 
 pymysql.install_as_MySQLdb()
-from app.fake import operators, man_patients, woman_patients, accucheks, datas
+from app.fake import man_patients, woman_patients, accucheks, datas, guard_datas
 
 app = create_app(os.getenv('FLASK_CONFIG')or 'default')
 manager = Manager(app)
@@ -33,11 +33,11 @@ def create_all():
     operator.password = password
     db.session.add(operator)
     db.session.commit()
-    operators()
     man_patients()
     woman_patients()
     accucheks()
     datas()
+    guard_datas()
 
 
 def make_shell_context():

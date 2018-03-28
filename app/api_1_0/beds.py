@@ -7,10 +7,11 @@ from .authentication import auth
 from sqlalchemy.exc import OperationalError
 import datetime
 from ..decorators import allow_cross_domain
+from flask_login import login_required, current_user
 
 
 @api.route('/beds')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_beds():
     fields = [i for i in Bed.__table__.c._data]
@@ -20,16 +21,16 @@ def get_beds():
             beds = beds.filter_by(**{k: v})
     if beds:
         page = request.args.get('page', 1, type=int)
-        pagination = beds.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
+        pagination = beds.paginate(page, per_page=28, error_out=False)
         beds = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_beds', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_beds', page=page + 1)
         return jsonify({
-            'beds': [bed.to_json() for bed in beds],
+            'beds': [bed.to_full_information() for bed in beds],
             'prev': prev,
             'next': next,
             'count': pagination.total,
@@ -79,7 +80,7 @@ def get_beds():
 
 
 @api.route('/beds', methods=['POST'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def new_bed():
     bed = Bed()
@@ -170,7 +171,7 @@ def new_bed():
 
 
 @api.route('/beds/<int:id>')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -224,7 +225,7 @@ def get_bed(id):
 
 
 @api.route('/beds/<int:id>', methods=['DELETE'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def delete_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -271,7 +272,7 @@ def delete_bed(id):
 
 
 @api.route('/beds/<int:id>', methods=['PUT'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def change_bed(id):
     bed = Bed.query.get_or_404(id)
@@ -398,7 +399,7 @@ def change_bed(id):
 
 
 @api.route('/beds/<int:id>/more')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_bed_more(id):
     bed = Bed.query.get_or_404(id)
@@ -450,21 +451,21 @@ def get_bed_more(id):
 
 
 @api.route('/beds/<int:id>/more_data')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_bed_moredatas(id):
     bed = Bed.query.get_or_404(id)
-    datas = bed.datas
+    datas = bed.datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden==0)
     if datas:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         datas = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_bed_moredatas', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_bed_moredatas', page=page + 1)
         return jsonify({
             'datas': [data.to_json() for data in datas],
             'prev': prev,

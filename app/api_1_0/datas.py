@@ -2,40 +2,60 @@ from . import api
 import os
 from .. import db
 from flask import request, jsonify, g, url_for, current_app
-from ..models import Patient, Operator, Data, Bed, Accuchek
+from ..models import Patient, Operator, Data, Bed, Accuchek, GuargData
 from .authentication import auth
 import datetime
 from sqlalchemy.exc import OperationalError
 from ..decorators import allow_cross_domain
 from .authentication import auth
+from flask_login import current_user, login_required
 
+sn_numbers = ['00000000', '11111111']
 @api.route('/datas/auto', methods=['POST'])
-@auth.login_required
-@allow_cross_domain
 def new_data_auto():
-    data = Data()
-    for k in request.json:
-        if hasattr(data, k):
-            setattr(data, k, request.json[k])
-    accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
-    bed = accuchek.bed
-    patient = bed.patient
-    id_number = patient.id_number
-    data.id_number = id_number
-    try:
-        db.session.add(data)
-        db.session.commit()
-    except OperationalError as e:
+    if request.json['sn'] not in sn_numbers:
+        data = Data()
+        for k in request.json:
+            if hasattr(data, k):
+                setattr(data, k, request.json[k])
+        accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
+        bed = accuchek.bed
+        patient = bed.patient
+        id_number = patient.id_number
+        data.id_number = id_number
+        try:
+            db.session.add(data)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status': 'fail',
+                'reason': e,
+                'data': data.to_json()
+            })
         return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': data.to_json()
+            'datas': [data.to_json()],
+            'status': 'success',
+            'reason': 'the data has been added'
         })
-    return jsonify({
-        'datas': [data.to_json()],
-        'status': 'success',
-        'reason': 'the data has been added'
-    })
+    else:
+        data = GuargData()
+        for k in request.json:
+            if hasattr(data, k):
+                setattr(data, k, request.json[k])
+        try:
+            db.session.add(data)
+            db.session.commit()
+        except OperationalError as e:
+            return jsonify({
+                'status': 'fail',
+                'reason': str(e)
+            })
+        return jsonify({
+            'datas': [data.to_full_json()],
+            'status': 'success',
+            'reason': 'the data has been added'
+        })
+
 
 
 """
@@ -69,7 +89,7 @@ def new_data_auto():
 
 
 @api.route('/datas/artificial', methods=['POST'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def new_data_artificial():
     data = Data()
@@ -145,7 +165,7 @@ def new_data_artificial():
 
 
 @api.route('/datas')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_datas():
     data_fields = [i for i in Data.__table__.c._data]
@@ -154,16 +174,17 @@ def get_datas():
     for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
+    datas = datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden == 0)
     if datas.count() != 0:
         page = request.args.get('page', 1, type=int)
         pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
         datas = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page=page - 1)
+            prev = url_for('api.get_datas', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page=page + 1)
+            next = url_for('api.get_datas', page=page + 1)
         return jsonify({
             'datas': [data.to_json() for data in datas],
             'prev': prev,
@@ -179,7 +200,43 @@ def get_datas():
             'reason': 'there is no data'
         })
 
-
+@api.route('/datas/guard')
+@login_required
+@allow_cross_domain
+def get_datas_guard():
+    if 'sn' in request.args:
+        sn = request.args['sn']
+    data_fields = [i for i in GuargData.__table__.c._data]
+    fields = data_fields
+    datas = GuargData.query
+    for k, v in request.args.items():
+        if k in fields:
+            datas = datas.filter_by(**{k: v})
+    datas = datas.order_by(GuargData.date.desc(), GuargData.time.desc()).filter(GuargData.hidden == 0).filter(GuargData.sn == sn)
+    if datas.count() != 0:
+        page = request.args.get('page', 1, type=int)
+        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
+        datas = pagination.items
+        prev = None
+        if pagination.has_prev:
+            prev = url_for('api.get_datas_guard', page=page - 1)
+        next = None
+        if pagination.has_next:
+            next = url_for('api.get_datas_guard', page=page + 1)
+        return jsonify({
+            'datas': [data.to_full_json() for data in datas],
+            'prev': prev,
+            'next': next,
+            'count': pagination.total,
+            'pages': pagination.pages,
+            'status': 'success',
+            'reason': 'there are the reasons'
+        })
+    else:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'there is no data'
+        })
 """
 @api {GET} /api/v1.0/datas 获取所有数据信息
 @apiGroup datas
@@ -221,7 +278,7 @@ def get_datas():
 
 
 @api.route('/datas/<int:id>')
-@auth.login_required
+@login_required
 @allow_cross_domain
 def get_data(id):
     data = Data.query.get_or_404(id)
@@ -259,17 +316,61 @@ def get_data(id):
 
 """
 
+@api.route('/datas/guard/<int:id>', methods=['PUT'])
+@login_required
+@allow_cross_domain
+def change_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    for k in request.json:
+        if hasattr(data, k):
+            setattr(data, k, request.json[k])
+    try:
+        db.session.add(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': []
+        })
+    return jsonify(data.to_full_json())
+
+@api.route('/datas/guard/<int:id>', methods=['DELETE'])
+@login_required
+@allow_cross_domain
+def delete_guard_data(id):
+    data = GuargData.query.get_or_404(id)
+    try:
+        db.session.delete(data)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': []
+        })
+    return jsonify({
+        'status':'success',
+        'reason':''
+    })
+
+@api.route('/datas/guard/<int:id>')
+@login_required
+@allow_cross_domain
+def get_guard_data(id):
+    data = GuargData.query.filter(GuargData.data_id == id).first()
+    return jsonify({
+        'status':'success',
+        'reason':'',
+        'data': [data.to_full_json()]
+    })
+
 
 @api.route('/datas/<int:id>', methods=['PUT'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def change_data(id):
     data = Data.query.get_or_404(id)
-    if g.current_user.operator_id != data.patient.doctor_id:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'no root'
-        })
     id_number = data.id_number
     if 'id_number' in request.json:
         id_number = request.json['id_number']
@@ -343,15 +444,10 @@ def change_data(id):
 
 
 @api.route('/datas/<int:id>', methods=['DELETE'])
-@auth.login_required
+@login_required
 @allow_cross_domain
 def delete_data(id):
     data = Data.query.get_or_404(id)
-    if g.current_user.operator_id != data.patient.doctor_id:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'no root'
-        })
     patient = data.patient
     try:
         db.session.delete(data)
@@ -368,7 +464,7 @@ def delete_data(id):
             'patient': url_for('api.get_patient', id=patient.patient_id),
             'sn': data.sn,
             'id_number': data.id_number,
-            'time': str(data.time),
+            'time': str(data.time)[0:5],
             'date': str(data.date),
             'glucose': data.glucose
         }],

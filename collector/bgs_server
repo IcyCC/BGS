@@ -36,13 +36,15 @@ class BgsServer(asyncio.Protocol):
         del self.connections[self]
 
     def data_received(self, data):
-        print("RECEIVE DATA : {}".format(data))
-        timestamp = datetime.strptime(str(data[17:21], encoding="ascii")+str(data[22:26], encoding="ascii"),
-                                       "%y%m%H%M")
-        d = {'sn': str(data[6:14], encoding="ascii"),
+        s = str(data, encoding="gb2312")
+        print("RECEIVE DATA : {}".format(s))
+        # timestamp = datetime.strptime(s[15:19] + s[20:24],
+        #                                "%y%m%H%M")
+        timestamp = datetime.now()
+        d = {'sn': s[4:12],
              'date': str(datetime.now().year)+'-'+(timestamp.date()).strftime("%m-%d"),
              'time': timestamp.time().strftime("%H:%M:%S"),
-             'glucose': str(data[27:31], encoding="ascii")}
+             'glucose': s[25:29]}
         print("PROCESS DATA :{}".format(data))
         if d['glucose'] == 'LOW ':
             d['glucose'] = 1.0
@@ -73,4 +75,12 @@ def server(host, port):
     loop.close()
 
 if __name__ == '__main__':
-    server('0.0.0.0', 37621)
+    server('0.0.0.0', 36751)
+
+
+
+"""
+
+'\xcc\xc7"1=ABCD1234=a=0104=0434=03.0mmol/Le\n2'
+
+"""

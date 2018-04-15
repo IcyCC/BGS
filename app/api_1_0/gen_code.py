@@ -15,6 +15,11 @@ from ..decorators import allow_cross_domain
 @api.route('/code/route', methods=['GET'])
 @allow_cross_domain
 def gen_code_route():
+    ssid = request.args.get("ssid")
+    password = request.args.get("password")
+    auth_method = request.args.get("auth_mothod")
+    crypto_method = request.args.get("crypto_method")
+    print("arg", request.args.items())
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -22,10 +27,10 @@ def gen_code_route():
         border=2,
     )
     qr.add_data("SSID:{ssid}\n{auth_method},{crypto_method},{password}\nAA55".format(
-        ssid=current_app.custom_net_setting.get('ssid'),
-        auth_method=current_app.custom_net_setting.get('auth_method'),
-        crypto_method=current_app.custom_net_setting.get('crypto_method'),
-        password=current_app.custom_net_setting.get('password')))
+        ssid=ssid,
+        auth_method=auth_method,
+        crypto_method=crypto_method,
+        password=password))
     qr.make(fit=True)
 
     file = BytesIO()

@@ -6,7 +6,6 @@ from app.models import Operator
 import os
 from flask_migrate import Migrate, upgrade, MigrateCommand
 import pymysql
-
 import json
 
 pymysql.install_as_MySQLdb()

@@ -12,13 +12,13 @@ from ..decorators import allow_cross_domain
 
 """
 
-@api.route('/code/route', methods=['GET'])
+@api.route('/code/route', methods=['GET','POST'])
 @allow_cross_domain
 def gen_code_route():
-    ssid = request.args.get("ssid")
-    password = request.args.get("password")
-    auth_method = request.args.get("auth_method")
-    crypto_method = request.args.get("crypto_method")
+    ssid = request.form.get("ssid")
+    password = request.form.get("password")
+    auth_method = request.form.get("auth_method")
+    crypto_method = request.form.get("crypto_method")
     print("arg", request.args.items())
     qr = qrcode.QRCode(
         version=1,

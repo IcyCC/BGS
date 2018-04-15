@@ -17,7 +17,7 @@ from ..decorators import allow_cross_domain
 def gen_code_route():
     ssid = request.args.get("ssid")
     password = request.args.get("password")
-    auth_method = request.args.get("auth_mothod")
+    auth_method = request.args.get("auth_method")
     crypto_method = request.args.get("crypto_method")
     print("arg", request.args.items())
     qr = qrcode.QRCode(

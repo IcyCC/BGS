@@ -3,12 +3,22 @@ import aiohttp
 from datetime import date, time, datetime
 
 loop = asyncio.get_event_loop()
+cookie = ""
 
+
+host = 'http://101.200.52.233:8080'
 async def send_data(data):
     async with aiohttp.ClientSession() as session:
-        async with session.post('/api/v1.0/datas/auto',data=data) as response:
+        async with session.post(host+'/api/v1.0/datas/auto',json=data) as response:
             if response.status != 200:
                 print("Failed")
+
+async def post_auth(info):
+    global cookie
+    async with aiohttp.ClientSession() as session:
+        async with session.post(host+'/api/v1.0/login',data=info) as response:
+            print(response.header)
+
 
 class BgsServer(asyncio.Protocol):
 
@@ -26,13 +36,15 @@ class BgsServer(asyncio.Protocol):
         del self.connections[self]
 
     def data_received(self, data):
-        print("RECEIVE DATA : {}".format(data))
-        timestamp = datetime.strptime(str(data[17:21], encoding="ascii")+str(data[22:26], encoding="ascii"),
-                                       "%y%m%H%M")
-        d = {'sn': str(data[6:14], encoding="ascii"),
-             'date': timestamp.date().strftime("%m-%d"),
+        s = str(data, encoding="gb2312")
+        print("RECEIVE DATA : {}".format(s))
+        # timestamp = datetime.strptime(s[15:19] + s[20:24],
+        #                                "%y%m%H%M")
+        timestamp = datetime.now()
+        d = {'sn': s[4:12],
+             'date': str(datetime.now().year)+'-'+(timestamp.date()).strftime("%m-%d"),
              'time': timestamp.time().strftime("%H:%M:%S"),
-             'glucose': str(data[27:31], encoding="ascii")}
+             'glucose': s[25:29]}
         print("PROCESS DATA :{}".format(data))
         if d['glucose'] == 'LOW ':
             d['glucose'] = 1.0
@@ -40,15 +52,18 @@ class BgsServer(asyncio.Protocol):
             d['glucose'] = 34
         d['glucose'] = float(d['glucose'])
         print("SEND DATA : {}".format(d))
+        loop.create_task(send_data(data=d))
 
 
 def server(host, port):
 
     global loop
 
+
     server_coroutine = loop.create_server(lambda: BgsServer(loop=loop),
                                           host=host, port=port)
     print("Server Start at {} ".format(str(host)+":"+str(port)))
+    # t = loop.create_task(post_auth())
     bgs_server = loop.run_until_complete(server_coroutine)
 
     try:
@@ -60,4 +75,12 @@ def server(host, port):
     loop.close()
 
 if __name__ == '__main__':
-    server('0.0.0.0', 37621)
+    server('0.0.0.0', 36751)
+
+
+
+"""
+
+'\xcc\xc7"1=ABCD1234=a=0104=0434=03.0mmol/Le\n2'
+
+"""

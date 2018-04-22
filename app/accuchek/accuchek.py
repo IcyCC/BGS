@@ -1,16 +1,12 @@
-from . import api
-import os
-from .. import db
-from flask import request, jsonify, g, url_for, current_app
-from ..models import Patient, Operator, Data, Bed, Accuchek
-from .authentication import auth
+from app.accuchek import accuchek
+from app import db
+from flask import request, jsonify, url_for, current_app
+from app.models import Accuchek
 from sqlalchemy.exc import OperationalError,IntegrityError
-from ..decorators import allow_cross_domain
 from flask_login import login_required
 
-@api.route('/accucheks')
+@accuchek.route('/accucheks')
 @login_required
-@allow_cross_domain
 def get_accucheks():
     fields = [i for i in Accuchek.__table__.c._data]
     accunckes = Accuchek.query
@@ -23,10 +19,10 @@ def get_accucheks():
         accunckes = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_accucheks', page=page - 1)
+            prev = url_for('accuchek.get_accucheks', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_accucheks', page=page + 1)
+            next = url_for('accuchek.get_accucheks', page=page + 1)
         return jsonify({
             'accunckes': [accuncke.to_json() for accuncke in accunckes],
             'prev': prev,
@@ -43,7 +39,7 @@ def get_accucheks():
         }), 404
 
 """
-@api {GET} /api/v1.0/accucheks 获取所有血糖仪信息(地址栏筛选)
+@api {GET} /accuchek/accucheks 获取所有血糖仪信息(地址栏筛选)
 @apiGroup accucheks
 @apiName 获取所有血糖仪信息
 
@@ -75,9 +71,9 @@ def get_accucheks():
     }
 """
 
-@api.route('/accucheks', methods = ['POST'])
+@accuchek.route('/accucheks', methods = ['POST'])
 @login_required
-@allow_cross_domain
+
 def new_accuchek():
     accuchek = Accuchek()
     if 'sn' in request.json:
@@ -113,7 +109,7 @@ def new_accuchek():
     })
 
 """
-@api {POST} /api/v1.0/accucheks 添加一个新的血糖仪(json数据)
+@api {POST} /accuchek/accucheks 添加一个新的血糖仪(json数据)
 @apiGroup accucheks
 @apiName 添加一个血糖仪
 
@@ -140,9 +136,8 @@ def new_accuchek():
     }
 """
 
-@api.route('/accucheks/<int:id>')
+@accuchek.route('/accucheks/<int:id>')
 @login_required
-@allow_cross_domain
 def get_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
     return jsonify({
@@ -152,7 +147,7 @@ def get_accuchek(id):
     })
 
 """
-@api {GET} /api/v1.0/accucheks/<int:id> 根据id获取血糖仪信息
+@api {GET} /accuchek/accucheks/<int:id> 根据id获取血糖仪信息
 @apiGroup accucheks
 @apiName 根据id获取血糖仪信息
 
@@ -179,9 +174,8 @@ def get_accuchek(id):
     HTTP/1.1 404 对应的血糖仪信息不存在
 """
 
-@api.route('/accucheks/<int:id>', methods = ['DELETE'])
+@accuchek.route('/accucheks/<int:id>', methods = ['DELETE'])
 @login_required
-@allow_cross_domain
 def delete_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
     try:
@@ -199,7 +193,7 @@ def delete_accuchek(id):
     })
 
 """
-@api {DELETE} /api/v1.0/accucheks/<int:id> 删除id所代表的血糖仪
+@api {DELETE} /accuchek/accucheks/<int:id> 删除id所代表的血糖仪
 @apiGroup accucheks
 @apiName 删除id所代表的血糖仪
 
@@ -226,9 +220,9 @@ def delete_accuchek(id):
     HTTP/1.1 404 对应的血糖仪信息不存在
 """
 
-@api.route('/accucheks/<int:id>', methods = ['PUT'])
+@accuchek.route('/accucheks/<int:id>', methods = ['PUT'])
 @login_required
-@allow_cross_domain
+
 def change_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
     if 'sn' in request.json:
@@ -257,7 +251,7 @@ def change_accuchek(id):
     })
 
 """
-@api {PUT} /api/v1.0/accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
+@api {PUT} /accuchek/accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
 @apiGroup accucheks
 @apiName 更改id所代表的血糖仪的信息
 

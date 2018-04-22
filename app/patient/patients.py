@@ -1,16 +1,14 @@
-from . import api
-import datetime
-import os
-from .. import db
-from flask import request, jsonify, g, url_for, current_app
-from ..models import Patient, Operator, Data, Bed
-from .authentication import auth
+from app.patient import patient
+from app import db
+from flask import request, jsonify, url_for, current_app
+from app.models import Patient, Data, Bed
 from sqlalchemy.exc import OperationalError
-from ..decorators import allow_cross_domain
-from flask_login import login_required, current_user
-@api.route('/patients', methods = ['POST'])
+from flask_login import login_required
+
+
+@patient.route('/patients', methods = ['POST'])
 @login_required
-@allow_cross_domain
+
 def new_patient():
     id_number = request.json['id_number']
     bed_id = request.json['bed_id']
@@ -49,7 +47,7 @@ def new_patient():
 
 
 """
-@api {POST} /api/v1.0/patients 新建病人信息(json数据)
+@api {POST} /patient/patients 新建病人信息(json数据)
 @apiGroup patients
 @apiName 新建病人信息
 
@@ -88,9 +86,9 @@ def new_patient():
 """
 
 
-@api.route('/patients')
+@patient.route('/patients')
 @login_required
-@allow_cross_domain
+
 def get_patients():
     page = request.args.get('page', 1, type=int)
     fields = [i for i in Patient.__table__.c._data]
@@ -103,10 +101,10 @@ def get_patients():
         patients = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patients', page = page-1)
+            prev = url_for('patient.get_patients', page = page-1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patients', page = page+1)
+            next = url_for('patient.get_patients', page = page+1)
         return jsonify({
             'patients':[patient.to_json() for patient in patients],
             'prev':prev,
@@ -123,7 +121,7 @@ def get_patients():
         })
 
 """
-@api {GET} /api/v1.0/patients 获取所有病人数据信息(地址栏筛选)
+@api {GET} /patient/patients 获取所有病人数据信息(地址栏筛选)
 @apiGroup patients
 @apiName 获取所有病人数据
 
@@ -165,9 +163,9 @@ def get_patients():
 """
 
 
-@api.route('/patients/<int:id>', methods = ['PUT'])
+@patient.route('/patients/<int:id>', methods = ['PUT'])
 @login_required
-@allow_cross_domain
+
 def change_patient(id):
     patient = Patient.query.get_or_404(id)
     if 'id_number' in request.json:
@@ -198,7 +196,7 @@ def change_patient(id):
     })
 
 """
-@api {PUT} /api/v1.0/patients/<int:id> 修改id代表的病人信息(json数据)
+@api {PUT} /patient/patients/<int:id> 修改id代表的病人信息(json数据)
 @apiGroup patients
 @apiName 修改id代表的病人信息
 
@@ -241,9 +239,9 @@ def change_patient(id):
 """
 
 
-@api.route('/patients/<int:id>')
+@patient.route('/patients/<int:id>')
 @login_required
-@allow_cross_domain
+
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
     return jsonify({
@@ -253,7 +251,7 @@ def get_patient(id):
     })
 
 """
-@api {GET} /api/v1.0/patients/<int:id> 根据id获取病人信息
+@api {GET} /patient/patients/<int:id> 根据id获取病人信息
 @apiGroup patients
 @apiName 根据id获取病人信息
 
@@ -285,9 +283,9 @@ def get_patient(id):
 """
 
 
-@api.route('/patients/<int:id>', methods = ['DELETE'])
+@patient.route('/patients/<int:id>', methods = ['DELETE'])
 @login_required
-@allow_cross_domain
+
 def delete_patients(id):
     patient = Patient.query.get_or_404(id)
     for data in patient.datas:
@@ -316,7 +314,7 @@ def delete_patients(id):
     })
 
 """
-@api {DELETE} /api/v1.0/patients/<int:id> 删除id所代表的病人信息
+@api {DELETE} /patient/patients/<int:id> 删除id所代表的病人信息
 @apiGroup patients
 @apiName 删除id所代表的病人信息
 
@@ -348,9 +346,9 @@ def delete_patients(id):
 """
 
 
-@api.route('/patients/get-from-id')
+@patient.route('/patients/get-from-id')
 @login_required
-@allow_cross_domain
+
 def get_from_id():
     id_number = request.args.get('id_number')
     patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -367,7 +365,7 @@ def get_from_id():
         })
 
 """
-@api {GET} /api/v1.0/patients/get-from-id 根据医疗卡号获取病人信息
+@api {GET} /patient/patients/get-from-id 根据医疗卡号获取病人信息
 @apiGroup patients
 @apiName 根据医疗卡号获取病人信息
 
@@ -400,9 +398,9 @@ def get_from_id():
 """
 
 
-@api.route('/patients/<int:id>/datas')
+@patient.route('/patients/<int:id>/datas')
 @login_required
-@allow_cross_domain
+
 def get_patient_datas(id):
     patient = Patient.query.get_or_404(id)
     datas = patient.datas.filter(Data.hidden==0)
@@ -412,10 +410,10 @@ def get_patient_datas(id):
         datas = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_patient_datas', page=page - 1)
+            prev = url_for('patient.get_patient_datas', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_patient_datas', page=page + 1)
+            next = url_for('patient.get_patient_datas', page=page + 1)
         return jsonify({
             'datas': [data.to_json() for data in datas],
             'prev': prev,
@@ -432,7 +430,7 @@ def get_patient_datas(id):
         })
 
 """
-@api {GET} /api/v1.0/patients/<int:id>/datas 获取id所代表的病人的数据
+@api {GET} /patient/patients/<int:id>/datas 获取id所代表的病人的数据
 @apiGroup patients
 @apiName 获取id所代表的病人的数据
 
@@ -472,9 +470,9 @@ def get_patient_datas(id):
 """
 
 
-@api.route('/patients/history')
+@patient.route('/patients/history')
 @login_required
-@allow_cross_domain
+
 def patients_history():
     datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
     patient_name = request.args.get('patient_name')
@@ -525,10 +523,10 @@ def patients_history():
         datas = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.patients_history', page=page - 1)
+            prev = url_for('patient.patients_history', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.patients_history', page=page + 1)
+            next = url_for('patient.patients_history', page=page + 1)
         return jsonify({
             'datas': [data.to_full_json() for data in datas],
             'prev': prev,
@@ -545,7 +543,7 @@ def patients_history():
         })
 
 """
-@api {GET} /api/v1.0/patients/history 获取病人历史信息(浏览器栏筛选)
+@api {GET} /patient/patients/history 获取病人历史信息(浏览器栏筛选)
 @apiGroup patients
 @apiName 获取id所代表的病人的数据
 
@@ -576,7 +574,9 @@ def patients_history():
             "patient":"病人地址",
             "sn":"血糖仪sn码",
             "url":"数据地址",
-            "time":"数据时间"
+            "time":"数据时间",
+            "sex":"患者性别",
+            "tel":"患者电话"
         }],
         "prev":"上一页地址",
         "next":"下一页地址",

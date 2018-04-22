@@ -36,8 +36,20 @@ def create_app(config_name):
 
     app.template_folder='/home/zhandong/PycharmProjects/accu_chek/templates'
 
-    from .api_1_0 import api as api_1_0_blueprint
-    app.register_blueprint(api_1_0_blueprint, url_prefix='/api/v1.0')
+    from .gencode import gen_code
+    app.register_blueprint(gen_code, url_prefix='/gencode')
+
+    from .accuchek import accuchek
+    app.register_blueprint(accuchek, url_prefix='/accuchek')
+
+    from .bed import bed
+    app.register_blueprint(bed, url_prefix='/bed')
+
+    from .operator import operator
+    app.register_blueprint(operator, url_prefix='/operator')
+
+    from .data import data
+    app.register_blueprint(data, url_prefix='/data')
 
     CORS(app, supports_credentials=True)
 

@@ -1,4 +1,4 @@
-from . import api
+from . import gencode
 import qrcode
 from io import BytesIO
 from flask import request, jsonify, g, url_for, current_app,send_file
@@ -13,7 +13,7 @@ from ..decorators import allow_cross_domain
 """
 
 @api.route('/code/route', methods=['GET'])
-@allow_cross_domain
+
 def gen_code_route():
     qr = qrcode.QRCode(
         version=1,
@@ -45,7 +45,7 @@ def gen_code_route():
 """
 
 @api.route('/code/server', methods=['GET'])
-@allow_cross_domain
+
 def gen_code_server():
     qr = qrcode.QRCode(
         version=1,
@@ -76,7 +76,7 @@ def gen_code_server():
 
 """
 @api.route('/code/sn', methods=['GET'])
-@allow_cross_domain
+
 def gen_code_sh():
 
     sn = request.args.get('sn')

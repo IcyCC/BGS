@@ -1,14 +1,13 @@
 from flask import g, jsonify, request, url_for
 from flask_httpauth import HTTPBasicAuth
 from flask_login import login_user
-from ..models import Operator
+from app.models import Operator
 import requests
-from . import api
+from app.operator import operator
 from sqlalchemy.exc import OperationalError
 from flask_login import current_user, login_required, logout_user
-from ..decorators import allow_cross_domain
 from flask_mail import Mail, Message
-from .. import mail, db
+from app import mail, db
 auth = HTTPBasicAuth()
 
 @auth.verify_password
@@ -27,9 +26,12 @@ def verify_password(operatorname_or_token, password):
             return True
         else:
             return False
+"""
+用于判断密码是否正确
+"""
 
-@api.route('/active')
-@allow_cross_domain
+@operator.route('/active')
+
 def operator_active():
     req = requests.session()
     try:
@@ -37,12 +39,14 @@ def operator_active():
         if res.status_code !=200:
             return jsonify({
                 'status':'fail',
-                'reason':'the web does not connect to the outer net'
+                'reason':'the web does not connect to the outer net',
+                'operators': []
             })
     except:
         return jsonify({
             'status': 'fail',
-            'reason': 'the web does not connect to the outer net'
+            'reason': 'the web does not connect to the outer net',
+            'operators': []
         })
     name = request.args['name']
     operator = Operator.query.filter(Operator.operator_name == name).first()
@@ -55,7 +59,7 @@ def operator_active():
         return jsonify({
             'status':'fail',
             'reason':'the mail has been posted failed',
-            'data':[]
+            'operators':[]
         })
     try:
         operator.active = True
@@ -70,36 +74,40 @@ def operator_active():
     return jsonify({
         'status':'success',
         'reason':'the operator has been actived',
-        'data':[operator.to_json()]
+        'operators':[operator.to_json()]
     })
 
 """
-@api {GET} /api/v1.0/login 通过得到的账号确定密码是否正确(json数据)
+@api {GET} /operator/active 用于激活账号（需要服务器支持使stmp）
 @apiGroup authentication
-@apiName 通过得到的账号约定密码是否正确
 
-@apiParam (params) {String} tel 操作者的电话号码
-@apiParam (params) {String} password 操作者的密码
-
-@apiSuccess {Array} status 返回密码的正确与否
+@apiSuccess {Array} status 返回账号是否激活成功
+@apiSuccess {Array} operators 返回激活成功的账号信息
 
 @apiSuccessExample Success-Response:
-    HTTP/1.1 200 OK
+    激活成功
     {
         "status":"success",
-        "reason":"the password is true"
+        "reason":"the operator has been actived",
+        "operators":[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }]
     }
-    密码错误
+    激活失败
     {
         "status":"fail",
-        "reason":"the password is wrong"
+        "reason":"",
+        "operators":[]
     }
 """
 
 
-@api.route('/tokens')
+@operator.route('/tokens')
 @auth.login_required
-@allow_cross_domain
 def get_auth_token():
     token = g.current_user.generate_auth_token()
     return jsonify({
@@ -109,7 +117,7 @@ def get_auth_token():
     })
 
 """
-@api {GET} /api/v1.0/tokens 根据登陆的账号密码获得token
+@api {GET} /operator/tokens 根据登陆的账号密码获得token
 @apiGroup authentication
 @apiName 根据登陆的账号密码获得token
 
@@ -127,8 +135,7 @@ def get_auth_token():
 
 """
 
-@api.route('/login', methods=['POST'])
-@allow_cross_domain
+@operator.route('/login', methods=['POST'])
 def login():
     username = request.json.get("username")
     password = request.json.get("password")
@@ -139,14 +146,64 @@ def login():
 
     login_user(operator, remember=True)
 
-    return jsonify(status="success", reason="", data=[operator.to_json()])
+    return jsonify(status="success", reason="", operators=[operator.to_json()])
 
-@api.route("/logout", methods=["GET"])
+"""
+@api {POST} /operator/login 登录账号(json数据)
+@apiGroup operator
+@apiName 新建操作者信息
+@apiParam (params) {String} hospital 医院名称
+@apiParam (params) {String} office 科室
+@apiParam (params) {String} password 新的密码
+
+@apiSuccess {Array} status 登陆情况
+@apiSuccess {Array} operator 操作人员信息
+
+@apiSuccessExample Success-Response:
+    登陆成功
+    {
+        "operators":[{
+            "url":"医生地址",
+            "hospital":"医生医院名称",
+            "office":"医生科室",
+            "lesion":"医生分区",
+            "operator_name":"医生姓名"
+        }],
+        "status":"success",
+        "reason":''
+    }
+    更改失败
+    {
+        "status":"fail",
+        "reason":"",
+        "operators":[]
+    }
+"""
+
+
+@operator.route("/logout", methods=["GET"])
 @login_required
-@allow_cross_domain
 def logout():
     if request.method == "GET":
         logout_user()
-        return jsonify(status="success", reason="", data=[])
+        return jsonify(status="success", reason="", operators=[])
+
+"""
+@api {GET} /operator/logout 登出账号(json数据)
+@apiGroup operator
+@apiName 新建操作者信息
+
+@apiParam (Login) {String} login 登录才可以访问
+
+@apiSuccess {Array} status 登出情况
+
+@apiSuccessExample Success-Response:
+    登出成功
+    {
+        "status":"success",
+        "reason":'',
+        "operators":[]
+    }
+"""
 
 

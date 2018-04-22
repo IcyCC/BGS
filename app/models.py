@@ -52,7 +52,7 @@ class Operator(db.Model, UserMixin):
 
     def to_json(self):
         json_operator = {
-            'url':url_for('api.get_operator', id = self.id),
+            'url':url_for('operator.get_operator', id = self.id),
             'hospital':self.hospital,
             'office':self.office,
             'lesion':self.lesion,
@@ -91,14 +91,14 @@ class Patient(db.Model):
 
     def to_json(self):
         json_patient = {
-            'url': url_for('api.get_patient', id=self.patient_id),
+            'url': url_for('patient.get_patient', id=self.patient_id),
             'patient_name':self.patient_name,
             'sex':self.sex,
             'tel':self.tel,
             'age':self.age,
             'doctor':self.doctor_name,
             'id_number':self.id_number,
-            'datas':url_for('api.get_patient_datas', id = self.patient_id)
+            'datas':url_for('patient.get_patient_datas', id = self.patient_id)
         }
         return json_patient
 
@@ -128,8 +128,8 @@ class Data(db.Model):
 
     def to_json(self):
         json_data = {
-            'url':url_for('api.get_data', id = self.data_id),
-            'patient':url_for('api.get_patient', id = self.patient.patient_id),
+            'url':url_for('data.get_data', id = self.data_id),
+            'patient':url_for('patient.get_patient', id = self.patient.patient_id),
             'sn':self.sn,
             'id_number':self.id_number,
             'time':str(self.time)[0:5],
@@ -140,7 +140,7 @@ class Data(db.Model):
 
     def to_guard_json(self):
         json_data = {
-            'url': url_for('api.get_data', id=self.data_id),
+            'url': url_for('data.get_data', id=self.data_id),
             'sn': self.sn,
             'id_number': self.id_number,
             'time': str(self.time)[0:5],
@@ -183,7 +183,7 @@ class Accuchek(db.Model):
 
     def to_json(self):
         json_accuchek = {
-            'url':url_for('api.get_accuchek', id = self.accuchek_id),
+            'url':url_for('accuchek.get_accuchek', id = self.accuchek_id),
             'sn':self.sn,
             'bed_id':self.bed_id
         }
@@ -225,7 +225,7 @@ class Bed(db.Model):
     def bed_information(self):
         patient = self.patient
         json_bed_information = {
-            'url':url_for('api.get_bed', id=self.bed_id),
+            'url':url_for('bed.get_bed', id=self.bed_id),
             'sn':self.sn,
             'sex': patient.sex,
             'tel': patient.tel,
@@ -239,7 +239,7 @@ class Bed(db.Model):
 
     def to_json(self):
         json_bed = {
-            'url':url_for('api.get_bed', id = self.bed_id),
+            'url':url_for('bed.get_bed', id = self.bed_id),
             'id_number': self.id_number,
             'sn': self.sn
         }
@@ -264,7 +264,7 @@ class Bed(db.Model):
             datas = [data.to_json() for data in current_datas]
 
         json_bed = {
-            'url': url_for('api.get_bed', id=self.bed_id),
+            'url': url_for('bed.get_bed', id=self.bed_id),
             'id_number': self.id_number,
             'sn': self.sn,
             'bed_id': self.bed_id,
@@ -303,7 +303,7 @@ class BedHistory(db.Model):
 
     def to_json(self):
         json_history = {
-            'url':url_for('api.get_history', id = self.history_id),
+            'url':url_for('bed.get_history', id = self.history_id),
             'bed_id':self.bed_id,
             'time':str(self.time)[0:5],
             'date':str(self.date),

@@ -241,7 +241,6 @@ def change_patient(id):
 
 @patient.route('/patients/<int:id>')
 @login_required
-
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
     return jsonify({

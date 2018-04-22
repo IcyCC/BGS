@@ -1,4 +1,4 @@
-from app.gencode import api
+from . import operator
 import os
 from app import db
 from flask import request, jsonify, g, url_for, current_app, make_response
@@ -6,7 +6,7 @@ from app.models import Operator
 from .authentication import auth
 from sqlalchemy.exc import OperationalError
 from flask_login import login_required, current_user, logout_user
-@api.route('/operators', methods = ['POST'])
+@operator.route('/operators', methods = ['POST'])
 def new_operator():
     tel = request.json['tel']
     operator = Operator.query.filter(Operator.tel == tel).first()
@@ -66,7 +66,7 @@ def new_operator():
 """
 
 
-@api.route('/operators')
+@operator.route('/operators')
 @login_required
 def get_operators():
     operators = Operator.query
@@ -80,10 +80,10 @@ def get_operators():
         operators = pagination.items
         prev = None
         if pagination.has_prev:
-            prev = url_for('api.get_operators', page=page - 1)
+            prev = url_for('operator.get_operators', page=page - 1)
         next = None
         if pagination.has_next:
-            next = url_for('api.get_operators', page=page + 1)
+            next = url_for('operator.get_operators', page=page + 1)
         return jsonify({
             'operators': [operator.to_json() for operator in operators],
             'prev': prev,
@@ -140,7 +140,7 @@ def get_operators():
 
 
 
-@api.route('/operators/<int:id>')
+@operator.route('/operators/<int:id>')
 @login_required
 
 def get_operator(id):
@@ -180,7 +180,7 @@ def get_operator(id):
     HTTP/1.1 404 对应id的医生不存在 
 """
 
-@api.route('/operators/<int:id>', methods = ['DELETE'])
+@operator.route('/operators/<int:id>', methods = ['DELETE'])
 @login_required
 
 def delete_operator(id):
@@ -240,7 +240,7 @@ def delete_operator(id):
 """
 
 
-@api.route('/operators/<int:id>', methods = ['PUT'])
+@operator.route('/operators/<int:id>', methods = ['PUT'])
 
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
@@ -305,7 +305,7 @@ def change_operator(id):
 """
 
 
-@api.route('/now')
+@operator.route('/now')
 @login_required
 def get_operator_now():
     operator = current_user
@@ -340,7 +340,7 @@ def get_operator_now():
 """
 
 
-@api.route('/now/password', methods = ['POST'])
+@operator.route('/now/password', methods = ['POST'])
 @login_required
 
 def operator_password():
@@ -398,7 +398,7 @@ def operator_password():
     } 
 """
 
-@api.route('/change_password', methods = ['POST'])
+@operator.route('/change_password', methods = ['POST'])
 def change_password():
     hospital = request.json['hospital']
     office = request.json['office']

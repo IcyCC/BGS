@@ -3,7 +3,7 @@ import qrcode
 from io import BytesIO
 from flask import request, jsonify, g, url_for, current_app,send_file
 import time
-from ..decorators import allow_cross_domain
+from . import gencode
 
 """
 @api {GET} /api/v1.0/code/route 获得设置wifi网络的二维码
@@ -12,8 +12,7 @@ from ..decorators import allow_cross_domain
 
 """
 
-@api.route('/code/route', methods=['GET'])
-
+@gencode.route('/code/route', methods=['GET'])
 def gen_code_route():
     qr = qrcode.QRCode(
         version=1,
@@ -44,7 +43,7 @@ def gen_code_route():
 
 """
 
-@api.route('/code/server', methods=['GET'])
+@gencode.route('/code/server', methods=['GET'])
 
 def gen_code_server():
     qr = qrcode.QRCode(
@@ -75,7 +74,7 @@ def gen_code_server():
 @apiParam (params) {String} sn 8位sn码 会自动转换成大写.
 
 """
-@api.route('/code/sn', methods=['GET'])
+@gencode.route('/code/sn', methods=['GET'])
 
 def gen_code_sh():
 

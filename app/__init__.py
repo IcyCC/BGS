@@ -36,8 +36,8 @@ def create_app(config_name):
 
     app.template_folder='/home/zhandong/PycharmProjects/accu_chek/templates'
 
-    from .gencode import gen_code
-    app.register_blueprint(gen_code, url_prefix='/gencode')
+    from .gencode import gencode
+    app.register_blueprint(gencode, url_prefix='/gencode')
 
     from .accuchek import accuchek
     app.register_blueprint(accuchek, url_prefix='/accuchek')
@@ -50,6 +50,9 @@ def create_app(config_name):
 
     from .data import data
     app.register_blueprint(data, url_prefix='/data')
+
+    from .patient import patient
+    app.register_blueprint(patient, url_prefix='/patient')
 
     CORS(app, supports_credentials=True)
 

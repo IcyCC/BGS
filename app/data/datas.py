@@ -242,6 +242,11 @@ def get_datas():
 def get_datas_guard():
     if 'sn' in request.args:
         sn = request.args['sn']
+    else:
+        return jsonify({
+            'status':'fail',
+            'reason':'no sn in request'
+        })
     data_fields = [i for i in GuargData.__table__.c._data]
     fields = data_fields
     datas = GuargData.query

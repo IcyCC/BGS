@@ -1,0 +1,13 @@
+{
+  "net": {
+    "host": "192.168.1.69",
+    "port": 36751,
+    "ssid":"vis_ap",
+    "auth_method":"WPA2PSK",
+    "crypto_method":"AES",
+    "password":"sadasd"
+  },
+  "server": {
+    "port": 8080
+  }
+}

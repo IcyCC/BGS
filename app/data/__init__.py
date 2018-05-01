@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-data = Blueprint('data', __name__)
+data_blueprint = Blueprint('data', __name__)
 
 from . import datas

@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-gencode = Blueprint('gencode', __name__)
+gencode_blueprint = Blueprint('gencode', __name__)
 
 from . import gen_code

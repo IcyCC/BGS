@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-accuchek = Blueprint('accuchek', __name__)
+accuchek_blueprint = Blueprint('accuchek', __name__)
 
 from . import accucheks

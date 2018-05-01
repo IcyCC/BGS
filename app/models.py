@@ -7,6 +7,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_login import UserMixin, AnonymousUserMixin,current_user
 from app import login_manager
 
+
 class Operator(db.Model, UserMixin):
     __tablename__ = 'operators'
     id = db.Column(db.Integer, primary_key=True)
@@ -312,7 +313,7 @@ class BedHistory(db.Model):
         }
         return json_history
 
-class GuargData(db.Model):
+class SpareData(db.Model):
     __tablename__ = 'guarddatas'
     data_id = db.Column(db.Integer, primary_key=True)
     sn = db.Column(db.String(32), nullable=False)
@@ -346,6 +347,23 @@ class GuargData(db.Model):
 
 @login_manager.user_loader
 def load_user(id):
+    print('load_user')
     return Operator.query.get(int(id))
 
 
+@login_manager.request_loader
+def load_user_from_request(request):
+    api_key = request.headers.get('Authorization')
+    if api_key:
+        api_key = api_key.split(' ')[1]
+        print(api_key)
+        obj = jwtDecoding(api_key)
+        print(obj)
+        if obj:
+            user = Operator.query.get(int(obj['id']))
+            return user
+        else:
+            return None
+
+
+from app.operator.authentication import jwtDecoding, jwtEncoding

@@ -1,4 +1,4 @@
-from . import api
+from . import gencode_blueprint
 import qrcode
 from io import BytesIO
 from flask import request, jsonify, g, url_for, current_app,send_file
@@ -11,7 +11,7 @@ from ..decorators import allow_cross_domain
 @apiName 设置server
 """
 
-@api.route('/code/route', methods=['GET','POST'])
+@gencode_blueprint.route('/code/route', methods=['GET','POST'])
 @allow_cross_domain
 def gen_code_route():
     ssid = request.form.get("ssid")
@@ -46,7 +46,7 @@ def gen_code_route():
 @apiName 设置网络
 """
 
-@api.route('/code/server', methods=['GET'])
+@gencode_blueprint.route('/code/server', methods=['GET'])
 @allow_cross_domain
 def gen_code_server():
     qr = qrcode.QRCode(
@@ -75,7 +75,7 @@ def gen_code_server():
 @apiName 设置sn
 @apiParam (params) {String} sn 8位sn码 会自动转换成大写.
 """
-@api.route('/code/sn', methods=['GET'])
+@gencode_blueprint.route('/code/sn', methods=['GET'])
 @allow_cross_domain
 def gen_code_sh():
 

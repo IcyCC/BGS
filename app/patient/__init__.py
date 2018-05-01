@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-patient = Blueprint('patient', __name__)
+patient_blueprint = Blueprint('patient', __name__)
 
 from . import patients

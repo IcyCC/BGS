@@ -1,13 +1,20 @@
-from app.data import data
+from app.data import data_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
-from app.models import Patient, Data, Accuchek, GuargData
+from app.models import Patient, Data, Accuchek, SpareData
 from sqlalchemy.exc import OperationalError
 from flask_login import login_required
+import json
+
+def std_json(d):
+    r = {}
+    for k, v in d.items():
+        r[k] = json.loads(v)
+    return r
 
 sn_numbers = ['00000000', '11111111']
 @login_required
-@data.route('/datas/auto', methods=['POST'])
+@data_blueprint.route('/datas/auto', methods=['POST'])
 def new_data_auto():
     if request.json['sn'] not in sn_numbers:
         data = Data()
@@ -34,7 +41,7 @@ def new_data_auto():
             'reason': 'the data has been added'
         })
     else:
-        data = GuargData()
+        data = SpareData()
         for k in request.json:
             if hasattr(data, k):
                 setattr(data, k, request.json[k])
@@ -55,7 +62,7 @@ def new_data_auto():
 
 
 """
-@api {POST} /data/datas/auto 添加数据(不用手动输入病人数据)(json数据)
+@api {POST} /datas/auto 添加数据(不用手动输入病人数据)(json数据)
 @apiGroup datas
 @apiName 添加数据
 
@@ -88,7 +95,7 @@ def new_data_auto():
 """
 
 
-@data.route('/datas/artificial', methods=['POST'])
+@data_blueprint.route('/datas/artificial', methods=['POST'])
 @login_required
 def new_data_artificial():
     data = Data()
@@ -128,7 +135,7 @@ def new_data_artificial():
 
 
 """
-@api {POST} /data/datas/artificial 添加数据(不用手动输入病人数据)(json数据)
+@api {POST} /datas/artificial 添加数据(不用手动输入病人数据)(json数据)
 @apiGroup datas
 @apiName 添加数据
 
@@ -163,43 +170,45 @@ def new_data_artificial():
 """
 
 
-@data.route('/datas')
+@data_blueprint.route('/datas')
 @login_required
 def get_datas():
     data_fields = [i for i in Data.__table__.c._data]
     fields = data_fields
-    datas = Data.query
-    for k, v in request.args.items():
+    datas = Data.query.order_by(Data.date.desc(), Data.time.desc())
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    for k, v in std_json(request.args).items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
-    datas = datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden == 0)
-    if datas.count() != 0:
-        page = request.args.get('page', 1, type=int)
-        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        datas = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('data.get_datas', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('data.get_datas', page=page + 1)
-        return jsonify({
-            'datas': [data.to_json() for data in datas],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'pages': pagination.pages,
-            'status': 'success',
-            'reason': 'there are the reasons'
-        })
-    else:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'there is no data'
-        })
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            datas = datas.limit(limit).from_self()
+    page = request.args.get('page', 1, type=int)
+    pagination = datas.paginate(page, per_page=per_page, error_out=False)
+    datas = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('data_blueprint.get_datas', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('data_blueprint.get_datas', page=page + 1)
+    return jsonify({
+        'datas': [data.to_json() for data in datas],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 
 """
-@api {GET} /data/datas 获取所有数据信息
+@api {GET} /datas 获取所有数据信息
 @apiGroup datas
 @apiName 获取所有数据信息
 
@@ -222,64 +231,61 @@ def get_datas():
             "sn":"血糖仪sn码",
             "url":"数据地址"
         }],
-        "count":"总数量",
         "prev":"上一页地址",
-        "next":"下一页地址".
-        "pages":'总页数",
-        "status":"success",
-        "reason":"there are the datas"
+        "next":"下一页地址",
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
-    没有数据
-    {
-        "status":"fail",
-        "reason":"there is no data"
-    } 
 
 """
 
-@data.route('/guard')
+@data_blueprint.route('/sparedata')
 @login_required
-def get_datas_guard():
-    if 'sn' in request.args:
-        sn = request.args['sn']
-    else:
+def get_datas_sparedata():
+    if 'sn' not in request.args:
         return jsonify({
             'status':'fail',
             'reason':'no sn in request'
         })
-    data_fields = [i for i in GuargData.__table__.c._data]
-    fields = data_fields
-    datas = GuargData.query
-    for k, v in request.args.items():
+    fields = [i for i in SpareData.__table__.c._data]
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    datas = SpareData.query.order_by(SpareData.date.desc(), SpareData.time.desc())
+    for k, v in std_json(request.args).items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
-    datas = datas.order_by(GuargData.date.desc(), GuargData.time.desc()).filter(GuargData.hidden == 0).filter(GuargData.sn == sn)
-    if datas.count() != 0:
-        page = request.args.get('page', 1, type=int)
-        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        datas = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('data.get_datas_guard', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('data.get_datas_guard', page=page + 1)
-        return jsonify({
-            'datas': [data.to_full_json() for data in datas],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'pages': pagination.pages,
-            'status': 'success',
-            'reason': 'there are the reasons'
-        })
-    else:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'there is no data'
-        })
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            datas = datas.limit(limit).from_self()
+    page = request.args.get('page', 1, type=int)
+    pagination = datas.paginate(page, per_page=per_page, error_out=False)
+    datas = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('data_blueprint.get_datas_sparedata', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('data_blueprint.get_datas_sparedata', page=page + 1)
+    return jsonify({
+        'datas': [data.to_full_json() for data in datas],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 """
-@api {GET} /data/guard 获取备用机数据
+@api {GET} /sparedata 获取备用机数据
 @apiGroup datas
 @apiName 获取备用机数据
 
@@ -307,23 +313,21 @@ def get_datas_guard():
             "url":"数据地址",
             "glucose":"血糖值"
         }],
-        "count":"总数量",
         "prev":"上一页地址",
-        "next":"下一页地址".
-        "pages":'总页数",
-        "status":"success",
-        "reason":"there are the datas"
+        "next":"下一页地址",
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
-    没有数据
-    {
-        "status":"fail",
-        "reason":"there is no data"
-    } 
 
 """
 
 
-@data.route('/datas/<int:id>')
+@data_blueprint.route('/datas/<int:id>')
 @login_required
 def get_data(id):
     data = Data.query.get_or_404(id)
@@ -335,7 +339,7 @@ def get_data(id):
 
 
 """
-@api {GET} /data/datas/<int:id> 根据id获取数据信息
+@api {GET} /datas/<int:id> 根据id获取数据信息
 @apiGroup datas
 @apiName 根据id获取数据信息
 
@@ -361,10 +365,10 @@ def get_data(id):
 
 """
 
-@data.route('/guard/<int:id>', methods=['PUT'])
+@data_blueprint.route('/sparedata/<int:id>', methods=['PUT'])
 @login_required
-def change_guard_data(id):
-    data = GuargData.query.get_or_404(id)
+def change_sparedata_data(id):
+    data = SpareData.query.get_or_404(id)
     for k in request.json:
         if hasattr(data, k):
             setattr(data, k, request.json[k])
@@ -380,7 +384,7 @@ def change_guard_data(id):
     return jsonify(data.to_full_json())
 
 """
-@api {PUT} /data/gurad/<int:id> 根据id修改备用机数据
+@api {PUT} /sparedata/<int:id> 根据id修改备用机数据
 @apiGroup datas
 @apiName 根据id修改备用机数据
 
@@ -411,10 +415,10 @@ def change_guard_data(id):
 """
 
 
-@data.route('/guard/<int:id>', methods=['DELETE'])
+@data_blueprint.route('/sparedata/<int:id>', methods=['DELETE'])
 @login_required
-def delete_guard_data(id):
-    data = GuargData.query.get_or_404(id)
+def delete_sparedata_data(id):
+    data = SpareData.query.get_or_404(id)
     try:
         db.session.delete(data)
         db.session.commit()
@@ -430,7 +434,7 @@ def delete_guard_data(id):
     })
 
 """
-@api {DELTET} /data/gurad/<int:id> 根据id删除备用机数据
+@api {DELTET} /sparedata/<int:id> 根据id删除备用机数据
 @apiGroup datas
 @apiName 根据id删除备用机数据
 
@@ -448,10 +452,10 @@ def delete_guard_data(id):
 
 """
 
-@data.route('/datas/guard/<int:id>')
+@data_blueprint.route('/sparedata/<int:id>')
 @login_required
-def get_guard_data(id):
-    data = GuargData.query.filter(GuargData.data_id == id).first()
+def get_sparedata_data(id):
+    data = SpareData.query.filter(SpareData.data_id == id).first()
     return jsonify({
         'status':'success',
         'reason':'',
@@ -459,7 +463,7 @@ def get_guard_data(id):
     })
 
 """
-@api {PUT} /data/gurad/<int:id> 根据id查询备用机数据
+@api {PUT} /sparedata/<int:id> 根据id查询备用机数据
 @apiGroup datas
 @apiName 根据id查询备用机数据
 
@@ -490,7 +494,7 @@ def get_guard_data(id):
 """
 
 
-@data.route('/datas/<int:id>', methods=['PUT'])
+@data_blueprint.route('/datas/<int:id>', methods=['PUT'])
 @login_required
 def change_data(id):
     data = Data.query.get_or_404(id)
@@ -512,8 +516,8 @@ def change_data(id):
         })
     return jsonify({
         'datas': [{
-            'url': url_for('data.get_data', id=data.data_id),
-            'patient': url_for('data.get_patient', id=patient.patient_id),
+            'url': url_for('data_blueprint.get_data', id=data.data_id),
+            'patient': url_for('data_blueprint.get_patient', id=patient.patient_id),
             'sn': data.sn,
             'id_number': data.id_number,
             'time': str(data.time),
@@ -526,7 +530,7 @@ def change_data(id):
 
 
 """
-@api {PUT} /data/datas/<int:id> 更改id所代表的数据的信息
+@api {PUT} /datas/<int:id> 更改id所代表的数据的信息
 @apiGroup datas
 @apiName 更改id所代表的数据的信息
 
@@ -567,7 +571,7 @@ def change_data(id):
 """
 
 
-@data.route('/datas/<int:id>', methods=['DELETE'])
+@data_blueprint.route('/datas/<int:id>', methods=['DELETE'])
 @login_required
 def delete_data(id):
     data = Data.query.get_or_404(id)
@@ -587,7 +591,7 @@ def delete_data(id):
 
 """
 
-@api {DELETE} /data/datas/<int:id> 删除id所代表的数据的信息
+@api {DELETE} /datas/<int:id> 删除id所代表的数据的信息
 @apiGroup datas
 @apiName 删除id所代表的数据的信息
 

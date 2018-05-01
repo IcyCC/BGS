@@ -1,43 +1,53 @@
-from app.bed import bed
+from app.bed import bed_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
 from app.models import Bed, Patient, Data, BedHistory
 from sqlalchemy.exc import OperationalError
 import datetime
 from flask_login import login_required
+import json
 
+def std_json(d):
+    r = {}
+    for k, v in d.items():
+        r[k] = json.loads(v)
+    return r
 
-@bed.route('/beds')
+@bed_blueprint.route('/beds')
 @login_required
 def get_beds():
     fields = [i for i in Bed.__table__.c._data]
     beds = Bed.query
-    for k, v in request.args.items():
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    for k, v in std_json(request.args).items():
         if k in fields:
             beds = beds.filter_by(**{k: v})
-    if beds:
-        page = request.args.get('page', 1, type=int)
-        pagination = beds.paginate(page, per_page=28, error_out=False)
-        beds = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('bed.get_beds', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('bed.get_beds', page=page + 1)
-        return jsonify({
-            'beds': [bed.to_full_information() for bed in beds],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'status': 'success',
-            'reason': 'there are the datas'
-        })
-    else:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'there is no data'
-        })
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            beds = beds.limit(limit).from_self()
+    page = request.args.get('page', 1, type=int)
+    pagination = beds.paginate(page, per_page=per_page, error_out=False)
+    beds = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('bed_blueprint.get_beds', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('bed_blueprint.get_beds', page=page + 1)
+    return jsonify({
+        'beds': [bed.to_full_information() for bed in beds],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 
 
 """
@@ -75,24 +85,22 @@ def get_beds():
             "sn":"血糖仪sn码",
             "url":"bed数据地址"
         }],
-        "count":"总数量",
         "prev":"上一页地址",
         "next":"下一页地址",
-        "reason":"there are the datas",
-        "status":"success"
-    }
-    没有数据
-    {
-        "status":"fail",
-        "reason":"there is no data"
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
 
 """
 
 
-@bed.route('/beds', methods=['POST'])
+@bed_blueprint.route('/beds', methods=['POST'])
 @login_required
-
 def new_bed():
     bed = Bed()
     bedhistory = BedHistory()
@@ -181,7 +189,7 @@ def new_bed():
 """
 
 
-@bed.route('/beds/<int:id>')
+@bed_blueprint.route('/beds/<int:id>')
 @login_required
 
 def get_bed(id):
@@ -235,7 +243,7 @@ def get_bed(id):
 """
 
 
-@bed.route('/beds/<int:id>', methods=['DELETE'])
+@bed_blueprint.route('/beds/<int:id>', methods=['DELETE'])
 @login_required
 
 def delete_bed(id):
@@ -282,7 +290,7 @@ def delete_bed(id):
 """
 
 
-@bed.route('/beds/<int:id>', methods=['PUT'])
+@bed_blueprint.route('/beds/<int:id>', methods=['PUT'])
 @login_required
 
 def change_bed(id):
@@ -409,7 +417,7 @@ def change_bed(id):
 """
 
 
-@bed.route('/beds/<int:id>/more')
+@bed_blueprint.route('/beds/<int:id>/more')
 @login_required
 
 def get_bed_more(id):
@@ -417,7 +425,7 @@ def get_bed_more(id):
     patient = bed.patient
     return jsonify({
         'patient': patient.to_json(),
-        'datas': url_for('bed.get_bed_moredatas', id=id),
+        'datas': url_for('bed_blueprint.get_bed_moredatas', id=id),
         'beds': bed.to_json(),
         'status': 'success',
         'reason': 'there is the data'
@@ -461,35 +469,43 @@ def get_bed_more(id):
 """
 
 
-@bed.route('/beds/<int:id>/more_data')
+@bed_blueprint.route('/beds/<int:id>/more_data')
 @login_required
 def get_bed_moredatas(id):
     bed = Bed.query.get_or_404(id)
-    datas = bed.datas.order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden==0)
-    if datas:
-        page = request.args.get('page', 1, type=int)
-        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        datas = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('bed.get_bed_moredatas', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('bed.get_bed_moredatas', page=page + 1)
-        return jsonify({
-            'datas': [data.to_json() for data in datas],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'pages': pagination.pages,
-            'status': 'success',
-            'reason': 'there is the data'
-        })
-    else:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'there is no data'
-        })
+    datas = bed.datas.order_by(Data.date.desc(), Data.time.desc())
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    fields = [i for i in Data.__table__.c._data]
+    for k, v in std_json(request.args).items():
+        if k in fields:
+            field = getattr(Data, k)
+            datas = datas.filter(field == v)
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            datas = datas.limit(limit).from_self()
+    page = request.args.get('page', 1, type=int)
+    pagination = datas.paginate(page, per_page=per_page, error_out=False)
+    datas = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('bed_blueprint.get_bed_moredatas', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('bed_blueprint.get_bed_moredatas', page=page + 1)
+    return jsonify({
+        'datas': [data.to_json() for data in datas],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 
 
 """
@@ -499,6 +515,7 @@ def get_bed_moredatas(id):
 @apiName 获取id所代表床位的全部数据的信息
 
 @apiParam (params) {Number} id 床位id 
+@apiParam (params) {Number} hidden 数据是否隐藏(0:未隐藏, 1:隐藏)
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回id所代表床位的全部数据的信息
@@ -515,12 +532,15 @@ def get_bed_moredatas(id):
             "id_number":"医疗卡号",
             "url":"数据信息地址"
         }],
-        "count":"总数量",
         "prev":"上一页地址",
         "next":"下一页地址",
-        "pages":"总页数",
-        "status":"success",
-        "reason":"there is the data"
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
 
 """

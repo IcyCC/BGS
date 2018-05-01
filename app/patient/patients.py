@@ -1,14 +1,19 @@
-from app.patient import patient
+from app.patient import patient_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
 from app.models import Patient, Data, Bed
 from sqlalchemy.exc import OperationalError
 from flask_login import login_required
+import json
 
+def std_json(d):
+    r = {}
+    for k, v in d.items():
+        r[k] = json.loads(v)
+    return r
 
-@patient.route('/patients', methods = ['POST'])
+@patient_blueprint.route('/patients', methods = ['POST'])
 @login_required
-
 def new_patient():
     id_number = request.json['id_number']
     bed_id = request.json['bed_id']
@@ -47,7 +52,7 @@ def new_patient():
 
 
 """
-@api {POST} /patient/patients 新建病人信息(json数据)
+@api {POST} /patients 新建病人信息(json数据)
 @apiGroup patients
 @apiName 新建病人信息
 
@@ -86,42 +91,41 @@ def new_patient():
 """
 
 
-@patient.route('/patients')
+@patient_blueprint.route('/patients')
 @login_required
-
 def get_patients():
     page = request.args.get('page', 1, type=int)
     fields = [i for i in Patient.__table__.c._data]
     patients = Patient.query
-    for k, v in request.args.items():
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    for k, v in std_json(request.args).items():
         if k in fields:
             patients = patients.filter_by(**{k: v})
-    if patients.count()!=0:
-        pagination = patients.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        patients = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('patient.get_patients', page = page-1)
-        next = None
-        if pagination.has_next:
-            next = url_for('patient.get_patients', page = page+1)
-        return jsonify({
-            'patients':[patient.to_json() for patient in patients],
-            'prev':prev,
-            'next':next,
-            'count':pagination.total,
-            "pages":pagination.pages,
-            'status':'success',
-            'reason':'there are the datas'
-        })
-    else:
-        return jsonify({
-            'status':'fail',
-            'reason':'there is no data'
-        })
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            patients = patients.limit(limit).from_self()
+    pagination = patients.paginate(page, per_page=per_page, error_out=False)
+    patients = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('patient_blueprint.get_patients', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('patient_blueprint.get_patients', page=page + 1)
+    return jsonify({
+        'patients': [patient.to_json() for patient in patients],
+        'prev': prev,
+        'next': next,
+        'count': pagination.total,
+        "pages": pagination.pages,
+        'status': 'success',
+        'reason': 'there are the datas'
+    })
 
 """
-@api {GET} /patient/patients 获取所有病人数据信息(地址栏筛选)
+@api {GET} /patients 获取所有病人数据信息(地址栏筛选)
 @apiGroup patients
 @apiName 获取所有病人数据
 
@@ -163,7 +167,7 @@ def get_patients():
 """
 
 
-@patient.route('/patients/<int:id>', methods = ['PUT'])
+@patient_blueprint.route('/patients/<int:id>', methods = ['PUT'])
 @login_required
 
 def change_patient(id):
@@ -196,7 +200,7 @@ def change_patient(id):
     })
 
 """
-@api {PUT} /patient/patients/<int:id> 修改id代表的病人信息(json数据)
+@api {PUT} /patients/<int:id> 修改id代表的病人信息(json数据)
 @apiGroup patients
 @apiName 修改id代表的病人信息
 
@@ -239,7 +243,7 @@ def change_patient(id):
 """
 
 
-@patient.route('/patients/<int:id>')
+@patient_blueprint.route('/patients/<int:id>')
 @login_required
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
@@ -250,7 +254,7 @@ def get_patient(id):
     })
 
 """
-@api {GET} /patient/patients/<int:id> 根据id获取病人信息
+@api {GET} /patients/<int:id> 根据id获取病人信息
 @apiGroup patients
 @apiName 根据id获取病人信息
 
@@ -282,7 +286,7 @@ def get_patient(id):
 """
 
 
-@patient.route('/patients/<int:id>', methods = ['DELETE'])
+@patient_blueprint.route('/patients/<int:id>', methods = ['DELETE'])
 @login_required
 
 def delete_patients(id):
@@ -313,7 +317,7 @@ def delete_patients(id):
     })
 
 """
-@api {DELETE} /patient/patients/<int:id> 删除id所代表的病人信息
+@api {DELETE} /patients/<int:id> 删除id所代表的病人信息
 @apiGroup patients
 @apiName 删除id所代表的病人信息
 
@@ -345,9 +349,8 @@ def delete_patients(id):
 """
 
 
-@patient.route('/patients/get-from-id')
+@patient_blueprint.route('/patients/getfromid')
 @login_required
-
 def get_from_id():
     id_number = request.args.get('id_number')
     patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -364,7 +367,7 @@ def get_from_id():
         })
 
 """
-@api {GET} /patient/patients/get-from-id 根据医疗卡号获取病人信息
+@api {GET} /patients/getfromid 根据医疗卡号获取病人信息
 @apiGroup patients
 @apiName 根据医疗卡号获取病人信息
 
@@ -397,39 +400,45 @@ def get_from_id():
 """
 
 
-@patient.route('/patients/<int:id>/datas')
+@patient_blueprint.route('/patients/<int:id>/datas')
 @login_required
-
 def get_patient_datas(id):
     patient = Patient.query.get_or_404(id)
-    datas = patient.datas.filter(Data.hidden==0)
-    if datas.count()!=0:
-        page = request.args.get('page', 1, type=int)
-        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        datas = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('patient.get_patient_datas', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('patient.get_patient_datas', page=page + 1)
-        return jsonify({
-            'datas': [data.to_json() for data in datas],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'pages':pagination.pages,
-            'status':'success',
-            'reason':'there are the datas'
-        })
-    else:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'there is no data'
-        })
+    fields = [i for i in Data.__table__.c._data]
+    datas = patient.datas
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    for k, v in std_json(request.args).items():
+        if k in fields:
+            datas = datas.filter(getattr(Data, k) == v)
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            datas = datas.limit(limit).from_self()
+    page = request.args.get('page', 1, type=int)
+    pagination = datas.paginate(page, per_page=per_page, error_out=False)
+    datas = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('patient_blueprint.get_patient_datas', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('patient_blueprint.get_patient_datas', page=page + 1)
+    return jsonify({
+        'datas': [data.to_json() for data in datas],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 
 """
-@api {GET} /patient/patients/<int:id>/datas 获取id所代表的病人的数据
+@api {GET} /patients/<int:id>/datas 获取id所代表的病人的数据
 @apiGroup patients
 @apiName 获取id所代表的病人的数据
 
@@ -452,15 +461,13 @@ def get_patient_datas(id):
         }]，
         "prev":"上一页地址",
         "next":"下一页地址",
-        "count":"总数量",
-        "pages":"总页数",
-        "status":"success",
-        "reason":"there are the datas"    
-    }
-    没有数据
-    {
-        "status":"fail",
-        "reason":"there is no data"
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
     @apiError (Error 4xx) 404 对应id的病人不存在
 
@@ -469,16 +476,28 @@ def get_patient_datas(id):
 """
 
 
-@patient.route('/patients/history')
+@patient_blueprint.route('/patients/history')
 @login_required
 
 def patients_history():
     datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
-    patient_name = request.args.get('patient_name')
-    sex = request.args.get('sex')
-    age = request.args.get('age')
-    tel = request.args.get('tel')
-    id_number = request.args.get('id_number')
+    patient_field = [i for i in Patient.__table__.c._data]
+    data_field = [i for i in Data.__table__.c._data]
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    for k, v in std_json(request.args).items():
+        if k in patient_field:
+            if hasattr(Patient, k):
+                field = getattr(Patient, k)
+                datas = datas.filter(field == v)
+        if k in data_field:
+            if hasattr(Data, k):
+                field = getattr(Data, k)
+                datas = datas.filter(field == v)
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+            datas = datas.limit(limit).from_self()
     max_age = request.args.get('max_age')
     min_age = request.args.get('min_age')
     max_glucose = request.args.get('max_glucose')
@@ -489,16 +508,6 @@ def patients_history():
     end_time1 = str(end_time)[0:6]+'59'
     begin_date = request.args.get('begin_date')
     end_date = request.args.get('end_date')
-    if patient_name:
-        datas = datas.filter(Patient.patient_name == patient_name)
-    if sex:
-        datas = datas.filter(Patient.sex == sex)
-    if age:
-        datas = datas.filter(Patient.age == age)
-    if tel:
-        datas = datas.filter(Patient.tel == tel)
-    if id_number:
-        datas = datas.filter(Patient.id_number == id_number)
     if max_age:
         datas = datas.filter(Patient.age <= max_age)
     if min_age:
@@ -516,33 +525,30 @@ def patients_history():
     if begin_date:
         datas = datas.filter(Data.date >= begin_date)
     print(datas.count())
-    if datas.count()!=0:
-        page = request.args.get('page', 1, type=int)
-        pagination = datas.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        datas = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('patient.patients_history', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('patient.patients_history', page=page + 1)
-        return jsonify({
-            'datas': [data.to_full_json() for data in datas],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'pages':pagination.pages,
-            'status':'success',
-            'reason':'there are the datas'
-        })
-    else:
-        return jsonify({
-            'status':'fail',
-            'reason':'there is no data'
-        })
+    page = request.args.get('page', 1, type=int)
+    pagination = datas.paginate(page, per_page=per_page, error_out=False)
+    datas = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('patient_blueprint.patients_history', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('patient_blueprint.patients_history', page=page + 1)
+    return jsonify({
+        'datas': [data.to_full_json() for data in datas],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 
 """
-@api {GET} /patient/patients/history 获取病人历史信息(浏览器栏筛选)
+@api {GET} /patients/history 获取病人历史信息(浏览器栏筛选)
 @apiGroup patients
 @apiName 获取id所代表的病人的数据
 
@@ -579,15 +585,13 @@ def patients_history():
         }],
         "prev":"上一页地址",
         "next":"下一页地址",
-        "count":"总数量",
-        "pages":"总页数",
-        "status":"success",
-        "reason":"there are the datas"    
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
-    没有数据
-    {
-        "status":"fail",
-        "reason":"there is no data"
-    } 
 """
 

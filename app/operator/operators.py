@@ -53,6 +53,7 @@ def new_operator():
     host = 'http://101.200.52.233:8080'
     msg.body = 'the operator name is %s, the operator id is%id, the operator url is %s%s' % (
     operator.operator_name, operator.id, host, url_for('operator_blueprint.get_operator', id=operator.id))
+    # mail.send(msg)
     try:
         mail.send(msg)
     except:
@@ -130,6 +131,7 @@ def get_operators():
     operators = Operator.query
     fields = [i for i in Operator.__table__.c._data]
     per_page = current_app.config['PATIENTS_PRE_PAGE']
+    limit = None
     for k, v in std_json(request.args).items():
         if k in fields:
             operators = operators.filter_by(**{k: v})
@@ -137,7 +139,7 @@ def get_operators():
             per_page = v
         if k == 'limit':
             limit = v
-            operators = operators.limit(limit).from_self()
+    operators = operators.limit(limit).from_self() if limit is not None else operators.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = operators.paginate(page, per_page=per_page, error_out=False)
     operators = pagination.items
@@ -165,6 +167,8 @@ def get_operators():
 @apiGroup operator
 @apiName 获取查询查询操作者
 
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (params) {String} operator_name 医生姓名
 @apiParam (params) {String} hospital 医院名称
 @apiParam (params) {String} office 科室
@@ -184,6 +188,7 @@ def get_operators():
             "url":"医生地址",
             "hospital":"医生医院名称",
             "office":"医生科室",
+            "active":"是否被激活",
             "lesion":"医生分区",
             "operator_name":"医生姓名"
         }],
@@ -300,27 +305,21 @@ def delete_operator(id):
 
 
 @operator_blueprint.route('/operators/<int:id>', methods = ['PUT'])
+@login_required
 def change_operator(id):
     operator = Operator.query.get_or_404(id)
-    if current_user.tel != operator.tel:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'no root'
-        }), 403
     for k in request.json:
         if hasattr(operator, k):
             setattr(operator, k, request.json[k])
-    if 'password' in request.json:
-        password = request.json['password']
-        operator.password = password
+        if k == 'password':
+            operator.password =  request.json[k]
     try:
         db.session.add(operator)
         db.session.commit()
     except OperationalError as e:
         return jsonify({
             'status':'fail',
-            'reason':e,
-            'data':operator.to_json()
+            'reason':e
         })
     return jsonify({
         'operators': [operator.to_json()],
@@ -354,7 +353,7 @@ def change_operator(id):
     不是本人修改
     {
         "status":"fail",
-        "root":"no root"
+        "reason":""
     }
     @apiError (Error 4xx) 404 对应id的医生不存在
 
@@ -401,25 +400,21 @@ def get_operator_now():
 @operator_blueprint.route('/current_operator/password', methods = ['POST'])
 @login_required
 def operator_password():
-    operator_name = ''
+    operator_name = None
+    password = ''
     if 'password' in request.json:
         password = request.json.get('password')
     if 'operator_name' in request.cookies:
         operator_name = request.cookies.get('operator_name')
         password = request.cookies.get('password')
-    if operator_name is None:
-        print('sssss')
-    operator = current_user if operator_name is '' else Operator.query.filter(Operator.operator_name == operator_name).first()
+    operator = current_user if operator_name is None else Operator.query.filter(Operator.operator_name == operator_name).first()
     if operator.verify_password(password):
         json = {
             'operators': [operator.to_json()],
             'status': 'success',
             'reason': 'the password is right'
         }
-        res = make_response(jsonify(json))
-        res.set_cookie('operator_name', operator.operator_name,max_age=60)
-        res.set_cookie('password', password, max_age=60)
-        return res
+        return jsonify(json)
     else:
         return jsonify({
             'status':'fail',

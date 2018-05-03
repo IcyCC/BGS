@@ -22,9 +22,9 @@ def new_data_auto():
             if hasattr(data, k):
                 setattr(data, k, request.json[k])
         accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
-        bed = accuchek.bed
-        patient = bed.patient
-        id_number = patient.id_number
+        bed = accuchek.bed if accuchek is not None else None
+        patient = bed.patient if bed is not None else None
+        id_number = patient.id_number if patient is not None else None
         data.id_number = id_number
         try:
             db.session.add(data)
@@ -86,7 +86,7 @@ def new_data_auto():
             "id_number":"医疗卡号",
             "patient":"病人地址",
             "sn":"血糖仪sn码",
-            "url":"数据地址",
+            "data_id":"数据id",
             "glucose":"血糖值"
         }],
         "status":"success",
@@ -162,7 +162,7 @@ def new_data_artificial():
             "id_number":"医疗卡号",
             "patient":"病人地址",
             "sn":"血糖仪sn码",
-            "url":"数据地址"
+            "data_id":"数据id"
         }],
         "status":"success",
         "reason":"the data has been added"
@@ -177,6 +177,7 @@ def get_datas():
     fields = data_fields
     datas = Data.query.order_by(Data.date.desc(), Data.time.desc())
     per_page = current_app.config['PATIENTS_PRE_PAGE']
+    limit = None
     for k, v in std_json(request.args).items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
@@ -184,7 +185,7 @@ def get_datas():
             per_page = v
         if k == 'limit':
             limit = v
-            datas = datas.limit(limit).from_self()
+    datas = datas.limit(limit).from_self() if limit is not None else datas.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = datas.paginate(page, per_page=per_page, error_out=False)
     datas = pagination.items
@@ -213,6 +214,8 @@ def get_datas():
 @apiName 获取所有数据信息
 
 @apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 数据时间_时间格式(00:00:00)
 @apiParam (params) {Number} glucose 血糖值
@@ -227,9 +230,18 @@ def get_datas():
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
-            "patient":"病人地址",
+            "patient":{
+                'patient_id': "病人id",
+                'patient_name':"病人姓名",
+                'sex':"病人性别",
+                'tel':"病人电话",
+                'age':"病人年龄",
+                'doctor':"医生姓名",
+                'id_number':"病人医疗卡号",
+                'datas':"病人数据地址"
+            },
             "sn":"血糖仪sn码",
-            "url":"数据地址"
+            "data_id":"数据id"
         }],
         "prev":"上一页地址",
         "next":"下一页地址",
@@ -244,7 +256,7 @@ def get_datas():
 
 """
 
-@data_blueprint.route('/sparedata')
+@data_blueprint.route('/sparedatas')
 @login_required
 def get_datas_sparedata():
     if 'sn' not in request.args:
@@ -254,15 +266,16 @@ def get_datas_sparedata():
         })
     fields = [i for i in SpareData.__table__.c._data]
     per_page = current_app.config['PATIENTS_PRE_PAGE']
+    limit = None
     datas = SpareData.query.order_by(SpareData.date.desc(), SpareData.time.desc())
-    for k, v in std_json(request.args).items():
+    for k, v in request.args.items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
         if k == 'per_page':
             per_page = v
         if k == 'limit':
             limit = v
-            datas = datas.limit(limit).from_self()
+    datas = datas.limit(limit).from_self() if limit is not None else datas.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = datas.paginate(page, per_page=per_page, error_out=False)
     datas = pagination.items
@@ -285,11 +298,13 @@ def get_datas_sparedata():
         'reason': 'there are datas'
     })
 """
-@api {GET} /sparedata 获取备用机数据
+@api {GET} /sparedatas 获取备用机数据
 @apiGroup datas
 @apiName 获取备用机数据
 
 @apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 数据时间_时间格式(00:00:00)
 @apiParam (params) {Number} glucose 血糖值
@@ -310,7 +325,7 @@ def get_datas_sparedata():
             "id_number":"医疗卡号",
             "patient":"病人地址",
             "sn":"血糖仪sn码",
-            "url":"数据地址",
+            "data_id":"数据id",
             "glucose":"血糖值"
         }],
         "prev":"上一页地址",
@@ -355,9 +370,18 @@ def get_data(id):
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
-            "patient":"病人地址",
+            "patient":{
+                'patient_id': "病人id",
+                'patient_name':"病人姓名",
+                'sex':"病人性别",
+                'tel':"病人电话",
+                'age':"病人年龄",
+                'doctor':"医生姓名",
+                'id_number':"病人医疗卡号",
+                'datas':"病人数据地址"
+            },
             "sn":"血糖仪sn码",
-            "url":"数据地址"
+            "data_id":"数据id"
         }],
         "status":"success",
         "reason":"there is the data"
@@ -365,7 +389,7 @@ def get_data(id):
 
 """
 
-@data_blueprint.route('/sparedata/<int:id>', methods=['PUT'])
+@data_blueprint.route('/sparedatas/<int:id>', methods=['PUT'])
 @login_required
 def change_sparedata_data(id):
     data = SpareData.query.get_or_404(id)
@@ -384,11 +408,22 @@ def change_sparedata_data(id):
     return jsonify(data.to_full_json())
 
 """
-@api {PUT} /sparedata/<int:id> 根据id修改备用机数据
+@api {PUT} /sparedatas/<int:id> 根据id修改备用机数据
 @apiGroup datas
 @apiName 根据id修改备用机数据
 
 @apiParam (params) {String} id 备用机数据id 
+@apiParam (params) {String} sn 备用机sn码
+@apiParam (params) {String} id_number 患者医疗卡号
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} age 患者年龄
+@apiParam (params) {String} tel 患者电话
+@apiParam (params) {String} doctor 医生姓名
+@apiParam (params) {String} time 数据时间
+@apiParam (params) {String} date 数据日期
+@apiParam (params) {String} glucose 血糖值
+@apiParam (params) {String} hidden 是否隐藏（0：隐藏， 1：不隐藏）
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回修改后的备用机数据
@@ -406,7 +441,7 @@ def change_sparedata_data(id):
             "id_number":"医疗卡号",
             "patient":"病人地址",
             "sn":"血糖仪sn码",
-            "url":"数据地址",
+            "data_id":"数据id",
             "glucose":"血糖值"
         }],
         "status":"success",
@@ -415,7 +450,7 @@ def change_sparedata_data(id):
 """
 
 
-@data_blueprint.route('/sparedata/<int:id>', methods=['DELETE'])
+@data_blueprint.route('/sparedatas/<int:id>', methods=['DELETE'])
 @login_required
 def delete_sparedata_data(id):
     data = SpareData.query.get_or_404(id)
@@ -434,7 +469,7 @@ def delete_sparedata_data(id):
     })
 
 """
-@api {DELTET} /sparedata/<int:id> 根据id删除备用机数据
+@api {DELTET} /sparedatas/<int:id> 根据id删除备用机数据
 @apiGroup datas
 @apiName 根据id删除备用机数据
 
@@ -452,7 +487,7 @@ def delete_sparedata_data(id):
 
 """
 
-@data_blueprint.route('/sparedata/<int:id>')
+@data_blueprint.route('/sparedatas/<int:id>')
 @login_required
 def get_sparedata_data(id):
     data = SpareData.query.filter(SpareData.data_id == id).first()
@@ -463,7 +498,7 @@ def get_sparedata_data(id):
     })
 
 """
-@api {PUT} /sparedata/<int:id> 根据id查询备用机数据
+@api {PUT} /sparedatas/<int:id> 根据id查询备用机数据
 @apiGroup datas
 @apiName 根据id查询备用机数据
 
@@ -485,7 +520,7 @@ def get_sparedata_data(id):
             "id_number":"医疗卡号",
             "patient":"病人地址",
             "sn":"血糖仪sn码",
-            "url":"数据地址",
+            "data_id":"数据id",
             "glucose":"血糖值"
         }],
         "status":"success",
@@ -516,13 +551,14 @@ def change_data(id):
         })
     return jsonify({
         'datas': [{
-            'url': url_for('data_blueprint.get_data', id=data.data_id),
-            'patient': url_for('data_blueprint.get_patient', id=patient.patient_id),
+            'data_id': data.data_id,
+            'patient': url_for('patient_blueprint.get_patient', id=patient.patient_id),
             'sn': data.sn,
             'id_number': data.id_number,
             'time': str(data.time),
             'date': str(data.date),
-            'glucose': data.glucose
+            'glucose': data.glucose,
+            'hidden':data.hidden
         }],
         'status': 'success',
         'reason': 'the data has been changed'
@@ -543,6 +579,8 @@ def change_data(id):
 @apiParam (request) {String} sn 血糖仪sn码 
 @apiParam (request) {String} date 数据日期_日期格式(0000-00-00)
 @apiParam (request) {String} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (request) {Number} glucose 血糖值
 @apiParam (Login) {String} login 登录才可以访问
 
@@ -557,7 +595,7 @@ def change_data(id):
             "id_number":"医疗卡号",
             "patient":"病人地址",
             "sn":"血糖仪sn码",
-            "url":"数据地址",
+            "data_id":"数据id",
             "glucose":"血糖值"
         }],
         "status":"success",

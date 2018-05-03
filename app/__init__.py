@@ -18,9 +18,9 @@ def create_app(config_name):
     config[config_name].init_app(app)
     app.config.update(
         MAIL_SERVER='smtp.qq.com',
-        MAIL_PROT=465,
-        MAIL_USE_TLS=False,
-        MAIL_USE_SSL=True,
+        MAIL_PROT=25,
+        MAIL_USE_TLS=True,
+        MAIL_USE_SSL=False,
         MAIL_USERNAME="1468767640@qq.com",
         MAIL_PASSWORD="uhieluellzqwhaea",
         MAIL_DEBUG=True
@@ -36,25 +36,25 @@ def create_app(config_name):
 
 
     from .gencode import gencode_blueprint
-    app.register_blueprint(gencode_blueprint, url_prefix='/')
+    app.register_blueprint(gencode_blueprint)
 
     from .accuchek import accuchek_blueprint
-    app.register_blueprint(accuchek_blueprint, url_prefix='/')
+    app.register_blueprint(accuchek_blueprint)
 
     from .bed import bed_blueprint
-    app.register_blueprint(bed_blueprint, url_prefix='/')
+    app.register_blueprint(bed_blueprint)
 
     from .operator import operator_blueprint
-    app.register_blueprint(operator_blueprint, url_prefix='/')
+    app.register_blueprint(operator_blueprint)
 
     from .data import data_blueprint
-    app.register_blueprint(data_blueprint, url_prefix='/')
+    app.register_blueprint(data_blueprint)
 
     from .patient import patient_blueprint
-    app.register_blueprint(patient_blueprint, url_prefix='/')
+    app.register_blueprint(patient_blueprint)
 
     from .error import error_blueprint
-    app.register_blueprint(error_blueprint, url_prefix='/')
+    app.register_blueprint(error_blueprint)
 
     CORS(app, supports_credentials=True)
 

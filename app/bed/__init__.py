@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-bed_blueprint = Blueprint('bed', __name__)
+bed_blueprint = Blueprint('bed_blueprint', __name__)
 
 from . import beds, bedhistory

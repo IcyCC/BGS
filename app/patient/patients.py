@@ -97,6 +97,7 @@ def get_patients():
     page = request.args.get('page', 1, type=int)
     fields = [i for i in Patient.__table__.c._data]
     patients = Patient.query
+    limit = None
     per_page = current_app.config['PATIENTS_PRE_PAGE']
     for k, v in std_json(request.args).items():
         if k in fields:
@@ -105,7 +106,7 @@ def get_patients():
             per_page = v
         if k == 'limit':
             limit = v
-            patients = patients.limit(limit).from_self()
+    patients = patients.limit(limit).from_self() if limit is not None else patients.from_self()
     pagination = patients.paginate(page, per_page=per_page, error_out=False)
     patients = pagination.items
     prev = None
@@ -118,10 +119,13 @@ def get_patients():
         'patients': [patient.to_json() for patient in patients],
         'prev': prev,
         'next': next,
-        'count': pagination.total,
-        "pages": pagination.pages,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
         'status': 'success',
-        'reason': 'there are the datas'
+        'reason': 'there are datas'
     })
 
 """
@@ -133,6 +137,8 @@ def get_patients():
 @apiParam (params) {String} tel 病人电话号码
 @apiParam (params) {Number} doctor_id 医生号码
 @apiParam (params) {String} sex 患者性别
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (params) {String} patient_name 患者姓名
 @apiParam (params) {Number} age 患者年龄
 @apiParam (Login) {String} login 登录才可以访问
@@ -152,12 +158,15 @@ def get_patients():
             "id_number":"医保卡号",
             "datas":"病人数据地址"    
         }],
-        "prev":"上一页",
-        "next":"下一页",
-        "count":"总数量",
-        "pages":"总页数",
-        "status":"success",
-        "reason":"there are the datas"
+        "prev":"上一页地址",
+        "next":"下一页地址",
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
     没有数据
     {
@@ -169,13 +178,12 @@ def get_patients():
 
 @patient_blueprint.route('/patients/<int:id>', methods = ['PUT'])
 @login_required
-
 def change_patient(id):
     patient = Patient.query.get_or_404(id)
     if 'id_number' in request.json:
         id_number = request.json['id_number']
         may_patient = Patient.query.filter(Patient.id_number == id_number).first()
-        if may_patient:
+        if may_patient and patient.id_number != id_number:
             if may_patient.patient_id != patient.patient_id:
                 return jsonify({
                     'status':'fail',
@@ -288,7 +296,6 @@ def get_patient(id):
 
 @patient_blueprint.route('/patients/<int:id>', methods = ['DELETE'])
 @login_required
-
 def delete_patients(id):
     patient = Patient.query.get_or_404(id)
     for data in patient.datas:
@@ -406,6 +413,7 @@ def get_patient_datas(id):
     patient = Patient.query.get_or_404(id)
     fields = [i for i in Data.__table__.c._data]
     datas = patient.datas
+    limit = None
     per_page = current_app.config['PATIENTS_PRE_PAGE']
     for k, v in std_json(request.args).items():
         if k in fields:
@@ -414,7 +422,7 @@ def get_patient_datas(id):
             per_page = v
         if k == 'limit':
             limit = v
-            datas = datas.limit(limit).from_self()
+    datas = datas.limit(limit).from_self() if limit is not None else datas.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = datas.paginate(page, per_page=per_page, error_out=False)
     datas = pagination.items
@@ -444,6 +452,8 @@ def get_patient_datas(id):
 
 @apiParam (params) {Number} id 病人id 
 @apiParam (Login) {String} login 登录才可以访问
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 
 @apiSuccess {Array} datas 返回id所表示病人的数据
 
@@ -478,13 +488,13 @@ def get_patient_datas(id):
 
 @patient_blueprint.route('/patients/history')
 @login_required
-
 def patients_history():
     datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
     patient_field = [i for i in Patient.__table__.c._data]
+    limit = None
     data_field = [i for i in Data.__table__.c._data]
     per_page = current_app.config['PATIENTS_PRE_PAGE']
-    for k, v in std_json(request.args).items():
+    for k, v in request.args.items():
         if k in patient_field:
             if hasattr(Patient, k):
                 field = getattr(Patient, k)
@@ -497,7 +507,6 @@ def patients_history():
             per_page = v
         if k == 'limit':
             limit = v
-            datas = datas.limit(limit).from_self()
     max_age = request.args.get('max_age')
     min_age = request.args.get('min_age')
     max_glucose = request.args.get('max_glucose')
@@ -525,6 +534,8 @@ def patients_history():
     if begin_date:
         datas = datas.filter(Data.date >= begin_date)
     print(datas.count())
+    datas = datas.order_by(Data.date.desc(), Data.time.desc())
+    datas = datas.limit(limit).from_self() if limit is not None else datas.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = datas.paginate(page, per_page=per_page, error_out=False)
     datas = pagination.items

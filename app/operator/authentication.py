@@ -55,23 +55,7 @@ def jwtDecoding(token, aud='webkit'):
 #     })
 #
 # """
-# @api {GET} /operator/tokens 根据登陆的账号密码获得token
-# @apiGroup authentication
-# @apiName 根据登陆的账号密码获得token
-#
-# @apiParam (Login) {String} login 登录才可以访问
-#
-# @apiSuccess {Array} token 返回相应账号的token
-#
-# @apiSuccessExample Success-Response:
-#     HTTP/1.1 200 OK
-#     {
-#         "token":token,
-#         "status":"success",
-#         "reason":"the token has been gotten"
-#     }
-#
-# """
+
 
 @operator_blueprint.route('/login', methods=['POST'])
 def login():

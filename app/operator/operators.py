@@ -1,5 +1,6 @@
 from . import operator_blueprint
 import os
+from marshmallow.exceptions import ValidationError
 from app import db, mail
 from flask import request, jsonify, g, url_for, current_app, make_response
 from app.models import Operator
@@ -7,6 +8,7 @@ from sqlalchemy.exc import OperationalError
 from flask_login import login_required, current_user, logout_user
 from flask_mail import Mail, Message
 import requests
+from app.form_model import UserValidation
 import json
 
 def std_json(d):
@@ -17,6 +19,18 @@ def std_json(d):
 
 @operator_blueprint.route('/operators', methods = ['POST'])
 def new_operator():
+    params_dict = {
+        'username': request.json.get('username', None),
+        'password': request.json.get('password', None),
+        'email': request.json.get('email', None)
+    }
+    try:
+        UserValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status':'fail',
+            'reason':str(e)
+        })
     tel = request.json['tel']
     operator = Operator.query.filter(Operator.tel == tel).first()
     if operator:
@@ -218,7 +232,7 @@ def get_operator(id):
 
 """
 @api {GET} /operators/<int:id> 根据id查询操作者
-@apiGroup operators
+@apiGroup operator
 @apiName 根据id查询操作者
 
 @apiParam (params) {Number} id 医生id

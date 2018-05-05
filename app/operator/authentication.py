@@ -27,8 +27,9 @@ def jwtDecoding(token, aud='webkit'):
 
 @operator_blueprint.route('/login', methods=['POST'])
 def login():
-    username = request.json.get("username")
-    password = request.json.get("password")
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
+    hospital = request.json.get("hospital", None)
     operator = Operator.query.filter(Operator.operator_name==username).first()
 
     if operator is None or not operator.verify_password(password=password):

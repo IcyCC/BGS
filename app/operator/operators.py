@@ -8,7 +8,7 @@ from sqlalchemy.exc import OperationalError
 from flask_login import login_required, current_user, logout_user
 from flask_mail import Mail, Message
 import requests
-from app.form_model import UserValidation
+from app.form_model import UserValidation, ChangeUserValidation
 import json
 
 def std_json(d):
@@ -22,6 +22,9 @@ def new_operator():
     params_dict = {
         'username': request.json.get('username', None),
         'password': request.json.get('password', None),
+        'tel': request.json.get('tel', None),
+        'hospital': request.json.get('hospital', None),
+        'lesion': request.json.get('lesion', None),
         'email': request.json.get('email', None)
     }
     try:
@@ -321,6 +324,21 @@ def delete_operator(id):
 @operator_blueprint.route('/operators/<int:id>', methods = ['PUT'])
 @login_required
 def change_operator(id):
+    params_dict = {
+        'username': request.json.get('username', None),
+        'password': request.json.get('password', None),
+        'tel': request.json.get('tel', None),
+        'hospital': request.json.get('hospital', None),
+        'lesion': request.json.get('lesion', None),
+        'email': request.json.get('email', None)
+    }
+    try:
+        ChangeUserValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     operator = Operator.query.get_or_404(id)
     for k in request.json:
         if hasattr(operator, k):
@@ -414,6 +432,17 @@ def get_operator_now():
 @operator_blueprint.route('/current_operator/password', methods = ['POST'])
 @login_required
 def operator_password():
+    params_dict = {
+        'username': request.json.get('username', None),
+        'password': request.json.get('password', None)
+    }
+    try:
+        ChangeUserValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     operator_name = None
     password = ''
     if 'password' in request.json:

@@ -6,6 +6,7 @@ from app.models import Operator
 import os
 from flask_migrate import Migrate, upgrade, MigrateCommand
 import pymysql
+
 import json
 
 pymysql.install_as_MySQLdb()
@@ -47,4 +48,4 @@ manager.add_command('db', MigrateCommand)
 
 
 if __name__ == '__main__':
-    app.run(port=5001, host='0.0.0.0')
+    manager.run()

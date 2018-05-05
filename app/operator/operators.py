@@ -1,15 +1,39 @@
-from . import api
+from . import operator_blueprint
 import os
-from .. import db
+from marshmallow.exceptions import ValidationError
+from app import db, mail
 from flask import request, jsonify, g, url_for, current_app, make_response
-from ..models import Operator
-from .authentication import auth
+from app.models import Operator
 from sqlalchemy.exc import OperationalError
-from ..decorators import allow_cross_domain
 from flask_login import login_required, current_user, logout_user
-@api.route('/operators', methods = ['POST'])
-@allow_cross_domain
+from flask_mail import Mail, Message
+import requests
+from app.form_model import UserValidation, ChangeUserValidation
+import json
+
+def std_json(d):
+    r = {}
+    for k, v in d.items():
+        r[k] = json.loads(v)
+    return r
+
+@operator_blueprint.route('/operators', methods = ['POST'])
 def new_operator():
+    params_dict = {
+        'username': request.json.get('username', None),
+        'password': request.json.get('password', None),
+        'tel': request.json.get('tel', None),
+        'hospital': request.json.get('hospital', None),
+        'lesion': request.json.get('lesion', None),
+        'email': request.json.get('email', None)
+    }
+    try:
+        UserValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status':'fail',
+            'reason':str(e)
+        })
     tel = request.json['tel']
     operator = Operator.query.filter(Operator.tel == tel).first()
     if operator:
@@ -27,6 +51,44 @@ def new_operator():
             'reason':e,
             'data':operator.to_json()
         })
+    req = requests.session()
+    try:
+        res = req.get('http://www.baidu.com')
+        if res.status_code != 200:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the web does not connect to the outer net',
+                'operators': []
+            })
+    except:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'the web does not connect to the outer net',
+            'operators': []
+        })
+    msg = Message('Operator active', sender='1468767640@qq.com', recipients=['1468767640@qq.com'])
+    host = 'http://101.200.52.233:8080'
+    msg.body = 'the operator name is %s, the operator id is%id, the operator url is %s%s' % (
+    operator.operator_name, operator.id, host, url_for('operator_blueprint.get_operator', id=operator.id))
+    # mail.send(msg)
+    try:
+        mail.send(msg)
+    except:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'the mail has been posted failed',
+            'operators': []
+        })
+    try:
+        operator.active = True
+        db.session.add(operator)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e),
+            'data': []
+        })
     return jsonify({
         'operators':[operator.to_json()],
         'status':'success',
@@ -34,18 +96,16 @@ def new_operator():
     })
 
 """
-@api {POST} /api/v1.0/operators 新建操作者(医生)信息(json数据)
-@apiGroup operators
+@api {POST} /operators 新建操作者(医生)信息(json数据)并激活
+@apiGroup operator
 @apiName 新建操作者信息
-
 @apiParam (params) {String} operator_name 医生姓名
 @apiParam (params) {String} password 登录密码
-@apiParam (params) {String} hospital 医院名称
+@apiParam (params) {String} hospital 医院名称   
 @apiParam (params) {String} office 科室
 @apiParam (params) {String} lesion 分区
 @apiParam (params) {String} tel 医生电话
 @apiParam (params) {String} mail 医生邮箱
-@apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回新增的医生数据
 
@@ -67,54 +127,73 @@ def new_operator():
         "status":"fail",
         "reason":"the tel or the mail has been used"
     }
+    未连接外网
+    {
+        'status': 'fail',
+        'reason': 'the web does not connect to the outer net',
+        'operators': []
+    }
+    邮件发送失败
+    {
+        'status': 'fail',
+        'reason': 'the mail has been posted failed',
+        'operators': []
+    }
 """
 
 
-@api.route('/operators')
+@operator_blueprint.route('/operators')
 @login_required
-@allow_cross_domain
 def get_operators():
     operators = Operator.query
     fields = [i for i in Operator.__table__.c._data]
-    for k, v in request.args.items():
+    per_page = current_app.config['PATIENTS_PRE_PAGE']
+    limit = None
+    for k, v in std_json(request.args).items():
         if k in fields:
             operators = operators.filter_by(**{k: v})
-    if operators.count()!=0:
-        page = request.args.get('page', 1, type=int)
-        pagination = operators.paginate(page, per_page=current_app.config['PATIENTS_PRE_PAGE'], error_out=False)
-        operators = pagination.items
-        prev = None
-        if pagination.has_prev:
-            prev = url_for('api.get_operators', page=page - 1)
-        next = None
-        if pagination.has_next:
-            next = url_for('api.get_operators', page=page + 1)
-        return jsonify({
-            'operators': [operator.to_json() for operator in operators],
-            'prev': prev,
-            'next': next,
-            'count': pagination.total,
-            'pages':pagination.pages,
-            'status':'success',
-            'reason':'there are the datas'
-        })
-    else:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'there is no data'
-        })
+        if k == 'per_page':
+            per_page = v
+        if k == 'limit':
+            limit = v
+    operators = operators.limit(limit).from_self() if limit is not None else operators.from_self()
+    page = request.args.get('page', 1, type=int)
+    pagination = operators.paginate(page, per_page=per_page, error_out=False)
+    operators = pagination.items
+    prev = None
+    if pagination.has_prev:
+        prev = url_for('operator.get_operators', page=page - 1)
+    next = None
+    if pagination.has_next:
+        next = url_for('operator.get_operators', page=page + 1)
+    return jsonify({
+        'operators': [operator.to_json() for operator in operators],
+        'prev': prev,
+        'next': next,
+        'has_prev':pagination.has_prev,
+        'has_next':pagination.has_next,
+        'total': pagination.total,
+        'pages': pagination.pages,
+        'per_page': per_page,
+        'status': 'success',
+        'reason': 'there are datas'
+    })
 
 """
-@api {GET} /api/v1.0/operators 获取查询操作者(地址栏筛选)
-@apiGroup operators
+@api {GET} /operators 获取查询操作者(地址栏筛选)
+@apiGroup operator
 @apiName 获取查询查询操作者
 
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (params) {String} operator_name 医生姓名
 @apiParam (params) {String} hospital 医院名称
 @apiParam (params) {String} office 科室
 @apiParam (params) {String} lesion 分区
 @apiParam (params) {String} tel 医生电话
 @apiParam (params) {String} mail 医生邮箱
+@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Number} per_page 每一页的数量
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回新增的医生数据
@@ -126,28 +205,26 @@ def get_operators():
             "url":"医生地址",
             "hospital":"医生医院名称",
             "office":"医生科室",
+            "active":"是否被激活",
             "lesion":"医生分区",
             "operator_name":"医生姓名"
         }],
-        "count":"总数量",
         "prev":"上一页地址",
         "next":"下一页地址",
-        "pages":"总页数",
-        "status":"success",
-        "reason":"there are the datas"
-    }
-    没有数据
-    {
-        "status"："fail",
-        "reason":"there is no data"
+        'has_prev':'是否有上一页',
+        'has_next':'是否有下一页',
+        'total': '查询总数量',
+        'pages': '查询总页数',
+        'per_page': '每一页的数量',
+        'status': 'success',
+        'reason': 'there are datas'
     }
 """
 
 
 
-@api.route('/operators/<int:id>')
+@operator_blueprint.route('/operators/<int:id>')
 @login_required
-@allow_cross_domain
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
     return jsonify({
@@ -157,8 +234,8 @@ def get_operator(id):
     })
 
 """
-@api {GET} /api/v1.0/operators/<int:id> 根据id查询操作者
-@apiGroup operators
+@api {GET} /operators/<int:id> 根据id查询操作者
+@apiGroup operator
 @apiName 根据id查询操作者
 
 @apiParam (params) {Number} id 医生id
@@ -185,9 +262,8 @@ def get_operator(id):
     HTTP/1.1 404 对应id的医生不存在 
 """
 
-@api.route('/operators/<int:id>', methods = ['DELETE'])
+@operator_blueprint.route('/operators/<int:id>', methods = ['DELETE'])
 @login_required
-@allow_cross_domain
 def delete_operator(id):
     operator = Operator.query.get_or_404(id)
     if current_user.tel != operator.tel:
@@ -211,8 +287,8 @@ def delete_operator(id):
     }), 200
 
 """
-@api {DELETE} /api/v1.0/operators/<int:id> 根据id删除操作者
-@apiGroup operators
+@api {DELETE} /operators/<int:id> 根据id删除操作者
+@apiGroup operator
 @apiName 根据id删除操作者
 
 @apiParam (params) {Number} id 医生id
@@ -245,29 +321,37 @@ def delete_operator(id):
 """
 
 
-@api.route('/operators/<int:id>', methods = ['PUT'])
-@allow_cross_domain
+@operator_blueprint.route('/operators/<int:id>', methods = ['PUT'])
+@login_required
 def change_operator(id):
-    operator = Operator.query.get_or_404(id)
-    if current_user.tel != operator.tel:
+    params_dict = {
+        'username': request.json.get('username', None),
+        'password': request.json.get('password', None),
+        'tel': request.json.get('tel', None),
+        'hospital': request.json.get('hospital', None),
+        'lesion': request.json.get('lesion', None),
+        'email': request.json.get('email', None)
+    }
+    try:
+        ChangeUserValidation().load(params_dict)
+    except ValidationError as e:
         return jsonify({
             'status': 'fail',
-            'reason': 'no root'
-        }), 403
+            'reason': str(e)
+        })
+    operator = Operator.query.get_or_404(id)
     for k in request.json:
         if hasattr(operator, k):
             setattr(operator, k, request.json[k])
-    if 'password' in request.json:
-        password = request.json['password']
-        operator.password = password
+        if k == 'password':
+            operator.password =  request.json[k]
     try:
         db.session.add(operator)
         db.session.commit()
     except OperationalError as e:
         return jsonify({
             'status':'fail',
-            'reason':e,
-            'data':operator.to_json()
+            'reason':e
         })
     return jsonify({
         'operators': [operator.to_json()],
@@ -276,8 +360,8 @@ def change_operator(id):
     }), 200
 
 """
-@api {PUT} /api/v1.0/operators 根据id修改操作者信息(json数据)
-@apiGroup operators
+@api {PUT} /operators/<int:id> 根据id修改操作者信息(json数据)
+@apiGroup operator
 @apiName 根据id修改操作者信息
 
 @apiParam (params) {Number} id 医生id
@@ -301,7 +385,7 @@ def change_operator(id):
     不是本人修改
     {
         "status":"fail",
-        "root":"no root"
+        "reason":""
     }
     @apiError (Error 4xx) 404 对应id的医生不存在
 
@@ -310,9 +394,8 @@ def change_operator(id):
 """
 
 
-@api.route('/operators/now')
+@operator_blueprint.route('/current_operator')
 @login_required
-@allow_cross_domain
 def get_operator_now():
     operator = current_user
     return jsonify({
@@ -322,8 +405,8 @@ def get_operator_now():
     })
 
 """
-@api {GET} /api/v1.0/operators/now 返回现在操作者的信息
-@apiGroup operators
+@api {GET} /current_operator 返回现在操作者的信息
+@apiGroup operator
 @apiName 返回现在操作者的信息
 
 @apiParam (Login) {String} login 登录才可以访问
@@ -346,29 +429,35 @@ def get_operator_now():
 """
 
 
-@api.route('/operators/now/password', methods = ['POST'])
+@operator_blueprint.route('/current_operator/password', methods = ['POST'])
 @login_required
-@allow_cross_domain
 def operator_password():
-    operator_name = ''
+    params_dict = {
+        'username': request.json.get('username', None),
+        'password': request.json.get('password', None)
+    }
+    try:
+        ChangeUserValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
+    operator_name = None
+    password = ''
     if 'password' in request.json:
         password = request.json.get('password')
     if 'operator_name' in request.cookies:
         operator_name = request.cookies.get('operator_name')
         password = request.cookies.get('password')
-    if operator_name is None:
-        print('sssss')
-    operator = current_user if operator_name is '' else Operator.query.filter(Operator.operator_name == operator_name).first()
+    operator = current_user if operator_name is None else Operator.query.filter(Operator.operator_name == operator_name).first()
     if operator.verify_password(password):
         json = {
             'operators': [operator.to_json()],
             'status': 'success',
             'reason': 'the password is right'
         }
-        res = make_response(jsonify(json))
-        res.set_cookie('operator_name', operator.operator_name,max_age=60)
-        res.set_cookie('password', password, max_age=60)
-        return res
+        return jsonify(json)
     else:
         return jsonify({
             'status':'fail',
@@ -376,8 +465,8 @@ def operator_password():
         })
 
 """
-@api {GET} /api/v1.0/operators/now/password 验证现在操作者输入密码是否正确
-@apiGroup operators
+@api {GET} /current_operator/password 验证现在操作者输入密码是否正确
+@apiGroup operator
 @apiName 验证现在操作者输入密码是是否正确
 
 @apiParam (Login) {String} login 登录才可以访问
@@ -404,34 +493,3 @@ def operator_password():
     } 
 """
 
-@api.route('/operators/change_password', methods = ['POST'])
-def change_password():
-    hospital = request.json['hospital']
-    section = request.json['section']
-    password = request.json['password']
-    operator = Operator.query.first()
-    if hospital != operator.hospital:
-        return jsonify({
-            'status':'fail',
-            'reason':'the hospital is wrong'
-        })
-    if section != operator.office:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'the office is wrong'
-        })
-    operator.password = password
-    try:
-        db.session.add(operator)
-        db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'season': e,
-            'data': []
-        })
-    return jsonify({
-        'status':'success',
-        'reason':[],
-        'datas':[operator.to_json()]
-    })

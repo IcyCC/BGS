@@ -19,6 +19,7 @@ def get_histories():
     fields = [i for i in BedHistory.__table__.c._data]
     bedhistorys = BedHistory.query.order_by(BedHistory.date.desc(), BedHistory.time.desc())
     per_page = current_app.config['PATIENTS_PRE_PAGE']
+    limit = None
     for k, v in std_json(request.args).items():
         if k in fields:
             bedhistorys = bedhistorys.filter_by(**{k: v})
@@ -26,7 +27,7 @@ def get_histories():
             per_page = v
         if k == 'limit':
             limit = v
-            bedhistorys = bedhistorys.limit(limit).from_self()
+    bedhistorys = bedhistorys.limit(limit).from_self() if limit is not None else bedhistorys.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = bedhistorys.paginate(page, per_page=per_page, error_out=False)
     bedhistorys = pagination.items
@@ -51,11 +52,11 @@ def get_histories():
 
 """
 
-@api {GET} /bed/bedhistorys 获取筛选所有的床位历史信息
-@apiGroup bedhistorys
+@api {GET} /bedhistorys 获取筛选所有的床位历史信息
+@apiGroup beds
 @apiName 获取筛选所有的床位历史信息
 
-@apiParam (params) {Number} api_id 床位id
+@apiParam (params) {Number} bed_id 床位id
 @apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
 @apiParam (params) {String} id_number 医疗卡号
@@ -69,9 +70,9 @@ def get_histories():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        “bedhistorys”:[{
-            "url":"历史信息地址",
-            "api_id":"床位号",
+        "bedhistorys":[{
+            "history_id":"历史信息id",
+            "bed_id":"床位号",
             "time":"历史信息时间",
             "date":"历史信息日期",
             "sn":"血糖仪sn码",
@@ -118,11 +119,11 @@ def new_history():
 
 """
 
-@api {POST} /bed/bedhistorys 新建床位历史信息
-@apiGroup bedhistorys
+@api {POST} /bedhistorys 新建床位历史信息
+@apiGroup beds
 @apiName 新建床位历史信息
 
-@apiParam (params) {Number} api_id 床位id
+@apiParam (params) {Number} bed_id 床位id
 @apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
 @apiParam (params) {String} id_number 医疗卡号
@@ -135,8 +136,8 @@ def new_history():
     HTTP/1.1 200 OK
     {
         "bedhistorys":[{
-            "url":"历史信息地址",
-            "api_id":"床位号",
+            "history_id":"历史信息id",
+            "bed_id":"床位号",
             "time":"历史信息时间",
             "date":"历史信息日期",
             "sn":"血糖仪sn码",
@@ -151,7 +152,6 @@ def new_history():
 
 @bed_blueprint.route('/bedhistorys/<int:id>')
 @login_required
-
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
     return jsonify({
@@ -162,8 +162,8 @@ def get_history(id):
 
 """
 
-@api {GET} /bed/bedhistorys/<int:id> 获取id所代表的床位历史的信息
-@apiGroup bedhistorys
+@api {GET} /bedhistorys/<int:id> 获取id所代表的床位历史的信息
+@apiGroup beds
 @apiName 获取id所代表的床位历史的信息
 
 @apiParam (params) {Number} id 床位历史信息id
@@ -175,8 +175,8 @@ def get_history(id):
     HTTP/1.1 200 OK
     {
         "bedhistorys":[{
-            "url":"历史信息地址",
-            "api_id":"床位号",
+            "history_id":"历史信息id",
+            "bed_id":"床位号",
             "time":"历史信息时间",
             "date":"历史信息日期",
             "sn":"血糖仪sn码",
@@ -213,11 +213,11 @@ def change_history(id):
 
 """
 
-@api {PUT} /bed/bedhistorys/<int:id> 更改id所代表的床位历史的信息
-@apiGroup bedhistorys
+@api {PUT} /bedhistorys/<int:id> 更改id所代表的床位历史的信息
+@apiGroup beds
 @apiName 更改id所代表的床位历史的信息
 
-@apiParam (params) {Number} api_id 床位id
+@apiParam (params) {Number} bed_id 床位id
 @apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
 @apiParam (params) {String} id_number 医疗卡号
@@ -231,8 +231,8 @@ def change_history(id):
     HTTP/1.1 200 OK
     {
         "bedhistorys":[{
-            "url":"历史信息地址",
-            "api_id":"床位号",
+            "history_id":"历史信息id",
+            "bed_id":"床位号",
             "time":"历史信息时间",
             "date":"历史信息日期",
             "sn":"血糖仪sn码",
@@ -271,8 +271,8 @@ def delete_history(id):
 
 """
 
-@api {DELETE} /bed/bedhistorys/<int:id> 删除id所代表的床位历史的信息
-@apiGroup bedhistorys
+@api {DELETE} /bedhistorys/<int:id> 删除id所代表的床位历史的信息
+@apiGroup beds
 @apiName 删除id所代表的床位历史的信息
 
 @apiParam (params) {Number} id 床位历史信息id
@@ -284,8 +284,8 @@ def delete_history(id):
     HTTP/1.1 200 OK
     {
         "bedhistorys":[{
-            "url":"历史信息地址",
-            "api_id":"床位号",
+            "history_id":"历史信息id",
+            "bed_id":"床位号",
             "time":"历史信息时间",
             "date":"历史信息日期",
             "sn":"血糖仪sn码",

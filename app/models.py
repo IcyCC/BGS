@@ -53,11 +53,12 @@ class Operator(db.Model, UserMixin):
 
     def to_json(self):
         json_operator = {
-            'url':url_for('operator.get_operator', id = self.id),
+            'operator_id':self.id,
             'hospital':self.hospital,
             'office':self.office,
             'lesion':self.lesion,
-            'operator_name':self.operator_name
+            'operator_name':self.operator_name,
+            'active':self.active
         }
         return json_operator
 login_manager.anonymous_user = AnonymousUserMixin
@@ -73,14 +74,20 @@ class Patient(db.Model):
 
     @property
     def bed(self):
-        bed = Bed.query.join(Patient, Patient.id_number == Bed.id_number).filter(Patient.patient_id == self.patient_id).first()
-        return bed
+        try:
+            bed = Bed.query.join(Patient, Patient.id_number == Bed.id_number).filter(Patient.patient_id == self.patient_id).first()
+            return bed
+        except:
+            return None
 
 
     @property
     def datas(self):
-        datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Patient.patient_id == self.patient_id).filter(Data.hidden != True).order_by(Data.date.desc(), Data.time.desc())
-        return datas
+        try:
+            datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Patient.patient_id == self.patient_id).filter(Data.hidden != True).order_by(Data.date.desc(), Data.time.desc())
+            return datas
+        except:
+            return Data.query.filter(Data.data_id == -1)
 
     @staticmethod
     def from_json(json_post):
@@ -92,14 +99,14 @@ class Patient(db.Model):
 
     def to_json(self):
         json_patient = {
-            'url': url_for('patient.get_patient', id=self.patient_id),
+            'patient_id': self.patient_id,
             'patient_name':self.patient_name,
             'sex':self.sex,
             'tel':self.tel,
             'age':self.age,
             'doctor':self.doctor_name,
             'id_number':self.id_number,
-            'datas':url_for('patient.get_patient_datas', id = self.patient_id)
+            'datas': url_for('patient_blueprint.get_patient_datas', id=self.patient_id)
         }
         return json_patient
 
@@ -115,8 +122,11 @@ class Data(db.Model):
 
     @property
     def patient(self):
-        patient = Patient.query.join(Data, Data.id_number == Patient.id_number).filter(Data.data_id == self.data_id).first()
-        return patient
+        try:
+            patient = Patient.query.join(Data, Data.id_number == Patient.id_number).filter(Data.data_id == self.data_id).first()
+            return patient
+        except:
+            return None
 
     @staticmethod
     def from_json(json_post):
@@ -129,8 +139,8 @@ class Data(db.Model):
 
     def to_json(self):
         json_data = {
-            'url':url_for('data.get_data', id = self.data_id),
-            'patient':url_for('patient.get_patient', id = self.patient.patient_id),
+            'data_id':self.data_id,
+            'patient':self.patient.to_json() if self.patient is not None else None,
             'sn':self.sn,
             'id_number':self.id_number,
             'time':str(self.time)[0:5],
@@ -141,7 +151,7 @@ class Data(db.Model):
 
     def to_guard_json(self):
         json_data = {
-            'url': url_for('data.get_data', id=self.data_id),
+            'data_id': self.data_id,
             'sn': self.sn,
             'id_number': self.id_number,
             'time': str(self.time)[0:5],
@@ -153,16 +163,16 @@ class Data(db.Model):
     def to_full_json(self):
         patient = self.patient
         json_data = {
-            'patient_name': patient.patient_name,
-            'age': patient.age,
-            'tel': patient.tel,
-            'doctor': patient.doctor_name,
+            'patient_name': patient.patient_name if patient is not None else None,
+            'age': patient.age if patient is not None else None,
+            'tel': patient.tel if patient is not None else None,
+            'doctor': patient.doctor_name if patient is not None else None,
             'id_number': self.id_number,
             'date': str(self.date),
             'time': str(self.time)[0:5],
             'glucose': self.glucose,
-            'sex': patient.sex
-
+            'sex': patient.sex if patient is not None else None,
+            'data_id':self.data_id
         }
         return json_data
 
@@ -174,17 +184,23 @@ class Accuchek(db.Model):
 
     @property
     def bed(self):
-        bed = Bed.query.join(Accuchek, Accuchek.sn == Bed.sn).filter(Accuchek.accuchek_id == self.accuchek_id).first()
-        return bed
+        try:
+            bed = Bed.query.join(Accuchek, Accuchek.sn == Bed.sn).filter(Accuchek.accuchek_id == self.accuchek_id).first()
+            return bed
+        except:
+            return None
 
     @property
     def datas(self):
-        datas = Data.query.join(Accuchek, Accuchek.sn == Data.sn).filter(Accuchek.accuchek_id == self.accuchek_id).order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden!=True)
-        return datas
+        try:
+            datas = Data.query.join(Accuchek, Accuchek.sn == Data.sn).filter(Accuchek.accuchek_id == self.accuchek_id).order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden!=True)
+            return datas
+        except:
+            return Data.query.filter(Data.data_id == -1).order_by(Data.date.desc(), Data.time.desc()).filter(Data.hidden!=True)
 
     def to_json(self):
         json_accuchek = {
-            'url':url_for('accuchek.get_accuchek', id = self.accuchek_id),
+            'accuchek_id':self.accuchek_id,
             'sn':self.sn,
             'bed_id':self.bed_id
         }
@@ -199,82 +215,81 @@ class Bed(db.Model):
 
     @property
     def patient(self):
-        patient = Patient.query.join(Bed, Bed.id_number == Patient.id_number).filter(Bed.bed_id == self.bed_id).first()
-        return patient
+        try:
+            patient = Patient.query.join(Bed, Bed.id_number == Patient.id_number).filter(Bed.bed_id == self.bed_id).first()
+            return patient
+        except:
+            return Patient.query.filter(Patient.patient_id == -1).first()
 
     @property
     def datas(self):
-        patient = self.patient
-        datas = patient.datas
-        return datas
+        try:
+            patient = self.patient
+            datas = patient.datas
+            return datas
+        except:
+            datas = Data.query.filter(Data.data_id == -1)
+            return datas
 
     @property
     def accuchek(self):
-        accuchek = Accuchek.query.join(Bed, Bed.sn == Accuchek.sn).filter(Bed.bed_id == self.bed_id).first()
-        return accuchek
+        try:
+            accuchek = Accuchek.query.join(Bed, Bed.sn == Accuchek.sn).filter(Bed.bed_id == self.bed_id).first()
+            return accuchek
+        except:
+            return Accuchek.query.filter(Accuchek.accuchek_id == -1).first()
 
     @property
     def current_datas(self):
-        current_datas = self.datas.order_by(Data.date.desc(), Data.time.desc()).limit(10)
-        return current_datas
+        try:
+            current_datas = self.datas.order_by(Data.date.desc(), Data.time.desc()).limit(10)
+            return current_datas
+        except:
+            return Data.query.filter(Data.data_id == -1).order_by(Data.date.desc(), Data.time.desc()).limit(10)
 
     @property
     def bed_historys(self):
-        bed_historys = BedHistory.query.join(Bed, Bed.bed_id == BedHistory.bed_id).filter(Bed.bed_id == self.bed_id).order_by(BedHistory.date.desc(), BedHistory.time.desc())
-        return bed_historys
+        try:
+            bed_historys = BedHistory.query.join(Bed, Bed.bed_id == BedHistory.bed_id).filter(Bed.bed_id == self.bed_id).order_by(BedHistory.date.desc(), BedHistory.time.desc())
+            return bed_historys
+        except:
+            return BedHistory.query.filter(BedHistory.history_id ==-1)
 
     def bed_information(self):
         patient = self.patient
         json_bed_information = {
-            'url':url_for('bed.get_bed', id=self.bed_id),
+            'bed_id':self.bed_id,
             'sn':self.sn,
-            'sex': patient.sex,
-            'tel': patient.tel,
-            'age': patient.age,
-            'patient_name':patient.patient_name,
-            'doctor': patient.doctor_name,
-            'id_number':patient.id_number,
+            'sex': patient.sex if patient is not None else None,
+            'tel': patient.tel if patient is not None else None,
+            'age': patient.age if patient is not None else None,
+            'patient_name':patient.patient_name if patient is not None else None,
+            'doctor': patient.doctor_name if patient is not None else None,
+            'id_number':patient.id_number if patient is not None else None,
             'current_datas':[current_data.to_json() for current_data in self.current_datas]
+        }
+        return json_bed_information
+
+    def bed_information_full(self):
+        patient = self.patient
+        json_bed_information = {
+            'bed_id':self.bed_id,
+            'sn':self.sn,
+            'sex': patient.sex if patient is not None else None,
+            'tel': patient.tel if patient is not None else None,
+            'age': patient.age if patient is not None else None,
+            'patient_name':patient.patient_name if patient is not None else None,
+            'doctor': patient.doctor_name if patient is not None else None,
+            'id_number':patient.id_number if patient is not None else None,
+            'datas':[current_data.to_json() for current_data in self.datas]
         }
         return json_bed_information
 
     def to_json(self):
         json_bed = {
-            'url':url_for('bed.get_bed', id = self.bed_id),
+            'id':self.bed_id,
             'id_number': self.id_number,
             'sn': self.sn
-        }
-        return json_bed
-
-    def to_full_information(self):
-        patient_name = ''
-        tel = ''
-        sex = ''
-        age = ''
-        operator_name = ''
-        datas = []
-
-        if self.id_number is not None:
-            patient = Patient.query.filter(Patient.id_number == self.id_number).first()
-            patient_name = patient.patient_name
-            tel = patient.tel
-            sex = patient.sex
-            age = patient.age
-            operator_name = patient.doctor_name
-            current_datas = patient.datas.limit(10)
-            datas = [data.to_json() for data in current_datas]
-
-        json_bed = {
-            'url': url_for('bed.get_bed', id=self.bed_id),
-            'id_number': self.id_number,
-            'sn': self.sn,
-            'bed_id': self.bed_id,
-            'patient_name': patient_name,
-            'tel': tel,
-            'sex': sex,
-            'age': age,
-            'doctor': operator_name,
-            'datas': datas
         }
         return json_bed
 
@@ -289,22 +304,31 @@ class BedHistory(db.Model):
 
     @property
     def bed(self):
-        bed = Bed.query.join(BedHistory, BedHistory.bed_id == Bed.bed_id).filter(BedHistory.history_id == self.history_id).first()
-        return bed
+        try:
+            bed = Bed.query.join(BedHistory, BedHistory.bed_id == Bed.bed_id).filter(BedHistory.history_id == self.history_id).first()
+            return bed
+        except:
+            return None
 
     @property
     def patient(self):
-        patient = Patient.query.join(BedHistory, BedHistory.id_number == Patient.id_number).filter(BedHistory.history_id == self.history_id).first()
-        return patient
+        try:
+            patient = Patient.query.join(BedHistory, BedHistory.id_number == Patient.id_number).filter(BedHistory.history_id == self.history_id).first()
+            return patient
+        except:
+            return None
 
     @property
     def accuchek(self):
-        accuchek = Accuchek.query.join(BedHistory, BedHistory.sn == Accuchek.sn).filter(BedHistory.history_id == self.history_id).first()
-        return accuchek
+        try:
+            accuchek = Accuchek.query.join(BedHistory, BedHistory.sn == Accuchek.sn).filter(BedHistory.history_id == self.history_id).first()
+            return accuchek
+        except:
+            return None
 
     def to_json(self):
         json_history = {
-            'url':url_for('bed.get_history', id = self.history_id),
+            'history_id':self.history_id,
             'bed_id':self.bed_id,
             'time':str(self.time)[0:5],
             'date':str(self.date),
@@ -356,9 +380,9 @@ def load_user_from_request(request):
     api_key = request.headers.get('Authorization')
     if api_key:
         api_key = api_key.split(' ')[1]
-        print(api_key)
+        # print(api_key)
         obj = jwtDecoding(api_key)
-        print(obj)
+        # print(obj)
         if obj:
             user = Operator.query.get(int(obj['id']))
             return user

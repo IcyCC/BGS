@@ -101,7 +101,7 @@ def guard_datas(count=200):
     i = 0
     while i<count:
         d = SpareData(
-            sn = '00000',
+            sn = '00000000',
             time = fake.time(),
             date = fake.date(),
             glucose=randint(10,20)
@@ -115,7 +115,7 @@ def guard_datas(count=200):
     i = 0
     while i <count:
         d = SpareData(
-            sn = '00000',
+            sn = '000000000',
             time = fake.time(),
             date = fake.date(),
             glucose=randint(10, 20),
@@ -134,7 +134,7 @@ def guard_datas(count=200):
     i = 0
     while i<count:
         d = SpareData(
-            sn = '11111',
+            sn = '11111111',
             time = fake.time(),
             date = fake.date(),
             glucose=randint(10,20)
@@ -148,7 +148,7 @@ def guard_datas(count=200):
     i = 0
     while i <count:
         d = SpareData(
-            sn = '11111',
+            sn = '11111111',
             time = fake.time(),
             date = fake.date(),
             glucose=randint(10, 20),

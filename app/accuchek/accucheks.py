@@ -12,11 +12,12 @@ def std_json(d):
         r[k] = json.loads(v)
     return r
 
-@accuchek_blueprint.route('/accucheks')
+@accuchek_blueprint.route('/accucheks', methods=['GET'])
 @login_required
 def get_accucheks():
     fields = [i for i in Accuchek.__table__.c._data]
     accunckes = Accuchek.query
+    limit = None
     per_page = current_app.config['PATIENTS_PRE_PAGE']
     for k, v in std_json(request.args).items():
         if k in fields:
@@ -25,7 +26,7 @@ def get_accucheks():
             per_page = v
         if k == 'limit':
             limit = v
-            accunckes = accunckes.limit(limit).from_self()
+    accunckes = accunckes.limit(limit).from_self() if limit is not None else accunckes.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = accunckes.paginate(page, per_page=per_page, error_out=False)
     accunckes = pagination.items
@@ -36,7 +37,7 @@ def get_accucheks():
     if pagination.has_next:
         next = url_for('accuchek_blueprint.get_accucheks', page=page + 1)
     return jsonify({
-        'articles': [accuncke.to_json() for accuncke in accunckes],
+        'accucheks': [accuncke.to_json() for accuncke in accunckes],
         'prev': prev,
         'next': next,
         'has_prev':pagination.has_prev,
@@ -49,7 +50,7 @@ def get_accucheks():
     })
 
 """
-@api {GET} /accuchek/accucheks 获取所有血糖仪信息(地址栏筛选)
+@api {GET} /accucheks 获取所有血糖仪信息(地址栏筛选)
 @apiGroup accucheks
 @apiName 获取所有血糖仪信息
 
@@ -65,7 +66,7 @@ def get_accucheks():
     HTTP/1.1 200 OK
     {
         "accuncheks":[{
-            "url":"血糖仪地址",
+            "accuchek_id":"血糖仪id",
             "sn":"血糖仪sn码",
             "bed_id":"床位号"
         }](血糖仪信息),
@@ -83,7 +84,6 @@ def get_accucheks():
 
 @accuchek_blueprint.route('/accucheks', methods = ['POST'])
 @login_required
-
 def new_accuchek():
     accuchek = Accuchek()
     if 'sn' in request.json:
@@ -91,35 +91,40 @@ def new_accuchek():
         may_accuchek = Accuchek.query.filter(Accuchek.sn == sn).first()
         if may_accuchek:
             return jsonify({
-                'status':'fail',
-                'reason':'the sn has been used'
+                'status': 'fail',
+                'reason': 'the sn has been used'
             })
+    else:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'there is no sn'
+        })
     for k in request.json:
         if hasattr(accuchek, k):
             try:
                 setattr(accuchek, k, request.json[k])
             except IntegrityError as e:
                 return jsonify({
-                    'status':'fail',
-                    'reason':e
+                    'status': 'fail',
+                    'reason': e
                 })
     try:
         db.session.add(accuchek)
         db.session.commit()
     except OperationalError as e:
         return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':accuchek.to_json()
+            'status': 'fail',
+            'reason': e,
+            'data': accuchek.to_json()
         })
     return jsonify({
-        "accukces":[accuchek.to_json()],
-        "status":"success",
-        "reason":"the data has been added"
+        "accukces": [accuchek.to_json()],
+        "status": "success",
+        "reason": "the data has been added"
     })
 
 """
-@api {POST} /accuchek/accucheks 添加一个新的血糖仪(json数据)
+@api {POST} /accucheks 添加一个新的血糖仪(json数据)
 @apiGroup accucheks
 @apiName 添加一个血糖仪
 
@@ -135,7 +140,7 @@ def new_accuchek():
         "accucheks":[{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
-            "url":"血糖仪地址"   
+            "accuchek_id":"血糖仪id"   
         }],
         "status":"success",
         "reason":"the data has been added"
@@ -157,7 +162,7 @@ def get_accuchek(id):
     })
 
 """
-@api {GET} /accuchek/accucheks/<int:id> 根据id获取血糖仪信息
+@api {GET} /accucheks/<int:id> 根据id获取血糖仪信息
 @apiGroup accucheks
 @apiName 根据id获取血糖仪信息
 
@@ -172,7 +177,7 @@ def get_accuchek(id):
         "accucheks":[{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
-            "url":"血糖仪地址"   
+            "accuchek_id":"血糖仪id"   
         }],
         "status":"success",
         "reason":"there is the data"
@@ -182,6 +187,11 @@ def get_accuchek(id):
 
 @apiErrorExample Error-Resopnse:
     HTTP/1.1 404 对应的血糖仪信息不存在
+    {
+       "error": "not found",
+        "reason": "404 Not Found: The requested URL was not found on the server.  If you entered the URL manually please check your spelling and try again.",
+        "status": "fail" 
+    }
 """
 
 @accuchek_blueprint.route('/accucheks/<int:id>', methods = ['DELETE'])
@@ -203,7 +213,7 @@ def delete_accuchek(id):
     })
 
 """
-@api {DELETE} /accuchek/accucheks/<int:id> 删除id所代表的血糖仪
+@api {DELETE} /accucheks/<int:id> 删除id所代表的血糖仪
 @apiGroup accucheks
 @apiName 删除id所代表的血糖仪
 
@@ -218,7 +228,7 @@ def delete_accuchek(id):
         "accucheks":[{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
-            "url":"血糖仪地址"   
+            "accuchek_id":"血糖仪id"   
         }],
         "status":"success",
         "reason":"the data has been deleted"
@@ -232,13 +242,12 @@ def delete_accuchek(id):
 
 @accuchek_blueprint.route('/accucheks/<int:id>', methods = ['PUT'])
 @login_required
-
 def change_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
     if 'sn' in request.json:
         sn = request.json['sn']
         may_accuchek = Accuchek.query.filter(Accuchek.sn == sn).first()
-        if may_accuchek.accuchek_id != id:
+        if may_accuchek is not None and may_accuchek.accuchek_id != id:
             return jsonify({
                 'status':'fail',
                 'reason':'the sn has been used'
@@ -261,7 +270,7 @@ def change_accuchek(id):
     })
 
 """
-@api {PUT} /accuchek/accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
+@api {PUT} /accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
 @apiGroup accucheks
 @apiName 更改id所代表的血糖仪的信息
 
@@ -276,7 +285,7 @@ def change_accuchek(id):
         "accucheks":[{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
-            "url":"血糖仪地址"   
+            "accuchek_id":"血糖仪id"   
         }],
         "status":"success",
         "reason":"the data has been changed"

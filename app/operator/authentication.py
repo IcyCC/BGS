@@ -24,59 +24,12 @@ def jwtDecoding(token, aud='webkit'):
     return decoded
 
 
-# @auth.verify_password
-# def verify_password(operatorname_or_token, password):
-#     if password == "":
-#         operator = Operator.verify_auth_token(operatorname_or_token)
-#         if operator is None:
-#             return False
-#         else:
-#             g.current_user = operator
-#             return True
-#     else:
-#         operator = Operator.query.filter(Operator.tel == operatorname_or_token).first()
-#         if operator.verify_password(password):
-#             g.current_user = operator
-#             return True
-#         else:
-#             return False
-# """
-# 用于判断密码是否正确
-# """
-
-# @operator_blueprint.route('/tokens')
-# @auth.login_required
-# def get_auth_token():
-#     token = g.current_user.generate_auth_token()
-#     return jsonify({
-#         'token':token,
-#         'status':'fail',
-#         'reason':'the token has been gotten'
-#     })
-#
-# """
-# @api {GET} /operator/tokens 根据登陆的账号密码获得token
-# @apiGroup authentication
-# @apiName 根据登陆的账号密码获得token
-#
-# @apiParam (Login) {String} login 登录才可以访问
-#
-# @apiSuccess {Array} token 返回相应账号的token
-#
-# @apiSuccessExample Success-Response:
-#     HTTP/1.1 200 OK
-#     {
-#         "token":token,
-#         "status":"success",
-#         "reason":"the token has been gotten"
-#     }
-#
-# """
 
 @operator_blueprint.route('/login', methods=['POST'])
 def login():
-    username = request.json.get("username")
-    password = request.json.get("password")
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
+    hospital = request.json.get("hospital", None)
     operator = Operator.query.filter(Operator.operator_name==username).first()
 
     if operator is None or not operator.verify_password(password=password):
@@ -94,8 +47,9 @@ def login():
 
 """
 @api {POST} /login 登录账号(json数据)
-@apiGroup authentication
+@apiGroup operator
 @apiName 登录账号
+
 @apiParam (params) {String} username 登录账号
 @apiParam (params) {String} password 新的密码
 
@@ -183,9 +137,10 @@ def change_password():
     })
 
 """
-@api {POST} /operators 修改密码(json数据)
+@api {POST} /change_password 修改密码(json数据)
 @apiGroup operator
 @apiName 修改密码
+
 @apiParam (params) {String} hospital 医院名称
 @apiParam (params) {String} office 科室
 @apiParam (params) {String} password 新的密码

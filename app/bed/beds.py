@@ -6,6 +6,8 @@ from sqlalchemy.exc import OperationalError
 import datetime
 from flask_login import login_required
 import json
+from marshmallow.exceptions import ValidationError
+from app.form_model import GetBedValidation, BedValidation, BedMoreDataValidation, ChangeBedValidation
 
 def std_json(d):
     r = {}
@@ -16,6 +18,20 @@ def std_json(d):
 @bed_blueprint.route('/beds')
 @login_required
 def get_beds():
+    params_dict = {
+        'id_number': request.args.get('id_number', None, type=str),
+        'sn': request.args.get('sn', None, type=str),
+        'per_page': request.args.get('per_page', None, type=int),
+        'limit': request.args.get('limit', None, type=int),
+        'bed_id': request.args.get('bed_id', None, type=int)
+    }
+    try:
+        GetBedValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     fields = [i for i in Bed.__table__.c._data]
     beds = Bed.query
     limit = None
@@ -104,6 +120,18 @@ def get_beds():
 @bed_blueprint.route('/beds', methods=['POST'])
 @login_required
 def new_bed():
+    params_dict = {
+        'id_number': request.json.get('id_number', None),
+        'sn': request.json.get('sn', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        BedValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bed = Bed()
     bedhistory = BedHistory()
     if 'sn' in request.json:
@@ -304,6 +332,27 @@ def delete_bed(id):
 @bed_blueprint.route('/beds/<int:id>', methods=['PUT'])
 @login_required
 def change_bed(id):
+    params_dict = {
+        'id_number': request.json.get('id_number', None),
+        'sn': request.json.get('sn', None),
+        'bed_id': request.json.get('bed_id', None),
+        'history_id': request.json.get('history_id', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'patient_id': request.json.get('patient_id', None),
+        'patient_name': request.json.get('patient_name', None),
+        'sex': request.json.get('sex', None),
+        'tel': request.json.get('tel', None),
+        'age': request.json.get('age', None),
+        'doctor_name': request.json.get('doctor_name',None)
+    }
+    try:
+        ChangeBedValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bed = Bed.query.get_or_404(id)
     bed_history = bed.bed_historys.order_by(Bed.bed_id.desc()).first()
     if 'sn' in request.json and request.json['sn']:
@@ -490,6 +539,20 @@ def get_bed_more(id):
 @bed_blueprint.route('/beds/<int:id>/more_data')
 @login_required
 def get_bed_moredatas(id):
+    params_dict = {
+        'id_number': request.args.get('id_number', None, type=str),
+        'data_id': request.args.get('data_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'time': request.args.get('time', None, type = str),
+        'date': request.args.get('date', None, type=str)
+    }
+    try:
+        BedMoreDataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bed = Bed.query.get_or_404(id)
     datas = bed.datas.order_by(Data.date.desc(), Data.time.desc())
     per_page = current_app.config['PATIENTS_PRE_PAGE']

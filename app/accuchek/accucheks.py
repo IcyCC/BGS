@@ -5,6 +5,8 @@ from app.models import Accuchek
 from sqlalchemy.exc import OperationalError,IntegrityError
 from flask_login import login_required
 import json
+from marshmallow.exceptions import ValidationError
+from app.form_model import GetAccuchekValidation, AccuchekValidation, ChangeAccuchekValidation
 
 def std_json(d):
     r = {}
@@ -15,6 +17,20 @@ def std_json(d):
 @accuchek_blueprint.route('/accucheks', methods=['GET'])
 @login_required
 def get_accucheks():
+    params_dict = {
+        'accuchek_id': request.args.get('accuchek_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'per_page': request.args.get('per_page', None, type=int),
+        'limit': request.args.get('limit', None, type=int),
+        'bed_id': request.args.get('bed_id', None, type=int)
+    }
+    try:
+        GetAccuchekValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     fields = [i for i in Accuchek.__table__.c._data]
     accunckes = Accuchek.query
     limit = None
@@ -85,6 +101,18 @@ def get_accucheks():
 @accuchek_blueprint.route('/accucheks', methods = ['POST'])
 @login_required
 def new_accuchek():
+    params_dict = {
+        'accuchek_id': request.json.get('accuchek_id', None),
+        'sn': request.json.get('sn', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        AccuchekValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     accuchek = Accuchek()
     if 'sn' in request.json:
         sn = request.json['sn']
@@ -243,6 +271,18 @@ def delete_accuchek(id):
 @accuchek_blueprint.route('/accucheks/<int:id>', methods = ['PUT'])
 @login_required
 def change_accuchek(id):
+    params_dict = {
+        'accuchek_id': request.json.get('accuchek_id', None),
+        'sn': request.json.get('sn', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        ChangeAccuchekValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     accuchek = Accuchek.query.get_or_404(id)
     if 'sn' in request.json:
         sn = request.json['sn']

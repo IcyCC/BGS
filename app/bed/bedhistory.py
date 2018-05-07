@@ -6,6 +6,8 @@ from sqlalchemy.exc import OperationalError
 import datetime
 from flask_login import login_required
 import json
+from app.form_model import BedHistoryValidation, GetBedHistoryValidation, ChangeBedHistoryValidation
+from marshmallow.exceptions import ValidationError
 
 def std_json(d):
     r = {}
@@ -16,6 +18,23 @@ def std_json(d):
 @bed_blueprint.route('/bedhistorys')
 @login_required
 def get_histories():
+    params_dict = {
+        'history_id': request.args.get('history_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'id_number': request.args.get('id_number', None, type=str),
+        'time': request.args.get('time', None, type=str),
+        'date': request.args.get('date', None, type=str),
+        'bed_id': request.args.get('bed_id', None, type=int),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        GetBedHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     fields = [i for i in BedHistory.__table__.c._data]
     bedhistorys = BedHistory.query.order_by(BedHistory.date.desc(), BedHistory.time.desc())
     per_page = current_app.config['PATIENTS_PRE_PAGE']
@@ -93,8 +112,22 @@ def get_histories():
 
 @bed_blueprint.route('/bedhistorys', methods = ['POST'])
 @login_required
-
 def new_history():
+    params_dict = {
+        'history_id': request.json.get('history_id', None),
+        'sn': request.json.get('sn', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        BedHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bedhistory = BedHistory()
     for k in request.json:
         if hasattr(bedhistory, k):
@@ -191,8 +224,22 @@ def get_history(id):
 
 @bed_blueprint.route('/bedhistorys/<int:id>', methods = ['PUT'])
 @login_required
-
 def change_history(id):
+    params_dict = {
+        'history_id': request.json.get('history_id', None),
+        'sn': request.json.get('sn', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        ChangeBedHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bedhistory = BedHistory.query.get_or_404(id)
     for k in request.json:
         if hasattr(bedhistory, k):

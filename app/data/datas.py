@@ -5,7 +5,8 @@ from app.models import Patient, Data, Accuchek, SpareData
 from sqlalchemy.exc import OperationalError
 from flask_login import login_required
 import json
-
+from app.form_model import DataValidation, DataArtificialValidation, GetDataValidation, GetSpareDataValidation, ChangeSpareDataValidation, ChangeDataValidation
+from marshmallow.exceptions import ValidationError
 def std_json(d):
     r = {}
     for k, v in d.items():
@@ -16,6 +17,22 @@ sn_numbers = ['00000000', '11111111']
 @login_required
 @data_blueprint.route('/datas/auto', methods=['POST'])
 def new_data_auto():
+    params_dict = {
+        'data_id': request.json.get('data_id', None),
+        'sn': request.json.get('sn', None),
+        'glucose': request.json.get('glucose', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'hidden': request.json.get('hidden', None)
+    }
+    try:
+        DataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     if request.json['sn'] not in sn_numbers:
         data = Data()
         for k in request.json:
@@ -98,6 +115,28 @@ def new_data_auto():
 @data_blueprint.route('/datas/artificial', methods=['POST'])
 @login_required
 def new_data_artificial():
+    params_dict = {
+        'data_id': request.json.get('data_id', None),
+        'sn': request.json.get('sn', None),
+        'glucose': request.json.get('glucose', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'hidden': request.json.get('hidden', None),
+        'patient_id': request.json.get('patient_id', None),
+        'patient_name': request.json.get('patient_name', None),
+        'sex': request.json.get('sex', None),
+        'tel': request.json.get('tel', None),
+        'age': request.json.get('age', None),
+        'doctor_name': request.json.get('doctor_name', None)
+    }
+    try:
+        DataArtificialValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     data = Data()
     for k in request.json:
         if hasattr(data, k):
@@ -173,6 +212,24 @@ def new_data_artificial():
 @data_blueprint.route('/datas')
 @login_required
 def get_datas():
+    params_dict = {
+        'data_id': request.args.get('data_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'glucose': request.args.get('glucose', None, type=float),
+        'id_number': request.args.get('id_number', None, type=str),
+        'time': request.args.get('time', None, type=str),
+        'date': request.args.get('date', None, type=str),
+        'hidden': request.args.get('hidden', None, type=bool),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        GetDataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     data_fields = [i for i in Data.__table__.c._data]
     fields = data_fields
     datas = Data.query.order_by(Data.date.desc(), Data.time.desc())
@@ -259,6 +316,29 @@ def get_datas():
 @data_blueprint.route('/sparedatas')
 @login_required
 def get_datas_sparedata():
+    params_dict = {
+        'data_id': request.args.get('data_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'glucose': request.args.get('glucose', None, type=float),
+        'id_number': request.args.get('id_number', None, type=str),
+        'patient_name': request.args.get('patient_name', None, type=str),
+        'sex': request.args.get('sex', None, type=str),
+        'tel': request.args.get('tel', None, type=str),
+        'age': request.args.get('age', None, type=int),
+        'doctor': request.args.get('doctor', None, type=str),
+        'time': request.args.get('time', None, type=str),
+        'date': request.args.get('date', None, type=str),
+        'hidden': request.args.get('hidden', None, type=bool),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        GetSpareDataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     if 'sn' not in request.args:
         return jsonify({
             'status':'fail',
@@ -392,6 +472,27 @@ def get_data(id):
 @data_blueprint.route('/sparedatas/<int:id>', methods=['PUT'])
 @login_required
 def change_sparedata_data(id):
+    params_dict = {
+        'data_id': request.json.get('data_id', None),
+        'sn': request.json.get('sn', None),
+        'glucose': request.json.get('glucose', None),
+        'id_number': request.json.get('id_number', None),
+        'patient_name': request.json.get('patient_name', None),
+        'sex': request.json.get('sex', None),
+        'tel': request.json.get('tel', None),
+        'age': request.json.get('age', None),
+        'doctor': request.json.get('doctor', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'hidden': request.json.get('hidden', None)
+    }
+    try:
+        ChangeSpareDataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     data = SpareData.query.get_or_404(id)
     for k in request.json:
         if hasattr(data, k):
@@ -532,6 +633,22 @@ def get_sparedata_data(id):
 @data_blueprint.route('/datas/<int:id>', methods=['PUT'])
 @login_required
 def change_data(id):
+    params_dict = {
+        'data_id': request.json.get('data_id', None),
+        'sn': request.json.get('sn', None),
+        'glucose': request.json.get('glucose', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'hidden': request.json.get('hidden', None)
+    }
+    try:
+        ChangeDataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     data = Data.query.get_or_404(id)
     id_number = data.id_number
     if 'id_number' in request.json:

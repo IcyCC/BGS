@@ -8,7 +8,7 @@ from sqlalchemy.exc import OperationalError
 from flask_login import login_required, current_user, logout_user
 from flask_mail import Mail, Message
 import requests
-from app.form_model import UserValidation, ChangeUserValidation
+from app.form_model import OperatorValidation, ChangeOperatorValidation, GetOperatorValidation, OperatorPasswordValidation
 import json
 
 def std_json(d):
@@ -20,15 +20,18 @@ def std_json(d):
 @operator_blueprint.route('/operators', methods = ['POST'])
 def new_operator():
     params_dict = {
-        'username': request.json.get('username', None),
+        'operator_id': request.json.get('operator_id', None),
+        'operator_name': request.json.get('operator_name', None),
         'password': request.json.get('password', None),
         'tel': request.json.get('tel', None),
         'hospital': request.json.get('hospital', None),
         'lesion': request.json.get('lesion', None),
-        'email': request.json.get('email', None)
+        'email': request.json.get('email', None),
+        'active':request.json.get('active', None),
+        'office':request.json.get('office', None)
     }
     try:
-        UserValidation().load(params_dict)
+        OperatorValidation().load(params_dict)
     except ValidationError as e:
         return jsonify({
             'status':'fail',
@@ -145,6 +148,26 @@ def new_operator():
 @operator_blueprint.route('/operators')
 @login_required
 def get_operators():
+    params_dict = {
+        'operator_id': request.args.get('operator_id', None, type=id),
+        'operator_name': request.args.get('operator_name', None),
+        'password': request.args.get('password', None),
+        'tel': request.args.get('tel', None),
+        'hospital': request.args.get('hospital', None),
+        'lesion': request.args.get('lesion', None),
+        'email': request.args.get('email', None),
+        'active': request.args.get('active', None, type=bool),
+        'office': request.args.get('office', None),
+        'limit': request.args.get('limit', None, type= int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        GetOperatorValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     operators = Operator.query
     fields = [i for i in Operator.__table__.c._data]
     per_page = current_app.config['PATIENTS_PRE_PAGE']
@@ -226,6 +249,11 @@ def get_operators():
 @operator_blueprint.route('/operators/<int:id>')
 @login_required
 def get_operator(id):
+    if request.args is not None:
+        return jsonify({
+            'status':'fail',
+            'reason':'any args should not be gave'
+        })
     operator = Operator.query.get_or_404(id)
     return jsonify({
         'operators': [operator.to_json()],
@@ -265,6 +293,11 @@ def get_operator(id):
 @operator_blueprint.route('/operators/<int:id>', methods = ['DELETE'])
 @login_required
 def delete_operator(id):
+    if request.args is not None:
+        return jsonify({
+            'status':'fail',
+            'reason':'any args should not be gave'
+        })
     operator = Operator.query.get_or_404(id)
     if current_user.tel != operator.tel:
         return jsonify({
@@ -325,15 +358,18 @@ def delete_operator(id):
 @login_required
 def change_operator(id):
     params_dict = {
-        'username': request.json.get('username', None),
+        'operator_id': request.json.get('operator_id', None),
+        'operator_name': request.json.get('operator_name', None),
         'password': request.json.get('password', None),
         'tel': request.json.get('tel', None),
         'hospital': request.json.get('hospital', None),
         'lesion': request.json.get('lesion', None),
-        'email': request.json.get('email', None)
+        'email': request.json.get('email', None),
+        'active': request.json.get('active', None),
+        'office': request.json.get('office', None)
     }
     try:
-        ChangeUserValidation().load(params_dict)
+        ChangeOperatorValidation().load(params_dict)
     except ValidationError as e:
         return jsonify({
             'status': 'fail',
@@ -433,11 +469,11 @@ def get_operator_now():
 @login_required
 def operator_password():
     params_dict = {
-        'username': request.json.get('username', None),
+        'operator_name': request.json.get('operator_name', None),
         'password': request.json.get('password', None)
     }
     try:
-        ChangeUserValidation().load(params_dict)
+        OperatorPasswordValidation().load(params_dict)
     except ValidationError as e:
         return jsonify({
             'status': 'fail',
@@ -465,10 +501,12 @@ def operator_password():
         })
 
 """
-@api {GET} /current_operator/password 验证现在操作者输入密码是否正确
+@api {POST} /current_operator/password 验证现在操作者输入密码是否正确
 @apiGroup operator
 @apiName 验证现在操作者输入密码是是否正确
 
+@apiParam (params) {String} password 登录密码
+@apiParam (params) {String} operator_name 操作者姓名
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回现在操作者的信息

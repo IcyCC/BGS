@@ -5,6 +5,8 @@ from app.models import Patient, Data, Bed
 from sqlalchemy.exc import OperationalError
 from flask_login import login_required
 import json
+from app.form_model import PatientValidation, GetPatientValidation, ChangePatientValidation, PatientDataValidation, PatientHistoryValidation
+from marshmallow.exceptions import ValidationError
 
 def std_json(d):
     r = {}
@@ -15,6 +17,22 @@ def std_json(d):
 @patient_blueprint.route('/patients', methods = ['POST'])
 @login_required
 def new_patient():
+    params_dict = {
+        'patient_id': request.json.get('patient_id', None),
+        'doctor_name': request.json.get('doctor_name', None),
+        'id_number': request.json.get('id_number', None),
+        'tel': request.json.get('tel', None),
+        'age': request.json.get('age', None),
+        'sex': request.json.get('sex', None),
+        'patient_name': request.json.get('patient_name', None)
+    }
+    try:
+        PatientValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     id_number = request.json['id_number']
     bed_id = request.json['bed_id']
     patient = Patient.query.filter(Patient.id_number == id_number).first()
@@ -94,6 +112,24 @@ def new_patient():
 @patient_blueprint.route('/patients')
 @login_required
 def get_patients():
+    params_dict = {
+        'patient_id': request.args.get('patient_id', None, type=int),
+        'doctor_name': request.args.get('doctor_name', None, type=str),
+        'id_number': request.args.get('id_number', None, type=str),
+        'tel': request.args.get('tel', None, type=str),
+        'age': request.args.get('age', None, type=int),
+        'sex': request.args.get('sex', None, type=str),
+        'patient_name': request.args.get('patient_name', None, type=str),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        GetPatientValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     page = request.args.get('page', 1, type=int)
     fields = [i for i in Patient.__table__.c._data]
     patients = Patient.query
@@ -179,6 +215,22 @@ def get_patients():
 @patient_blueprint.route('/patients/<int:id>', methods = ['PUT'])
 @login_required
 def change_patient(id):
+    params_dict = {
+        'patient_id': request.json.get('patient_id', None),
+        'doctor_name': request.json.get('doctor_name', None),
+        'id_number': request.json.get('id_number', None),
+        'tel': request.json.get('tel', None),
+        'age': request.json.get('age', None),
+        'sex': request.json.get('sex', None),
+        'patient_name': request.json.get('patient_name', None)
+    }
+    try:
+        ChangePatientValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     patient = Patient.query.get_or_404(id)
     if 'id_number' in request.json:
         id_number = request.json['id_number']
@@ -410,6 +462,24 @@ def get_from_id():
 @patient_blueprint.route('/patients/<int:id>/datas')
 @login_required
 def get_patient_datas(id):
+    params_dict = {
+        'data_id': request.args.get('data_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'id_number': request.args.get('id_number', None, type=str),
+        'time': request.args.get('time', None, type=str),
+        'date': request.args.get('date', None, type=str),
+        'glucose': request.args.get('glucose', None, type=float),
+        'hidden': request.args.get('hidden', None, type=bool),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        PatientDataValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     patient = Patient.query.get_or_404(id)
     fields = [i for i in Data.__table__.c._data]
     datas = patient.datas
@@ -489,6 +559,38 @@ def get_patient_datas(id):
 @patient_blueprint.route('/patients/history')
 @login_required
 def patients_history():
+    params_dict = {
+        'patient_id': request.args.get('patient_id', None, type=int),
+        'doctor_name': request.args.get('doctor_name', None, type=str),
+        'id_number': request.args.get('id_number', None, type=str),
+        'tel': request.args.get('tel', None, type=str),
+        'age': request.args.get('age', None, type=int),
+        'sex': request.args.get('sex', None, type=str),
+        'patient_name': request.args.get('patient_name', None, type=str),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'time': request.args.get('time', None, type=str),
+        'date': request.args.get('date', None, type=str),
+        'glucose': request.args.get('glucose', None, type=float),
+        'data_id': request.args.get('data_id', None, type=int),
+        'hidden': request.args.get('hidden', None, type=bool),
+        'min_age': request.args.get('min_age', None, type=int),
+        'max_age': request.args.get('max_age', None, type=int),
+        'max_glucose': request.args.get('max_glucose', None, type=float),
+        'min_glucose': request.args.get('min_glucose', None, type=float),
+        'begin_time': request.args.get('begin_time', None, type=str),
+        'end_time': request.args.get('end_time', None, type=str),
+        'begin_date': request.args.get('begin_date', None, type=str),
+        'end_date': request.args.get('end_date', None, type=str)
+    }
+    try:
+        PatientHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     datas = Data.query.join(Patient, Patient.id_number == Data.id_number)
     patient_field = [i for i in Patient.__table__.c._data]
     limit = None

@@ -39,7 +39,6 @@ def login():
         "id": operator.id,
         "username": operator.operator_name
     }
-
     token = jwtEncoding(userInfo)
     login_user(operator, remember=True)
 
@@ -48,7 +47,6 @@ def login():
 """
 @api {POST} /login 登录账号(json数据)
 @apiGroup operator
-@apiName 登录账号
 
 @apiParam (params) {String} username 登录账号
 @apiParam (params) {String} password 新的密码
@@ -89,7 +87,6 @@ def logout():
 """
 @api {GET} /logout 登出账号(json数据)
 @apiGroup operator
-@apiName 新建操作者信息
 
 @apiParam (Login) {String} login 登录才可以访问
 
@@ -139,7 +136,6 @@ def change_password():
 """
 @api {POST} /change_password 修改密码(json数据)
 @apiGroup operator
-@apiName 修改密码
 
 @apiParam (params) {String} hospital 医院名称
 @apiParam (params) {String} office 科室

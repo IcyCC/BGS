@@ -72,7 +72,6 @@ def new_patient():
 """
 @api {POST} /patients 新建病人信息(json数据)
 @apiGroup patients
-@apiName 新建病人信息
 
 @apiParam (params) {String} id_number 医保卡号
 @apiParam (params) {String} tel 病人电话号码
@@ -167,7 +166,6 @@ def get_patients():
 """
 @api {GET} /patients 获取所有病人数据信息(地址栏筛选)
 @apiGroup patients
-@apiName 获取所有病人数据
 
 @apiParam (params) {String} id_number 医保卡号
 @apiParam (params) {String} tel 病人电话号码
@@ -262,7 +260,6 @@ def change_patient(id):
 """
 @api {PUT} /patients/<int:id> 修改id代表的病人信息(json数据)
 @apiGroup patients
-@apiName 修改id代表的病人信息
 
 @apiParam (params) {Number} id 病人id
 @apiParam (params) {String} id_number 医保卡号
@@ -316,7 +313,6 @@ def get_patient(id):
 """
 @api {GET} /patients/<int:id> 根据id获取病人信息
 @apiGroup patients
-@apiName 根据id获取病人信息
 
 @apiParam (params) {Number} id 病人id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -378,7 +374,6 @@ def delete_patients(id):
 """
 @api {DELETE} /patients/<int:id> 删除id所代表的病人信息
 @apiGroup patients
-@apiName 删除id所代表的病人信息
 
 @apiParam (params) {Number} id 病人id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -428,7 +423,6 @@ def get_from_id():
 """
 @api {GET} /patients/getfromid 根据医疗卡号获取病人信息
 @apiGroup patients
-@apiName 根据医疗卡号获取病人信息
 
 @apiParam (params) {String} id_number 医疗卡号 
 @apiParam (Login) {String} login 登录才可以访问
@@ -518,7 +512,6 @@ def get_patient_datas(id):
 """
 @api {GET} /patients/<int:id>/datas 获取id所代表的病人的数据
 @apiGroup patients
-@apiName 获取id所代表的病人的数据
 
 @apiParam (params) {Number} id 病人id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -663,7 +656,6 @@ def patients_history():
 """
 @api {GET} /patients/history 获取病人历史信息(浏览器栏筛选)
 @apiGroup patients
-@apiName 获取id所代表的病人的数据
 
 @apiParam (params) {String} id_number 医疗卡号 
 @apiParam (params) {String} patient_name 病人名字

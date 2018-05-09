@@ -81,7 +81,6 @@ def new_data_auto():
 """
 @api {POST} /datas/auto 添加数据(不用手动输入病人数据)(json数据)
 @apiGroup datas
-@apiName 添加数据
 
 @apiParam (params) {String} sn 血糖仪sn码 
 @apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
@@ -176,7 +175,6 @@ def new_data_artificial():
 """
 @api {POST} /datas/artificial 添加数据(不用手动输入病人数据)(json数据)
 @apiGroup datas
-@apiName 添加数据
 
 @apiParam (params) {String} id_number 医疗卡号
 @apiParam (params) {String} patient_name 病人姓名
@@ -268,7 +266,6 @@ def get_datas():
 """
 @api {GET} /datas 获取所有数据信息
 @apiGroup datas
-@apiName 获取所有数据信息
 
 @apiParam (params) {String} sn 血糖仪sn码 
 @apiParam (params) {Number} limit 查询总数量
@@ -380,7 +377,6 @@ def get_datas_sparedata():
 """
 @api {GET} /sparedatas 获取备用机数据
 @apiGroup datas
-@apiName 获取备用机数据
 
 @apiParam (params) {String} sn 血糖仪sn码 
 @apiParam (params) {Number} limit 查询总数量
@@ -436,7 +432,6 @@ def get_data(id):
 """
 @api {GET} /datas/<int:id> 根据id获取数据信息
 @apiGroup datas
-@apiName 根据id获取数据信息
 
 @apiParam (params) {String} id 数据id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -511,7 +506,6 @@ def change_sparedata_data(id):
 """
 @api {PUT} /sparedatas/<int:id> 根据id修改备用机数据
 @apiGroup datas
-@apiName 根据id修改备用机数据
 
 @apiParam (params) {String} id 备用机数据id 
 @apiParam (params) {String} sn 备用机sn码
@@ -572,7 +566,6 @@ def delete_sparedata_data(id):
 """
 @api {DELTET} /sparedatas/<int:id> 根据id删除备用机数据
 @apiGroup datas
-@apiName 根据id删除备用机数据
 
 @apiParam (params) {String} id 备用机数据id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -601,7 +594,6 @@ def get_sparedata_data(id):
 """
 @api {PUT} /sparedatas/<int:id> 根据id查询备用机数据
 @apiGroup datas
-@apiName 根据id查询备用机数据
 
 @apiParam (params) {String} id 备用机数据id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -685,7 +677,6 @@ def change_data(id):
 """
 @api {PUT} /datas/<int:id> 更改id所代表的数据的信息
 @apiGroup datas
-@apiName 更改id所代表的数据的信息
 
 @apiParam (request) {String} id_number 医疗卡号(修改病人信息时添加)
 @apiParam (request) {String} patient_name 病人姓名(修改病人信息时添加)
@@ -748,7 +739,6 @@ def delete_data(id):
 
 @api {DELETE} /datas/<int:id> 删除id所代表的数据的信息
 @apiGroup datas
-@apiName 删除id所代表的数据的信息
 
 @apiParam (params) {String} id 数据id 
 @apiParam (Login) {String} login 登录才可以访问

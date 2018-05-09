@@ -101,7 +101,7 @@ def new_operator():
 """
 @api {POST} /operators 新建操作者(医生)信息(json数据)并激活
 @apiGroup operator
-@apiName 新建操作者信息
+
 @apiParam (params) {String} operator_name 医生姓名
 @apiParam (params) {String} password 登录密码
 @apiParam (params) {String} hospital 医院名称   
@@ -205,7 +205,6 @@ def get_operators():
 """
 @api {GET} /operators 获取查询操作者(地址栏筛选)
 @apiGroup operator
-@apiName 获取查询查询操作者
 
 @apiParam (params) {Number} limit 查询总数量
 @apiParam (params) {Number} per_page 每一页的数量
@@ -264,7 +263,6 @@ def get_operator(id):
 """
 @api {GET} /operators/<int:id> 根据id查询操作者
 @apiGroup operator
-@apiName 根据id查询操作者
 
 @apiParam (params) {Number} id 医生id
 @apiParam (Login) {String} login 登录才可以访问
@@ -322,7 +320,6 @@ def delete_operator(id):
 """
 @api {DELETE} /operators/<int:id> 根据id删除操作者
 @apiGroup operator
-@apiName 根据id删除操作者
 
 @apiParam (params) {Number} id 医生id
 @apiParam (Login) {String} login 登录才可以访问
@@ -398,7 +395,6 @@ def change_operator(id):
 """
 @api {PUT} /operators/<int:id> 根据id修改操作者信息(json数据)
 @apiGroup operator
-@apiName 根据id修改操作者信息
 
 @apiParam (params) {Number} id 医生id
 @apiParam (Login) {String} login 登录才可以访问
@@ -443,7 +439,6 @@ def get_operator_now():
 """
 @api {GET} /current_operator 返回现在操作者的信息
 @apiGroup operator
-@apiName 返回现在操作者的信息
 
 @apiParam (Login) {String} login 登录才可以访问
 
@@ -503,7 +498,6 @@ def operator_password():
 """
 @api {POST} /current_operator/password 验证现在操作者输入密码是否正确
 @apiGroup operator
-@apiName 验证现在操作者输入密码是是否正确
 
 @apiParam (params) {String} password 登录密码
 @apiParam (params) {String} operator_name 操作者姓名

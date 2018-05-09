@@ -71,7 +71,6 @@ def get_beds():
 
 @api {GET} /beds 获取筛选beds信息
 @apiGroup beds
-@apiName 获取筛选beds信息
 
 @apiParam (params) {Number} bed_id 病床号码
 @apiParam (params) {Number} limit 查询总数量
@@ -184,7 +183,6 @@ def new_bed():
 
 @api {POST} /beds 添加新的床位信息(json数据)
 @apiGroup beds
-@apiName 添加新的床位信息
 
 @apiParam (params) {String} id_number 医疗卡号
 @apiParam (params) {String} sn 血糖仪sn码  
@@ -232,7 +230,6 @@ def get_bed(id):
 
 @api {GET} /beds/<int:id> 获取id代表的beds信息
 @apiGroup beds
-@apiName 获取id代表的beds信息
 
 @apiParam (params) {Number} id bed的id  
 @apiParam (Login) {String} login 登录才可以访问
@@ -304,7 +301,6 @@ def delete_bed(id):
 
 @api {DELETE} /beds/<int:id> 删除id所代表的床位信息
 @apiGroup beds
-@apiName 删除id所代表的床位信息
 
 @apiParam (params) {Number} id 床位id
 @apiParam (Login) {String} login 登录才可以访问
@@ -438,7 +434,6 @@ def change_bed(id):
 
 @api {PUT} /beds/<int:id> 修改id所代表的床位的信息
 @apiGroup beds
-@apiName 修改id所代表的床位的信息
 
 @apiParam (params) {Number} id 床位号
 @apiParam (params) {String} sn 血糖仪sn码
@@ -503,7 +498,6 @@ def get_bed_more(id):
 
 @api {GET} /beds/<int:id>/more 获取id所代表床位的全部信息
 @apiGroup beds
-@apiName 获取id所代表床位的全部信息
 
 @apiParam (params) {Number} id 床位id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -594,7 +588,6 @@ def get_bed_moredatas(id):
 
 @api {GET} /beds/<int:id>/more_data 获取id所代表床位的全部数据的信息(包括之前患者的数据信息)
 @apiGroup beds
-@apiName 获取id所代表床位的全部数据的信息
 
 @apiParam (params) {Number} id 床位id 
 @apiParam (params) {Number} limit 查询总数量

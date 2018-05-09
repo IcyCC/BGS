@@ -68,7 +68,6 @@ def get_accucheks():
 """
 @api {GET} /accucheks 获取所有血糖仪信息(地址栏筛选)
 @apiGroup accucheks
-@apiName 获取所有血糖仪信息
 
 @apiParam (params) {String} sn 血糖仪sn码
 @apiParam (params) {Number} bed_id 病床号码
@@ -154,7 +153,6 @@ def new_accuchek():
 """
 @api {POST} /accucheks 添加一个新的血糖仪(json数据)
 @apiGroup accucheks
-@apiName 添加一个血糖仪
 
 @apiParam (params) {String} sn 血糖仪sn码
 @apiParam (params) {Number} bed_id 病床号码
@@ -192,7 +190,6 @@ def get_accuchek(id):
 """
 @api {GET} /accucheks/<int:id> 根据id获取血糖仪信息
 @apiGroup accucheks
-@apiName 根据id获取血糖仪信息
 
 @apiParam (params) {Number} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
@@ -243,7 +240,6 @@ def delete_accuchek(id):
 """
 @api {DELETE} /accucheks/<int:id> 删除id所代表的血糖仪
 @apiGroup accucheks
-@apiName 删除id所代表的血糖仪
 
 @apiParam (params) {Number} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
@@ -312,7 +308,6 @@ def change_accuchek(id):
 """
 @api {PUT} /accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
 @apiGroup accucheks
-@apiName 更改id所代表的血糖仪的信息
 
 @apiParam (params) {Number} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问

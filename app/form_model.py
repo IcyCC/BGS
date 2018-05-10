@@ -47,9 +47,9 @@ class GetOperatorValidation(Schema):
 
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
 class ChangeOperatorValidation(Schema):
@@ -75,9 +75,9 @@ class ChangeOperatorValidation(Schema):
 
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('operator_id')
@@ -98,7 +98,7 @@ class GetAccuchekValidation(Schema):
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
 class AccuchekValidation(Schema):
@@ -123,7 +123,7 @@ class ChangeAccuchekValidation(Schema):
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
     @validates('accuchek_id')
@@ -140,7 +140,7 @@ class GetBedValidation(Schema):
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
 class BedValidation(Schema):
@@ -150,7 +150,7 @@ class BedValidation(Schema):
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
     @validates('bed_id')
@@ -163,8 +163,8 @@ class ChangeBedValidation(Schema):
     id_number = fields.String(allow_none=True)
     sn = fields.String(allow_none=True)
     history_id = fields.Integer(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     patient_id = fields.Integer(allow_none=True)
     patient_name = fields.String(allow_none=True)
     sex = fields.String(allow_none=True)
@@ -172,16 +172,21 @@ class ChangeBedValidation(Schema):
     age = fields.Integer(allow_none=True)
     doctor_name = fields.String(allow_none=True)
 
+    @validates('sex')
+    def validate_sex(self, value):
+        if value is not None and value != '男' or value is not None and value != '女':
+            raise ValidationError('sex is wrong')
+
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
     @validates('bed_id')
@@ -213,14 +218,16 @@ class BedMoreDataValidation(Schema):
     data_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
+    limit = fields.Integer(allow_none=True)
+    per_page = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
     
 
@@ -248,7 +255,7 @@ class PatientValidation(Schema):
 
     @validates('sex')
     def validate_sex(self, value):
-        if value != '男' or value != '女':
+        if value != '男' and value != '女':
             raise ValidationError('sex is wrong')
 
 
@@ -265,14 +272,14 @@ class GetPatientValidation(Schema):
 
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('sex')
     def validate_sex(self, value):
-        if value != '男' or value != '女':
+        if value is not None and value != '男' and value != '女':
             raise ValidationError('sex is wrong')
 
 class ChangePatientValidation(Schema):
@@ -291,22 +298,22 @@ class ChangePatientValidation(Schema):
 
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('sex')
     def validate_sex(self, value):
-        if value != '男' or value != '女':
+        if value is not None and value != '男' and value != '女':
             raise ValidationError('sex is wrong')
 
 class PatientDataValidation(Schema):
     data_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     limit = fields.Integer(allow_none=True)
@@ -314,7 +321,7 @@ class PatientDataValidation(Schema):
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
 class PatientHistoryValidation(Schema):
@@ -322,7 +329,7 @@ class PatientHistoryValidation(Schema):
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
     time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    date = fields.Date(allow_none=True)
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     limit = fields.Integer(allow_none=True)
@@ -337,33 +344,32 @@ class PatientHistoryValidation(Schema):
     min_glucose = fields.Float(allow_none=True)
     begin_time = fields.String(allow_none=True)
     end_time = fields.String(allow_none=True)
-    begin_date = fields.String(allow_none=True)
-    end_date = fields.String(allow_none=True)
+    begin_date = fields.Date(allow_none=True)
+    end_date = fields.Date(allow_none=True)
     max_age = fields.Integer(allow_none=True)
     min_age = fields.Integer(allow_none=True)
 
-
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('sex')
     def validate_sex(self, value):
-        if value != '男' or value != '女':
+        if value is not None and value != '男' and value != '女':
             raise ValidationError('sex is wrong')
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
 class BedHistoryValidation(Schema):
     history_id = fields.Integer(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     bed_id = fields.Integer(required=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
@@ -380,8 +386,8 @@ class BedHistoryValidation(Schema):
 
 class GetBedHistoryValidation(Schema):
     history_id = fields.Integer(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     bed_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
@@ -400,8 +406,8 @@ class GetBedHistoryValidation(Schema):
 
 class ChangeBedHistoryValidation(Schema):
     history_id = fields.Integer(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     bed_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
@@ -422,8 +428,8 @@ class DataValidation(Schema):
     sn = fields.String(required=True)
     glucose = fields.Float(required=True)
     id_number = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
 
     @validates('sn')
@@ -441,8 +447,8 @@ class DataArtificialValidation(Schema):
     sn = fields.String(required=True)
     glucose = fields.Float(required=True)
     id_number = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     patient_id = fields.Integer(allow_none=True)
     patient_name = fields.String(allow_none=True)
@@ -478,15 +484,15 @@ class GetDataValidation(Schema):
     sn = fields.String(allow_none=True)
     glucose = fields.Float(allow_none=True)
     id_number = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     per_page = fields.Integer(allow_none=True)
     limit = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
 class GetSpareDataValidation(Schema):
@@ -498,8 +504,8 @@ class GetSpareDataValidation(Schema):
     age = fields.Integer(allow_none=True)
     tel = fields.String(allow_none=True)
     doctor = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(aillow_none=True)
+    date = fields.Date(allow_none=True)
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     limit = fields.Integer(allow_none=True)
@@ -507,19 +513,19 @@ class GetSpareDataValidation(Schema):
 
     @validates('sn')
     def validate_sn(self, value):
-        if len(value) != 8:
+        if value is not None and len(value) != 8:
             raise ValidationError('the length of sn is wrong')
 
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('sex')
     def validate_sex(self, value):
-        if value != '男' or value != '女':
+        if value is not None and value != '男' and value != '女':
             raise ValidationError('sex is wrong')
         
 class ChangeSpareDataValidation(Schema):
@@ -531,8 +537,8 @@ class ChangeSpareDataValidation(Schema):
     age = fields.Integer(allow_none=True)
     tel = fields.String(allow_none=True)
     doctor = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     
@@ -548,9 +554,9 @@ class ChangeSpareDataValidation(Schema):
 
     @validates('tel')
     def validate_tel(self, value):
-        if not value.isdigit():
+        if value is not None and not value.isdigit():
             raise ValidationError('tel must be made by number')
-        if len(value) > 11 or len(value) < 7:
+        if value is not None and len(value) > 11 or value is not None and len(value) < 7:
             raise ValidationError('the length of tel is wrong')
 
     @validates('sex')
@@ -563,8 +569,8 @@ class ChangeDataValidation(Schema):
     sn = fields.String(required=True)
     glucose = fields.Float(required=True)
     id_number = fields.String(allow_none=True)
-    time = fields.String(allow_none=True)
-    date = fields.String(allow_none=True)
+    time = fields.Time(allow_none=True)
+    date = fields.Date(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
 
     @validates('sn')

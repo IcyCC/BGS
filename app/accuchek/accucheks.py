@@ -11,7 +11,10 @@ from app.form_model import GetAccuchekValidation, AccuchekValidation, ChangeAccu
 def std_json(d):
     r = {}
     for k, v in d.items():
-        r[k] = json.loads(v)
+        try:
+            r[k] = json.loads(v)
+        except:
+            r[k] = v
     return r
 
 @accuchek_blueprint.route('/accucheks', methods=['GET'])
@@ -70,9 +73,10 @@ def get_accucheks():
 @apiGroup accucheks
 
 @apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {Number} bed_id 病床号码
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
+@apiParam (params) {Int} bed_id 病床号码
+@apiParam (params) {Int} accuchek_id 血糖仪号码
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回所有根据条件查询到的血糖仪信息
@@ -154,8 +158,8 @@ def new_accuchek():
 @api {POST} /accucheks 添加一个新的血糖仪(json数据)
 @apiGroup accucheks
 
-@apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {Number} bed_id 病床号码
+@apiParam (json) {String} sn 血糖仪sn码
+@apiParam (json) {Int} bed_id 病床号码
 @apiParam (Login) {String} login 登录才可以访问 
 
 @apiSuccess {Array} accucheks 返回添加血糖仪的信息
@@ -191,7 +195,7 @@ def get_accuchek(id):
 @api {GET} /accucheks/<int:id> 根据id获取血糖仪信息
 @apiGroup accucheks
 
-@apiParam (params) {Number} id 血糖仪id
+@apiParam (params) {Int} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回相应血糖仪的信息
@@ -241,7 +245,7 @@ def delete_accuchek(id):
 @api {DELETE} /accucheks/<int:id> 删除id所代表的血糖仪
 @apiGroup accucheks
 
-@apiParam (params) {Number} id 血糖仪id
+@apiParam (params) {Int} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回被删除的血糖仪的信息
@@ -309,7 +313,9 @@ def change_accuchek(id):
 @api {PUT} /accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
 @apiGroup accucheks
 
-@apiParam (params) {Number} id 血糖仪id
+@apiParam (params) {Int} id 血糖仪id
+@apiParam (json) {String} sn sn码
+@apiParam (json) {Int} bed_id 床位id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回更改后的血糖仪的信息

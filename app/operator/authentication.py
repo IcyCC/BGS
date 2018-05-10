@@ -48,8 +48,8 @@ def login():
 @api {POST} /login 登录账号(json数据)
 @apiGroup operator
 
-@apiParam (params) {String} username 登录账号
-@apiParam (params) {String} password 新的密码
+@apiParam (json) {String} username 登录账号
+@apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} status 登陆情况
 @apiSuccess {Array} operator 操作人员信息
@@ -101,7 +101,7 @@ def logout():
     }
 """
 
-@operator_blueprint.route('/change_password', methods = ['PUT'])
+@operator_blueprint.route('/operator/password', methods = ['PUT'])
 def change_password():
     hospital = request.json['hospital']
     office = request.json['office']
@@ -134,12 +134,12 @@ def change_password():
     })
 
 """
-@api {POST} /change_password 修改密码(json数据)
+@api {PUT} /operator/password 修改密码(json数据)
 @apiGroup operator
 
-@apiParam (params) {String} hospital 医院名称
-@apiParam (params) {String} office 科室
-@apiParam (params) {String} password 新的密码
+@apiParam (json) {String} hospital 医院名称
+@apiParam (json) {String} office 科室
+@apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} operators 更改后的操作者信息
 

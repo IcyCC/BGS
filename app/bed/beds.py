@@ -12,7 +12,10 @@ from app.form_model import GetBedValidation, BedValidation, BedMoreDataValidatio
 def std_json(d):
     r = {}
     for k, v in d.items():
-        r[k] = json.loads(v)
+        try:
+            r[k] = json.loads(v)
+        except:
+            r[k] = v
     return r
 
 @bed_blueprint.route('/beds')
@@ -54,7 +57,7 @@ def get_beds():
     if pagination.has_next:
         next = url_for('bed_blueprint.get_beds', page=page + 1)
     return jsonify({
-        'beds': [bed.bed_information_full() for bed in beds],
+        'beds': [bed.bed_full_data() for bed in beds],
         'prev': prev,
         'next': next,
         'has_prev':pagination.has_prev,
@@ -72,13 +75,14 @@ def get_beds():
 @api {GET} /beds 获取筛选beds信息
 @apiGroup beds
 
-@apiParam (params) {Number} bed_id 病床号码
-@apiParam (params) {Number} limit 查询总数量
+@apiParam (params) {Int} bed_id 病床号码
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每页数量
 @apiParam (params) {String} id_number 医疗卡号
 @apiParam (params) {String} sn 血糖仪sn码  
 @apiParam (Login) {String} login 登录才可以访问
 
-@apisuccess {Array} beds 返回经过筛选的beds信息
+@apisuccess {Array} beds 返回经过筛选的beds信息(返回的是全部数据)
 
 @apisuccessExample Success-Response:
     HTTP/1.1 200 OK
@@ -184,11 +188,11 @@ def new_bed():
 @api {POST} /beds 添加新的床位信息(json数据)
 @apiGroup beds
 
-@apiParam (params) {String} id_number 医疗卡号
-@apiParam (params) {String} sn 血糖仪sn码  
+@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {String} sn 血糖仪sn码  
 @apiParam (Login) {String} login 登录才可以访问
 
-@apisuccess {Array} beds 返回新添加的beds信息
+@apisuccess {Array} beds 返回新添加的beds信息(返回的是床位信息不带数据)
 
 @apisuccessExample Success-Response:
     HTTP/1.1 200 OK
@@ -220,7 +224,7 @@ def new_bed():
 def get_bed(id):
     bed = Bed.query.get_or_404(id)
     return jsonify({
-        'bed_information': [bed.bed_information()],
+        'bed_information': [bed.bed_current_data()],
         'status': 'success',
         'reason': 'there is the data'
     })
@@ -231,10 +235,10 @@ def get_bed(id):
 @api {GET} /beds/<int:id> 获取id代表的beds信息
 @apiGroup beds
 
-@apiParam (params) {Number} id bed的id  
+@apiParam (params) {Int} id bed的id  
 @apiParam (Login) {String} login 登录才可以访问
 
-@apisuccess {Array} beds 返回id代表的bed的数据
+@apisuccess {Array} beds 返回id代表的bed的数据(带最近10组数据)
 
 @apisuccessExample Success-Response:
     HTTP/1.1 200 OK
@@ -302,7 +306,7 @@ def delete_bed(id):
 @api {DELETE} /beds/<int:id> 删除id所代表的床位信息
 @apiGroup beds
 
-@apiParam (params) {Number} id 床位id
+@apiParam (params) {Int} id 床位id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回删除的beds信息
@@ -435,14 +439,14 @@ def change_bed(id):
 @api {PUT} /beds/<int:id> 修改id所代表的床位的信息
 @apiGroup beds
 
-@apiParam (params) {Number} id 床位号
-@apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {String} id_number 医疗卡号
-@apiParam (params) {String} patient_name 病人姓名
-@apiParam (params) {String} sex 病人性别
-@apiParam (params) {String} tel 病人电话
-@apiParam (params) {Number} age 病人年龄
-@apiParam (params) {Number} doctor_id 医生id  
+@apiParam (params) {Int} id 床位号
+@apiParam (json) {String} sn 血糖仪sn码
+@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {String} patient_name 病人姓名
+@apiParam (json) {String} sex 病人性别
+@apiParam (json) {String} tel 病人电话
+@apiParam (json) {Int} age 病人年龄
+@apiParam (json) {Int} doctor_id 医生id  
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回更改后的beds信息
@@ -496,10 +500,10 @@ def get_bed_more(id):
 
 """
 
-@api {GET} /beds/<int:id>/more 获取id所代表床位的全部信息
+@api {GET} /beds/<int:id>/more 获取id所代表床位的全部信息(不包括数据信息)
 @apiGroup beds
 
-@apiParam (params) {Number} id 床位id 
+@apiParam (params) {Int} id 床位id 
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回id所代表床位的全部信息
@@ -536,9 +540,13 @@ def get_bed_moredatas(id):
     params_dict = {
         'id_number': request.args.get('id_number', None, type=str),
         'data_id': request.args.get('data_id', None, type=int),
+        'glucose': request.args.get('glucose', None, type=float),
+        'hidden': request.args.get('hidden', None, type=bool),
         'sn': request.args.get('sn', None, type=str),
         'time': request.args.get('time', None, type = str),
-        'date': request.args.get('date', None, type=str)
+        'date': request.args.get('date', None, type=str),
+        'per_page': request.args.get('per_page', None, type=int),
+        'limit': request.args.get('limit', None, type=int)
     }
     try:
         BedMoreDataValidation().load(params_dict)
@@ -589,10 +597,10 @@ def get_bed_moredatas(id):
 @api {GET} /beds/<int:id>/more_data 获取id所代表床位的全部数据的信息(包括之前患者的数据信息)
 @apiGroup beds
 
-@apiParam (params) {Number} id 床位id 
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
-@apiParam (params) {Number} hidden 数据是否隐藏(0:未隐藏, 1:隐藏)
+@apiParam (params) {Int} id 床位id 
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
+@apiParam (params) {Bool} hidden 数据是否隐藏(0:未隐藏, 1:隐藏)
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回id所代表床位的全部数据的信息

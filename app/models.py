@@ -106,7 +106,7 @@ class Patient(db.Model):
             'age':self.age,
             'doctor':self.doctor_name,
             'id_number':self.id_number,
-            'datas': url_for('patient_blueprint.get_patient_datas', id=self.patient_id)
+            'datas_url': url_for('patient_blueprint.get_patient_datas', id=self.patient_id)
         }
         return json_patient
 
@@ -169,6 +169,7 @@ class Data(db.Model):
             'doctor': patient.doctor_name if patient is not None else None,
             'id_number': self.id_number,
             'date': str(self.date),
+            'sn':self.sn,
             'time': str(self.time)[0:5],
             'glucose': self.glucose,
             'sex': patient.sex if patient is not None else None,
@@ -289,7 +290,7 @@ class Bed(db.Model):
 
     def to_json(self):
         json_bed = {
-            'id':self.bed_id,
+            'bed_id':self.bed_id,
             'id_number': self.id_number,
             'sn': self.sn
         }

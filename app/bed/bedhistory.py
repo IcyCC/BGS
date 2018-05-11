@@ -75,7 +75,7 @@ def get_histories():
 """
 
 @api {GET} /bed_historys 获取筛选所有的床位历史信息
-@apiGroup beds
+@apiGroup bedhistorys
 
 @apiParam (params) {Int} bed_id 床位id
 @apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
@@ -155,7 +155,7 @@ def new_history():
 """
 
 @api {POST} /bed_historys 新建床位历史信息
-@apiGroup beds
+@apiGroup bedhistorys
 
 @apiParam (json) {Int} bed_id 床位id
 @apiParam (json) {Date} date 床位历史日期_日期格式(0000-00-00)
@@ -197,7 +197,7 @@ def get_history(id):
 """
 
 @api {GET} /bed_historys/<int:id> 获取id所代表的床位历史的信息
-@apiGroup beds
+@apiGroup bedhistorys
 
 @apiParam (params) {Int} id 床位历史信息id
 @apiParam (Login) {String} login 登录才可以访问
@@ -261,7 +261,7 @@ def change_history(id):
 """
 
 @api {PUT} /bed_historys/<int:id> 更改id所代表的床位历史的信息
-@apiGroup beds
+@apiGroup bedhistorys
 
 @apiParam (json) {Int} bed_id 床位id
 @apiParam (json) {Date} date 床位历史日期_日期格式(0000-00-00)
@@ -318,7 +318,7 @@ def delete_history(id):
 """
 
 @api {DELETE} /bed_historys/<int:id> 删除id所代表的床位历史的信息
-@apiGroup beds
+@apiGroup bedhistorys
 
 @apiParam (params) {Int} id 床位历史信息id
 @apiParam (Login) {String} login 登录才可以访问

@@ -1,7 +1,7 @@
 from app.accuchek import accuchek_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
-from app.models import Accuchek
+from app.models import Accuchek, Bed
 from sqlalchemy.exc import OperationalError,IntegrityError
 from flask_login import login_required
 import json
@@ -130,6 +130,14 @@ def new_accuchek():
             'status': 'fail',
             'reason': 'there is no sn'
         })
+    if 'bed_id' in request.json:
+        bed_id = request.json['bed_id']
+        bed = Bed.query.filter(Bed.bed_id == bed_id).first()
+        if bed is None:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the bed does not exist'
+            })
     for k in request.json:
         if hasattr(accuchek, k):
             try:
@@ -236,7 +244,6 @@ def delete_accuchek(id):
             'reason':e
         })
     return jsonify({
-        "accukces": [accuchek.to_json()],
         "status": "success",
         "reason": "the data has been deleted"
     })
@@ -248,18 +255,17 @@ def delete_accuchek(id):
 @apiParam (params) {Int} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
 
-@apiSuccess {Array} accucheks 返回被删除的血糖仪的信息
+@apiSuccess {Array} status 返回删除状态
 
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "accucheks":[{
-            "bed_id":"床位号",
-            "sn":"血糖仪sn码",
-            "accuchek_id":"血糖仪id"   
-        }],
         "status":"success",
         "reason":"the data has been deleted"
+    }
+    {
+        "status":"fail",
+        "reason":""
     }
 
 @apiError (Error 4xx) 404 对应id的血糖仪不存在
@@ -291,6 +297,14 @@ def change_accuchek(id):
             return jsonify({
                 'status':'fail',
                 'reason':'the sn has been used'
+            })
+    if 'bed_id' in request.json:
+        bed_id = request.json['bed_id']
+        bed = Bed.query.filter(Bed.bed_id == bed_id).first()
+        if bed is None:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the bed does not exist'
             })
     for k in request.json:
         if hasattr(accuchek, k):

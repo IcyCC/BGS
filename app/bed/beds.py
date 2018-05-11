@@ -95,14 +95,23 @@ def get_beds():
             "age":"患者年龄",
             "doctor_name":"医生姓名",
             "datas":[{
-                "data_id":"数据id",
-                "patient":"患者详细信息的url",
-                "sn":"血糖仪编码",
-                "id_number":"患者id_number",
-                "time":"时间",
-                "date":"日期",
-                "glucose":"血糖值",
-            }]
+                "date":"数据日期",
+                "glucose":"血糖",
+                "id_number":"医疗卡号",
+                "patient": {
+                    "age": "病人年龄",
+                    "datas_url": "病人所有数据地址",
+                    "doctor": "医生姓名",
+                    "id_number": "患者医疗卡号",
+                    "patient_id": "病人id",
+                    "patient_name": "病人姓名",
+                    "sex": "病人性别",
+                    "tel": "病人电话"
+                    },
+                "sn":"血糖仪sn码",
+                "time":"数据时间",
+                "data_id":"数据id"
+            }],
             "sn":"血糖仪sn码",
             "bed_id":"床位号"
         }],
@@ -232,7 +241,7 @@ def get_bed(id):
 
 """
 
-@api {GET} /beds/<int:id> 获取id代表的beds信息
+@api {GET} /beds/<int:id> 返回id代表的bed的数据(带最近10组数据)
 @apiGroup beds
 
 @apiParam (params) {Int} id bed的id  
@@ -243,20 +252,29 @@ def get_bed(id):
 @apisuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "bed_informaition":[{
+        "bed_current_data":[{
             "id_number":"患者医疗卡号",
             "sn":"血糖仪sn码",
             "bed_id":"床位号",
             "tel":"患者电话",
             "sex":"患者性别",
             "patient_name":"患者姓名",
-            "doctor_id":"医生id",
+            "doctor":"医生姓名",
             "age":"患者年龄",
             "current_datas":[{
                 "date":"数据日期",
                 "glucose":"血糖",
                 "id_number":"医疗卡号",
-                "patient":"患者地址",
+                "patient": {
+                    "age": "病人年龄",
+                    "datas_url": "病人所有数据地址",
+                    "doctor": "医生姓名",
+                    "id_number": "患者医疗卡号",
+                    "patient_id": "病人id",
+                    "patient_name": "病人姓名",
+                    "sex": "病人性别",
+                    "tel": "病人电话"
+                    },
                 "sn":"血糖仪sn码",
                 "time":"数据时间",
                 "data_id":"数据id"
@@ -295,7 +313,6 @@ def delete_bed(id):
                 'season': e
             })
     return jsonify({
-        'beds': [bed.to_json()],
         'status': 'success',
         'reason': 'the data has been deleted'
     }), 200
@@ -309,16 +326,11 @@ def delete_bed(id):
 @apiParam (params) {Int} id 床位id
 @apiParam (Login) {String} login 登录才可以访问
 
-@apisuccess {Array} beds 返回删除的beds信息
+@apisuccess {Array} status 返回删除状态
 
 @apisuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "beds":[{
-            "id_number":"患者医疗卡号",
-            "sn":"血糖仪sn码",
-            "bed_id":"床位数据地址"  
-        }],
         "status":"success",
         "reason":"the data has been deleted"
     }
@@ -335,16 +347,7 @@ def change_bed(id):
     params_dict = {
         'id_number': request.json.get('id_number', None),
         'sn': request.json.get('sn', None),
-        'bed_id': request.json.get('bed_id', None),
-        'history_id': request.json.get('history_id', None),
-        'time': request.json.get('time', None),
-        'date': request.json.get('date', None),
-        'patient_id': request.json.get('patient_id', None),
-        'patient_name': request.json.get('patient_name', None),
-        'sex': request.json.get('sex', None),
-        'tel': request.json.get('tel', None),
-        'age': request.json.get('age', None),
-        'doctor_name': request.json.get('doctor_name',None)
+        'bed_id': request.json.get('bed_id', None)
     }
     try:
         ChangeBedValidation().load(params_dict)
@@ -354,7 +357,6 @@ def change_bed(id):
             'reason': str(e)
         })
     bed = Bed.query.get_or_404(id)
-    bed_history = bed.bed_historys.order_by(Bed.bed_id.desc()).first()
     if 'sn' in request.json and request.json['sn']:
         sn = request.json['sn']
         may_bed = bed.query.filter(Bed.sn == sn).first()
@@ -372,49 +374,25 @@ def change_bed(id):
                 'status': 'fail',
                 'reason': 'the patient has been placed on the other bed'
             })
-        if bed_history:
-            if bed_history.id_number == request.json['id_number'] and bed_history.bed_id == id:
-                for k in request.json:
-                    if hasattr(bed_history, k):
-                        setattr(bed_history, k, request.json[k])
-        else:
-            bed_history = BedHistory()
-            for k in request.json:
-                if hasattr(bed_history, k):
-                    setattr(bed_history, k, request.json[k])
-            date = datetime.datetime.now().date()
-            time = datetime.datetime.now().time()
-            bed_history.bed_id = id
-            bed_history.date = date
-            bed_history.time = time
-        try:
-            db.session.add(bed_history)
-            db.session.add(bed)
-            db.session.commit()
-        except OperationalError as e:
-            return jsonify({
-                'status': 'fail',
-                'reason': e,
-                'data': bed.to_json()
-            })
-        id_number = request.json['id_number']
-        patient = Patient.query.filter(Patient.id_number == id_number).first()
-        if patient is None:
-            patient = Patient()
-        for k in request.json:
-            if hasattr(patient, k):
-                setattr(patient, k, request.json[k])
-        try:
-            db.session.add(patient)
-            db.session.commit()
-        except OperationalError as e:
-            return jsonify({
-                'status': 'fail',
-                'reason': e,
-                'data': patient.to_json()
-            })
-    if 'sn' in request.json and request.json['sn']:
-        bed.sn = request.json['sn']
+    bed_history = BedHistory()
+    for k in request.json:
+        if hasattr(bed_history, k):
+            setattr(bed_history, k, request.json[k])
+    date = datetime.datetime.now().date()
+    time = datetime.datetime.now().time()
+    bed_history.bed_id = id
+    bed_history.date = date
+    bed_history.time = time
+    try:
+        db.session.add(bed_history)
+        db.session.add(bed)
+        db.session.commit()
+    except OperationalError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': e,
+            'data': bed.to_json()
+        })
     for k in request.json:
         if hasattr(bed, k):
             setattr(bed, k, request.json[k])
@@ -442,11 +420,6 @@ def change_bed(id):
 @apiParam (params) {Int} id 床位号
 @apiParam (json) {String} sn 血糖仪sn码
 @apiParam (json) {String} id_number 医疗卡号
-@apiParam (json) {String} patient_name 病人姓名
-@apiParam (json) {String} sex 病人性别
-@apiParam (json) {String} tel 病人电话
-@apiParam (json) {Int} age 病人年龄
-@apiParam (json) {Int} doctor_id 医生id  
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回更改后的beds信息
@@ -484,7 +457,7 @@ def get_bed_more(id):
     if patient is None:
         return jsonify({
             'patients': [],
-            'datas': url_for('bed_blueprint.get_bed_moredatas', id=id),
+            'datas_url': url_for('bed_blueprint.get_bed_moredatas', id=id),
             'beds': bed.to_json(),
             'status': 'success',
             'reason': 'there is the data'
@@ -516,10 +489,10 @@ def get_bed_more(id):
             "sn":"血糖仪sn码",
             "bed_id":"床位信息地址"
         },
-        "datas":"床位所有数据的信息的地址",
+        "datas_url":"床位所有数据的信息的地址",
         "patients":[{
             "age":"患者年龄",
-            "datas":"患者数据信息地址",
+            "datas_url":"患者数据信息地址",
             "doctor_id":"医生id",
             "id_number":"医疗卡号",
             "patient_name":"患者姓名",
@@ -613,7 +586,16 @@ def get_bed_moredatas(id):
             "time":"数据创建时间",
             "glucose":"血糖值",
             "sn":"血糖仪sn码",
-            "patient":"患者信息地址",
+            "patient":{
+                "age": "患者年龄",
+                "datas_url": "患者数据地址",
+                "doctor": "医生姓名",
+                "id_number": "患者医疗卡号",
+                "patient_id": "患者id",
+                "patient_name": "患者姓名",
+                "sex": "患者性别",
+                "tel": "患者电话"
+            },
             "id_number":"医疗卡号",
             "data_id":"数据id"
         }],

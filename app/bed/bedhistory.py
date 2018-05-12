@@ -6,16 +6,38 @@ from sqlalchemy.exc import OperationalError
 import datetime
 from flask_login import login_required
 import json
+from app.form_model import BedHistoryValidation, GetBedHistoryValidation, ChangeBedHistoryValidation
+from marshmallow.exceptions import ValidationError
 
 def std_json(d):
     r = {}
     for k, v in d.items():
-        r[k] = json.loads(v)
+        try:
+            r[k] = json.loads(v)
+        except:
+            r[k] = v
     return r
 
-@bed_blueprint.route('/bedhistorys')
+@bed_blueprint.route('/bed_historys')
 @login_required
 def get_histories():
+    params_dict = {
+        'history_id': request.args.get('history_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'id_number': request.args.get('id_number', None, type=str),
+        'time': request.args.get('time', None, type=str),
+        'date': request.args.get('date', None, type=str),
+        'bed_id': request.args.get('bed_id', None, type=int),
+        'limit': request.args.get('limit', None, type=int),
+        'per_page': request.args.get('per_page', None, type=int)
+    }
+    try:
+        GetBedHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     fields = [i for i in BedHistory.__table__.c._data]
     bedhistorys = BedHistory.query.order_by(BedHistory.date.desc(), BedHistory.time.desc())
     per_page = current_app.config['PATIENTS_PRE_PAGE']
@@ -52,17 +74,16 @@ def get_histories():
 
 """
 
-@api {GET} /bedhistorys 获取筛选所有的床位历史信息
-@apiGroup beds
-@apiName 获取筛选所有的床位历史信息
+@api {GET} /bed_historys 获取筛选所有的床位历史信息
+@apiGroup bedhistorys
 
-@apiParam (params) {Number} bed_id 床位id
+@apiParam (params) {Int} bed_id 床位id
 @apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
 @apiParam (params) {String} id_number 医疗卡号
 @apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} bedhistorys 返回筛选过的床位历史信息信息
@@ -91,10 +112,24 @@ def get_histories():
 """
 
 
-@bed_blueprint.route('/bedhistorys', methods = ['POST'])
+@bed_blueprint.route('/bed_historys', methods = ['POST'])
 @login_required
-
 def new_history():
+    params_dict = {
+        'history_id': request.json.get('history_id', None),
+        'sn': request.json.get('sn', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        BedHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bedhistory = BedHistory()
     for k in request.json:
         if hasattr(bedhistory, k):
@@ -119,15 +154,14 @@ def new_history():
 
 """
 
-@api {POST} /bedhistorys 新建床位历史信息
-@apiGroup beds
-@apiName 新建床位历史信息
+@api {POST} /bed_historys 新建床位历史信息
+@apiGroup bedhistorys
 
-@apiParam (params) {Number} bed_id 床位id
-@apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
-@apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
-@apiParam (params) {String} id_number 医疗卡号
-@apiParam (params) {String} sn 血糖仪sn码
+@apiParam (json) {Int} bed_id 床位id
+@apiParam (json) {Date} date 床位历史日期_日期格式(0000-00-00)
+@apiParam (json) {Time} time 床位历史时间_时间模式(00:00:00)
+@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {String} sn 血糖仪sn码
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} bedhistorys 返回新建的床位历史信息
@@ -150,7 +184,7 @@ def new_history():
 """
 
 
-@bed_blueprint.route('/bedhistorys/<int:id>')
+@bed_blueprint.route('/bed_historys/<int:id>')
 @login_required
 def get_history(id):
     bedhistory = BedHistory.query.get_or_404(id)
@@ -162,11 +196,10 @@ def get_history(id):
 
 """
 
-@api {GET} /bedhistorys/<int:id> 获取id所代表的床位历史的信息
-@apiGroup beds
-@apiName 获取id所代表的床位历史的信息
+@api {GET} /bed_historys/<int:id> 获取id所代表的床位历史的信息
+@apiGroup bedhistorys
 
-@apiParam (params) {Number} id 床位历史信息id
+@apiParam (params) {Int} id 床位历史信息id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} bedhistorys 返回id所代表的床位历史信息
@@ -189,10 +222,24 @@ def get_history(id):
 """
 
 
-@bed_blueprint.route('/bedhistorys/<int:id>', methods = ['PUT'])
+@bed_blueprint.route('/bed_historys/<int:id>', methods = ['PUT'])
 @login_required
-
 def change_history(id):
+    params_dict = {
+        'history_id': request.json.get('history_id', None),
+        'sn': request.json.get('sn', None),
+        'id_number': request.json.get('id_number', None),
+        'time': request.json.get('time', None),
+        'date': request.json.get('date', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        ChangeBedHistoryValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     bedhistory = BedHistory.query.get_or_404(id)
     for k in request.json:
         if hasattr(bedhistory, k):
@@ -213,16 +260,15 @@ def change_history(id):
 
 """
 
-@api {PUT} /bedhistorys/<int:id> 更改id所代表的床位历史的信息
-@apiGroup beds
-@apiName 更改id所代表的床位历史的信息
+@api {PUT} /bed_historys/<int:id> 更改id所代表的床位历史的信息
+@apiGroup bedhistorys
 
-@apiParam (params) {Number} bed_id 床位id
-@apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
-@apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
-@apiParam (params) {String} id_number 医疗卡号
-@apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {Number} id 床位历史信息id
+@apiParam (json) {Int} bed_id 床位id
+@apiParam (json) {Date} date 床位历史日期_日期格式(0000-00-00)
+@apiParam (json) {Time} time 床位历史时间_时间模式(00:00:00)
+@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {String} sn 血糖仪sn码
+@apiParam (params) {Int} id 床位历史信息id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} bedhistorys 返回更改的床位历史信息
@@ -249,7 +295,7 @@ def change_history(id):
 """
 
 
-@bed_blueprint.route('/bedhistorys/<int:id>', methods = ['DELETE'])
+@bed_blueprint.route('/bed_historys/<int:id>', methods = ['DELETE'])
 @login_required
 
 def delete_history(id):
@@ -271,11 +317,10 @@ def delete_history(id):
 
 """
 
-@api {DELETE} /bedhistorys/<int:id> 删除id所代表的床位历史的信息
-@apiGroup beds
-@apiName 删除id所代表的床位历史的信息
+@api {DELETE} /bed_historys/<int:id> 删除id所代表的床位历史的信息
+@apiGroup bedhistorys
 
-@apiParam (params) {Number} id 床位历史信息id
+@apiParam (params) {Int} id 床位历史信息id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} bedhistorys 返回删除的的床位历史的信息

@@ -39,7 +39,6 @@ def login():
         "id": operator.id,
         "username": operator.operator_name
     }
-
     token = jwtEncoding(userInfo)
     login_user(operator, remember=True)
 
@@ -48,10 +47,9 @@ def login():
 """
 @api {POST} /login 登录账号(json数据)
 @apiGroup operator
-@apiName 登录账号
 
-@apiParam (params) {String} username 登录账号
-@apiParam (params) {String} password 新的密码
+@apiParam (json) {String} username 登录账号
+@apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} status 登陆情况
 @apiSuccess {Array} operator 操作人员信息
@@ -89,7 +87,6 @@ def logout():
 """
 @api {GET} /logout 登出账号(json数据)
 @apiGroup operator
-@apiName 新建操作者信息
 
 @apiParam (Login) {String} login 登录才可以访问
 
@@ -104,7 +101,7 @@ def logout():
     }
 """
 
-@operator_blueprint.route('/change_password', methods = ['PUT'])
+@operator_blueprint.route('/operator/password', methods = ['PUT'])
 def change_password():
     hospital = request.json['hospital']
     office = request.json['office']
@@ -137,13 +134,12 @@ def change_password():
     })
 
 """
-@api {POST} /change_password 修改密码(json数据)
+@api {PUT} /operator/password 修改密码(json数据)
 @apiGroup operator
-@apiName 修改密码
 
-@apiParam (params) {String} hospital 医院名称
-@apiParam (params) {String} office 科室
-@apiParam (params) {String} password 新的密码
+@apiParam (json) {String} hospital 医院名称
+@apiParam (json) {String} office 科室
+@apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} operators 更改后的操作者信息
 

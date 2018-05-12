@@ -1,20 +1,39 @@
 from app.accuchek import accuchek_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
-from app.models import Accuchek
+from app.models import Accuchek, Bed
 from sqlalchemy.exc import OperationalError,IntegrityError
 from flask_login import login_required
 import json
+from marshmallow.exceptions import ValidationError
+from app.form_model import GetAccuchekValidation, AccuchekValidation, ChangeAccuchekValidation
 
 def std_json(d):
     r = {}
     for k, v in d.items():
-        r[k] = json.loads(v)
+        try:
+            r[k] = json.loads(v)
+        except:
+            r[k] = v
     return r
 
 @accuchek_blueprint.route('/accucheks', methods=['GET'])
 @login_required
 def get_accucheks():
+    params_dict = {
+        'accuchek_id': request.args.get('accuchek_id', None, type=int),
+        'sn': request.args.get('sn', None, type=str),
+        'per_page': request.args.get('per_page', None, type=int),
+        'limit': request.args.get('limit', None, type=int),
+        'bed_id': request.args.get('bed_id', None, type=int)
+    }
+    try:
+        GetAccuchekValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     fields = [i for i in Accuchek.__table__.c._data]
     accunckes = Accuchek.query
     limit = None
@@ -52,12 +71,12 @@ def get_accucheks():
 """
 @api {GET} /accucheks 获取所有血糖仪信息(地址栏筛选)
 @apiGroup accucheks
-@apiName 获取所有血糖仪信息
 
 @apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {Number} bed_id 病床号码
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
+@apiParam (params) {Int} bed_id 病床号码
+@apiParam (params) {Int} accuchek_id 血糖仪号码
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回所有根据条件查询到的血糖仪信息
@@ -85,6 +104,18 @@ def get_accucheks():
 @accuchek_blueprint.route('/accucheks', methods = ['POST'])
 @login_required
 def new_accuchek():
+    params_dict = {
+        'accuchek_id': request.json.get('accuchek_id', None),
+        'sn': request.json.get('sn', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        AccuchekValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     accuchek = Accuchek()
     if 'sn' in request.json:
         sn = request.json['sn']
@@ -99,6 +130,14 @@ def new_accuchek():
             'status': 'fail',
             'reason': 'there is no sn'
         })
+    if 'bed_id' in request.json:
+        bed_id = request.json['bed_id']
+        bed = Bed.query.filter(Bed.bed_id == bed_id).first()
+        if bed is None:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the bed does not exist'
+            })
     for k in request.json:
         if hasattr(accuchek, k):
             try:
@@ -126,10 +165,9 @@ def new_accuchek():
 """
 @api {POST} /accucheks 添加一个新的血糖仪(json数据)
 @apiGroup accucheks
-@apiName 添加一个血糖仪
 
-@apiParam (params) {String} sn 血糖仪sn码
-@apiParam (params) {Number} bed_id 病床号码
+@apiParam (json) {String} sn 血糖仪sn码
+@apiParam (json) {Int} bed_id 病床号码
 @apiParam (Login) {String} login 登录才可以访问 
 
 @apiSuccess {Array} accucheks 返回添加血糖仪的信息
@@ -164,9 +202,8 @@ def get_accuchek(id):
 """
 @api {GET} /accucheks/<int:id> 根据id获取血糖仪信息
 @apiGroup accucheks
-@apiName 根据id获取血糖仪信息
 
-@apiParam (params) {Number} id 血糖仪id
+@apiParam (params) {Int} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回相应血糖仪的信息
@@ -207,7 +244,6 @@ def delete_accuchek(id):
             'reason':e
         })
     return jsonify({
-        "accukces": [accuchek.to_json()],
         "status": "success",
         "reason": "the data has been deleted"
     })
@@ -215,23 +251,21 @@ def delete_accuchek(id):
 """
 @api {DELETE} /accucheks/<int:id> 删除id所代表的血糖仪
 @apiGroup accucheks
-@apiName 删除id所代表的血糖仪
 
-@apiParam (params) {Number} id 血糖仪id
+@apiParam (params) {Int} id 血糖仪id
 @apiParam (Login) {String} login 登录才可以访问
 
-@apiSuccess {Array} accucheks 返回被删除的血糖仪的信息
+@apiSuccess {Array} status 返回删除状态
 
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "accucheks":[{
-            "bed_id":"床位号",
-            "sn":"血糖仪sn码",
-            "accuchek_id":"血糖仪id"   
-        }],
         "status":"success",
         "reason":"the data has been deleted"
+    }
+    {
+        "status":"fail",
+        "reason":""
     }
 
 @apiError (Error 4xx) 404 对应id的血糖仪不存在
@@ -243,6 +277,18 @@ def delete_accuchek(id):
 @accuchek_blueprint.route('/accucheks/<int:id>', methods = ['PUT'])
 @login_required
 def change_accuchek(id):
+    params_dict = {
+        'accuchek_id': request.json.get('accuchek_id', None),
+        'sn': request.json.get('sn', None),
+        'bed_id': request.json.get('bed_id', None)
+    }
+    try:
+        ChangeAccuchekValidation().load(params_dict)
+    except ValidationError as e:
+        return jsonify({
+            'status': 'fail',
+            'reason': str(e)
+        })
     accuchek = Accuchek.query.get_or_404(id)
     if 'sn' in request.json:
         sn = request.json['sn']
@@ -251,6 +297,14 @@ def change_accuchek(id):
             return jsonify({
                 'status':'fail',
                 'reason':'the sn has been used'
+            })
+    if 'bed_id' in request.json:
+        bed_id = request.json['bed_id']
+        bed = Bed.query.filter(Bed.bed_id == bed_id).first()
+        if bed is None:
+            return jsonify({
+                'status': 'fail',
+                'reason': 'the bed does not exist'
             })
     for k in request.json:
         if hasattr(accuchek, k):
@@ -272,9 +326,10 @@ def change_accuchek(id):
 """
 @api {PUT} /accucheks/<int:id> 更改id所代表的血糖仪的信息(json数据)
 @apiGroup accucheks
-@apiName 更改id所代表的血糖仪的信息
 
-@apiParam (params) {Number} id 血糖仪id
+@apiParam (params) {Int} id 血糖仪id
+@apiParam (json) {String} sn sn码
+@apiParam (json) {Int} bed_id 床位id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回更改后的血糖仪的信息

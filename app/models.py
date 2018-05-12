@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_login import UserMixin, AnonymousUserMixin,current_user
 from app import login_manager
-
+from datetime import datetime
 
 class Operator(db.Model, UserMixin):
     __tablename__ = 'operators'
@@ -106,7 +106,7 @@ class Patient(db.Model):
             'age':self.age,
             'doctor':self.doctor_name,
             'id_number':self.id_number,
-            'datas': url_for('patient_blueprint.get_patient_datas', id=self.patient_id)
+            'datas_url': url_for('patient_blueprint.get_patient_datas', id=self.patient_id)
         }
         return json_patient
 
@@ -115,8 +115,8 @@ class Data(db.Model):
     data_id = db.Column(db.Integer, primary_key=True)
     sn = db.Column(db.String(32), nullable=False)
     id_number = db.Column(db.String(32))
-    time = db.Column(db.Time, nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     glucose = db.Column(db.Float, nullable=False)
     hidden = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -169,6 +169,7 @@ class Data(db.Model):
             'doctor': patient.doctor_name if patient is not None else None,
             'id_number': self.id_number,
             'date': str(self.date),
+            'sn':self.sn,
             'time': str(self.time)[0:5],
             'glucose': self.glucose,
             'sex': patient.sex if patient is not None else None,
@@ -255,7 +256,8 @@ class Bed(db.Model):
         except:
             return BedHistory.query.filter(BedHistory.history_id ==-1)
 
-    def bed_information(self):
+    def bed_current_data(self):
+        #返回最近十组数据
         patient = self.patient
         json_bed_information = {
             'bed_id':self.bed_id,
@@ -270,7 +272,8 @@ class Bed(db.Model):
         }
         return json_bed_information
 
-    def bed_information_full(self):
+    def bed_full_data(self):
+        #返回所有数据
         patient = self.patient
         json_bed_information = {
             'bed_id':self.bed_id,
@@ -287,7 +290,7 @@ class Bed(db.Model):
 
     def to_json(self):
         json_bed = {
-            'id':self.bed_id,
+            'bed_id':self.bed_id,
             'id_number': self.id_number,
             'sn': self.sn
         }
@@ -347,8 +350,8 @@ class SpareData(db.Model):
     age = db.Column(db.Integer)
     tel = db.Column(db.String(32))
     doctor = db.Column(db.String(64))
-    time = db.Column(db.Time, nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     glucose = db.Column(db.Float, nullable=False)
     hidden = db.Column(db.Boolean, nullable=False, default=False)
 

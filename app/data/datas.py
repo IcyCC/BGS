@@ -7,10 +7,14 @@ from flask_login import login_required
 import json
 from app.form_model import DataValidation, DataArtificialValidation, GetDataValidation, GetSpareDataValidation, ChangeSpareDataValidation, ChangeDataValidation
 from marshmallow.exceptions import ValidationError
+from datetime import datetime
 def std_json(d):
     r = {}
     for k, v in d.items():
-        r[k] = json.loads(v)
+        try:
+            r[k] = json.loads(v)
+        except:
+            r[k] = v
     return r
 
 sn_numbers = ['00000000', '11111111']
@@ -38,7 +42,16 @@ def new_data_auto():
         for k in request.json:
             if hasattr(data, k):
                 setattr(data, k, request.json[k])
+        if 'date' not in request.json:
+            data.date = datetime.utcnow().date()
+        if 'time' not in request.json:
+            data.time = datetime.utcnow().time()
         accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
+        if accuchek is None:
+            return jsonify({
+                'status':'fail',
+                'reason':'the accuchek does not exist'
+            })
         bed = accuchek.bed if accuchek is not None else None
         patient = bed.patient if bed is not None else None
         id_number = patient.id_number if patient is not None else None
@@ -62,6 +75,11 @@ def new_data_auto():
         for k in request.json:
             if hasattr(data, k):
                 setattr(data, k, request.json[k])
+
+        if 'date' not in request.json:
+            data.date = datetime.utcnow().date()
+        if 'time' not in request.json:
+            data.time = datetime.utcnow().time()
         try:
             db.session.add(data)
             db.session.commit()
@@ -81,12 +99,13 @@ def new_data_auto():
 """
 @api {POST} /datas/auto 添加数据(不用手动输入病人数据)(json数据)
 @apiGroup datas
-@apiName 添加数据
 
 @apiParam (params) {String} sn 血糖仪sn码 
-@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
-@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
-@apiParam (params) {Number} glucose 血糖值
+@apiParam (params) {String} id_number 患者医疗卡号
+@apiParam (params) {Date} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {Time} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Bool} hidden 是否隐藏
+@apiParam (params) {Float} glucose 血糖值
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回新添加的数据
@@ -105,6 +124,29 @@ def new_data_auto():
             "sn":"血糖仪sn码",
             "data_id":"数据id",
             "glucose":"血糖值"
+        }],
+        "status":"success",
+        "reason":"the data has been added"
+    } 
+    HTTP/1.1 200 OK
+    {
+        "datas":[{
+            'data_id':"数据id",
+            "patient":{
+                'patient_id': "病人id",
+                'patient_name':"病人姓名",
+                'sex':"病人性别",
+                'tel':"病人电话",
+                'age':"病人年龄",
+                'doctor':"医生姓名",
+                'id_number':"病人医疗卡号",
+                'datas':"病人数据地址"
+            },
+            'sn':"血糖仪sn码",
+            'id_number':"患者医疗卡号",
+            'time':"数据时间",
+            'date':"数据日期",
+            'glucose':"血糖值"
         }],
         "status":"success",
         "reason":"the data has been added"
@@ -137,10 +179,21 @@ def new_data_artificial():
             'status': 'fail',
             'reason': str(e)
         })
+    accuchek = Accuchek.query.filter(Accuchek.sn == request.json.get('sn')).first()
+    if accuchek is None:
+        return jsonify({
+            'status': 'fail',
+            'reason': 'the accuchek does not exist'
+        })
     data = Data()
     for k in request.json:
         if hasattr(data, k):
             setattr(data, k, request.json[k])
+
+    if 'date' not in request.json:
+        data.date = datetime.utcnow().date()
+    if 'time' not in request.json:
+        data.time = datetime.utcnow().time()
     id_number = request.json['id_number']
     patient = Patient.query.filter(Patient.id_number == id_number).first()
     if patient is None:
@@ -176,18 +229,17 @@ def new_data_artificial():
 """
 @api {POST} /datas/artificial 添加数据(不用手动输入病人数据)(json数据)
 @apiGroup datas
-@apiName 添加数据
 
-@apiParam (params) {String} id_number 医疗卡号
-@apiParam (params) {String} patient_name 病人姓名
-@apiParam (params) {String} sex 病人性别
-@apiParam (params) {String} tel 病人电话
-@apiParam (params) {Number} age 病人年龄
-@apiParam (params) {Number} doctor_id 医生id
-@apiParam (params) {String} sn 血糖仪sn码 
-@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
-@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
-@apiParam (params) {Number} glucose 血糖值
+@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {String} patient_name 病人姓名
+@apiParam (json) {String} sex 病人性别
+@apiParam (json) {String} tel 病人电话
+@apiParam (json) {Int} age 病人年龄
+@apiParam (json) {String} doctor_name 医生姓名
+@apiParam (json) {String} sn 血糖仪sn码 
+@apiParam (json) {Date} date 数据日期_日期格式(0000-00-00)
+@apiParam (json) {Time} time 数据时间_时间格式(00:00:00)
+@apiParam (json) {Float} glucose 血糖值
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回新添加的数据
@@ -196,12 +248,22 @@ def new_data_artificial():
     HTTP/1.1 200 OK
     {
         "datas":[{
-            "date":"数据添加日期",
-            "time":"数据添加时间",
-            "id_number":"医疗卡号",
-            "patient":"病人地址",
-            "sn":"血糖仪sn码",
-            "data_id":"数据id"
+            'data_id':"数据id",
+            "patient":{
+                'patient_id': "病人id",
+                'patient_name':"病人姓名",
+                'sex':"病人性别",
+                'tel':"病人电话",
+                'age':"病人年龄",
+                'doctor':"医生姓名",
+                'id_number':"病人医疗卡号",
+                'datas':"病人数据地址"
+            },
+            'sn':"血糖仪sn码",
+            'id_number':"患者医疗卡号",
+            'time':"数据时间",
+            'date':"数据日期",
+            'glucose':"血糖值"
         }],
         "status":"success",
         "reason":"the data has been added"
@@ -268,15 +330,18 @@ def get_datas():
 """
 @api {GET} /datas 获取所有数据信息
 @apiGroup datas
-@apiName 获取所有数据信息
 
 @apiParam (params) {String} sn 血糖仪sn码 
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
-@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
-@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
-@apiParam (params) {Number} glucose 血糖值
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
+@apiParam (params) {Date} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {Time} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Float} glucose 血糖值
+@apiParam (params) {Int} data_id 数据id
+@apiParam (params) {String} id_number 医疗卡号
+@apiParam (params) {Bool} hidden 是否隐藏
 @apiParam (Login) {String} login 登录才可以访问
+
 
 @apiSuccess {Array} datas 返回查询到的数据
 
@@ -297,7 +362,8 @@ def get_datas():
                 'id_number':"病人医疗卡号",
                 'datas':"病人数据地址"
             },
-            "sn":"血糖仪sn码",
+            "sn":"血糖仪sn码",,
+            "glucose":"血糖值",
             "data_id":"数据id"
         }],
         "prev":"上一页地址",
@@ -380,14 +446,21 @@ def get_datas_sparedata():
 """
 @api {GET} /sparedatas 获取备用机数据
 @apiGroup datas
-@apiName 获取备用机数据
 
 @apiParam (params) {String} sn 血糖仪sn码 
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
-@apiParam (params) {String} date 数据日期_日期格式(0000-00-00)
-@apiParam (params) {String} time 数据时间_时间格式(00:00:00)
-@apiParam (params) {Number} glucose 血糖值
+@apiParam (params) {Int} data_id 数据id
+@apiParam (params) {String} patient_name 患者姓名
+@apiParam (params) {String} sex 患者性别
+@apiParam (params) {String} tel 患者电话
+@apiParam (params) {String} doctor 医生姓名
+@apiParam (params) {Int} age 患者年龄
+@apiParam (params) {String} id_number 医疗卡号 
+@apiParam (params) {Bool} hidden 是否隐藏 
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
+@apiParam (params) {Date} date 数据日期_日期格式(0000-00-00)
+@apiParam (params) {Time} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Float} glucose 血糖值
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回查询到的数据
@@ -436,9 +509,8 @@ def get_data(id):
 """
 @api {GET} /datas/<int:id> 根据id获取数据信息
 @apiGroup datas
-@apiName 根据id获取数据信息
 
-@apiParam (params) {String} id 数据id 
+@apiParam (params) {Int} id 数据id 
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回id所代表数据信息
@@ -477,15 +549,16 @@ def change_sparedata_data(id):
         'sn': request.json.get('sn', None),
         'glucose': request.json.get('glucose', None),
         'id_number': request.json.get('id_number', None),
-        'patient_name': request.json.get('patient_name', None),
-        'sex': request.json.get('sex', None),
-        'tel': request.json.get('tel', None),
-        'age': request.json.get('age', None),
-        'doctor': request.json.get('doctor', None),
         'time': request.json.get('time', None),
         'date': request.json.get('date', None),
-        'hidden': request.json.get('hidden', None)
+        'hidden': request.json.get('hidden', None),
+        'doctor': request.json.get('doctor', None),
+        'sex': request.json.get('sex', None),
+        'patient_name': request.json.get('patient_name', None),
+        'age': request.json.get('age', None),
+        'tel': request.json.get('tel', None)
     }
+
     try:
         ChangeSpareDataValidation().load(params_dict)
     except ValidationError as e:
@@ -506,25 +579,28 @@ def change_sparedata_data(id):
             'reason': e,
             'data': []
         })
-    return jsonify(data.to_full_json())
+    return jsonify({
+        'sparedatas':[data.to_full_json()],
+        'status':'success',
+        'reason':''
+    })
 
 """
 @api {PUT} /sparedatas/<int:id> 根据id修改备用机数据
 @apiGroup datas
-@apiName 根据id修改备用机数据
 
-@apiParam (params) {String} id 备用机数据id 
-@apiParam (params) {String} sn 备用机sn码
-@apiParam (params) {String} id_number 患者医疗卡号
-@apiParam (params) {String} patient_name 患者姓名
-@apiParam (params) {String} sex 患者性别
-@apiParam (params) {String} age 患者年龄
-@apiParam (params) {String} tel 患者电话
-@apiParam (params) {String} doctor 医生姓名
-@apiParam (params) {String} time 数据时间
-@apiParam (params) {String} date 数据日期
-@apiParam (params) {String} glucose 血糖值
-@apiParam (params) {String} hidden 是否隐藏（0：隐藏， 1：不隐藏）
+@apiParam (params) {Int} id 备用机数据id 
+@apiParam (json) {String} sn 备用机sn码
+@apiParam (json) {String} id_number 患者医疗卡号
+@apiParam (json) {Time} time 数据时间
+@apiParam (json) {Date} date 数据日期
+@apiParam (json) {String} doctor 医生姓名
+@apiParam (json) {Float} glucose 血糖值
+@apiParam (json) {String} sex 患者性别
+@apiParam (json) {String} patient_name 患者姓名
+@apiParam (json) {Int} age 患者年龄
+@apiParam (json) {String} tel 患者电话
+@apiParam (json) {Bool} hidden 是否隐藏（0：隐藏， 1：不隐藏）
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回修改后的备用机数据
@@ -532,7 +608,7 @@ def change_sparedata_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "datas":[{
+        "sparedatas":[{
             "data_id":"备用机数据号",
             "patient_name":"患者姓名",
             "age":"患者年龄",
@@ -548,6 +624,10 @@ def change_sparedata_data(id):
         "status":"success",
         "reason":"there is the data"
     }
+    {
+        "status":"fail",
+        "reason":""
+    }
 """
 
 
@@ -561,8 +641,7 @@ def delete_sparedata_data(id):
     except OperationalError as e:
         return jsonify({
             'status': 'fail',
-            'reason': e,
-            'data': []
+            'reason': e
         })
     return jsonify({
         'status':'success',
@@ -572,7 +651,6 @@ def delete_sparedata_data(id):
 """
 @api {DELTET} /sparedatas/<int:id> 根据id删除备用机数据
 @apiGroup datas
-@apiName 根据id删除备用机数据
 
 @apiParam (params) {String} id 备用机数据id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -595,13 +673,12 @@ def get_sparedata_data(id):
     return jsonify({
         'status':'success',
         'reason':'',
-        'data': [data.to_full_json()]
+        'sparedatas': [data.to_full_json()]
     })
 
 """
-@api {PUT} /sparedatas/<int:id> 根据id查询备用机数据
+@api {GET} /sparedatas/<int:id> 根据id查询备用机数据
 @apiGroup datas
-@apiName 根据id查询备用机数据
 
 @apiParam (params) {String} id 备用机数据id 
 @apiParam (Login) {String} login 登录才可以访问
@@ -611,7 +688,7 @@ def get_sparedata_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "datas":[{
+        "sparedatas":[{
             "data_id":"备用机数据号",
             "patient_name":"患者姓名",
             "age":"患者年龄",
@@ -650,13 +727,9 @@ def change_data(id):
             'reason': str(e)
         })
     data = Data.query.get_or_404(id)
-    id_number = data.id_number
-    if 'id_number' in request.json:
-        id_number = request.json['id_number']
     for k in request.json:
         if hasattr(data, k):
             setattr(data, k, request.json[k])
-    patient = Patient.query.filter(Patient.id_number == id_number).first()
     try:
         db.session.add(data)
         db.session.commit()
@@ -667,16 +740,7 @@ def change_data(id):
             'data': data.to_json()
         })
     return jsonify({
-        'datas': [{
-            'data_id': data.data_id,
-            'patient': url_for('patient_blueprint.get_patient', id=patient.patient_id),
-            'sn': data.sn,
-            'id_number': data.id_number,
-            'time': str(data.time),
-            'date': str(data.date),
-            'glucose': data.glucose,
-            'hidden':data.hidden
-        }],
+        'datas': [data.to_full_json()],
         'status': 'success',
         'reason': 'the data has been changed'
     }), 200
@@ -685,20 +749,16 @@ def change_data(id):
 """
 @api {PUT} /datas/<int:id> 更改id所代表的数据的信息
 @apiGroup datas
-@apiName 更改id所代表的数据的信息
 
-@apiParam (request) {String} id_number 医疗卡号(修改病人信息时添加)
-@apiParam (request) {String} patient_name 病人姓名(修改病人信息时添加)
-@apiParam (request) {String} sex 病人性别(修改病人信息时添加)
-@apiParam (request) {String} tel 病人电话(修改病人信息时添加)
-@apiParam (request) {Number} age 病人年龄(修改病人信息时添加)
-@apiParam (request) {Number} doctor_id 医生id(修改病人信息时添加)
-@apiParam (request) {String} sn 血糖仪sn码 
-@apiParam (request) {String} date 数据日期_日期格式(0000-00-00)
-@apiParam (request) {String} time 数据时间_时间格式(00:00:00)
+@apiParam (params) {Int} id 数据id
+@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {String} sn 血糖仪sn码 
+@apiParam (json) {Date} date 数据日期_日期格式(0000-00-00)
+@apiParam (json) {String} time 数据时间_时间格式(00:00:00)
 @apiParam (params) {Number} limit 查询总数量
 @apiParam (params) {Number} per_page 每一页的数量
-@apiParam (request) {Number} glucose 血糖值
+@apiParam (json) {Float} glucose 血糖值
+@apiParam (json) {Bool} hidden 是否隐藏
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} datas 返回id所代表数据信息
@@ -710,10 +770,14 @@ def change_data(id):
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
-            "patient":"病人地址",
+            "patient_name":"病人姓名",
+            "age":"患者年龄",
+            "tel":"患者电话",
             "sn":"血糖仪sn码",
             "data_id":"数据id",
-            "glucose":"血糖值"
+            "glucose":"血糖值",
+            "sex":"患者性别",
+            "doctor":"医生姓名"
         }],
         "status":"success",
         "reason":"the data has been changed"
@@ -748,7 +812,6 @@ def delete_data(id):
 
 @api {DELETE} /datas/<int:id> 删除id所代表的数据的信息
 @apiGroup datas
-@apiName 删除id所代表的数据的信息
 
 @apiParam (params) {String} id 数据id 
 @apiParam (Login) {String} login 登录才可以访问

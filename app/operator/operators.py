@@ -14,7 +14,10 @@ import json
 def std_json(d):
     r = {}
     for k, v in d.items():
-        r[k] = json.loads(v)
+        try:
+            r[k] = json.loads(v)
+        except:
+            r[k] = v
     return r
 
 @operator_blueprint.route('/operators', methods = ['POST'])
@@ -101,14 +104,14 @@ def new_operator():
 """
 @api {POST} /operators 新建操作者(医生)信息(json数据)并激活
 @apiGroup operator
-@apiName 新建操作者信息
-@apiParam (params) {String} operator_name 医生姓名
-@apiParam (params) {String} password 登录密码
-@apiParam (params) {String} hospital 医院名称   
-@apiParam (params) {String} office 科室
-@apiParam (params) {String} lesion 分区
-@apiParam (params) {String} tel 医生电话
-@apiParam (params) {String} mail 医生邮箱
+
+@apiParam (json) {String} operator_name 医生姓名
+@apiParam (json) {String} password 登录密码
+@apiParam (json) {String} hospital 医院名称   
+@apiParam (json) {String} office 科室
+@apiParam (json) {String} lesion 分区
+@apiParam (json) {String} tel 医生电话
+@apiParam (json) {String} mail 医生邮箱
 
 @apiSuccess {Array} operators 返回新增的医生数据
 
@@ -116,7 +119,7 @@ def new_operator():
     HTTP/1.1 200 OK
     {
         operators:[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
@@ -205,18 +208,16 @@ def get_operators():
 """
 @api {GET} /operators 获取查询操作者(地址栏筛选)
 @apiGroup operator
-@apiName 获取查询查询操作者
 
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
+@apiParam (params) {Int} operator_id 操作者id
 @apiParam (params) {String} operator_name 医生姓名
 @apiParam (params) {String} hospital 医院名称
 @apiParam (params) {String} office 科室
 @apiParam (params) {String} lesion 分区
 @apiParam (params) {String} tel 医生电话
 @apiParam (params) {String} mail 医生邮箱
-@apiParam (params) {Number} limit 查询总数量
-@apiParam (params) {Number} per_page 每一页的数量
+@apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} per_page 每一页的数量
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回新增的医生数据
@@ -225,7 +226,7 @@ def get_operators():
     HTTP/1.1 200 OK
     {
         "operators":[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "active":"是否被激活",
@@ -249,11 +250,6 @@ def get_operators():
 @operator_blueprint.route('/operators/<int:id>')
 @login_required
 def get_operator(id):
-    if request.args is not None:
-        return jsonify({
-            'status':'fail',
-            'reason':'any args should not be gave'
-        })
     operator = Operator.query.get_or_404(id)
     return jsonify({
         'operators': [operator.to_json()],
@@ -264,9 +260,8 @@ def get_operator(id):
 """
 @api {GET} /operators/<int:id> 根据id查询操作者
 @apiGroup operator
-@apiName 根据id查询操作者
 
-@apiParam (params) {Number} id 医生id
+@apiParam (params) {Int} id 医生id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回新增的医生数据
@@ -275,7 +270,7 @@ def get_operator(id):
     HTTP/1.1 200 OK
     {
         operators:[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
@@ -293,11 +288,6 @@ def get_operator(id):
 @operator_blueprint.route('/operators/<int:id>', methods = ['DELETE'])
 @login_required
 def delete_operator(id):
-    if request.args is not None:
-        return jsonify({
-            'status':'fail',
-            'reason':'any args should not be gave'
-        })
     operator = Operator.query.get_or_404(id)
     if current_user.tel != operator.tel:
         return jsonify({
@@ -322,9 +312,8 @@ def delete_operator(id):
 """
 @api {DELETE} /operators/<int:id> 根据id删除操作者
 @apiGroup operator
-@apiName 根据id删除操作者
 
-@apiParam (params) {Number} id 医生id
+@apiParam (params) {Int} id 医生id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回删除的医生数据
@@ -333,7 +322,7 @@ def delete_operator(id):
     HTTP/1.1 200 OK
     {
         operators:[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
@@ -377,10 +366,12 @@ def change_operator(id):
         })
     operator = Operator.query.get_or_404(id)
     for k in request.json:
-        if hasattr(operator, k):
-            setattr(operator, k, request.json[k])
+        if k == 'password_hash':
+            continue
         if k == 'password':
             operator.password =  request.json[k]
+        if hasattr(operator, k):
+            setattr(operator, k, request.json[k])
     try:
         db.session.add(operator)
         db.session.commit()
@@ -398,9 +389,13 @@ def change_operator(id):
 """
 @api {PUT} /operators/<int:id> 根据id修改操作者信息(json数据)
 @apiGroup operator
-@apiName 根据id修改操作者信息
 
-@apiParam (params) {Number} id 医生id
+@apiParam (params) {Int} id 医生id
+@apiParam (json) {String} tel 电话号码
+@apiParam (json) {String} hospital 医院名称
+@apiParam (json) {String} lesion 医生分区
+@apiParam (json) {String} email 电子邮箱
+@apiParam (json) {String} office 医生科室 
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回修改后的的医生数据
@@ -409,7 +404,7 @@ def change_operator(id):
     HTTP/1.1 200 OK
     {
         operators:[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
@@ -430,7 +425,7 @@ def change_operator(id):
 """
 
 
-@operator_blueprint.route('/current_operator')
+@operator_blueprint.route('/operators/current')
 @login_required
 def get_operator_now():
     operator = current_user
@@ -441,9 +436,8 @@ def get_operator_now():
     })
 
 """
-@api {GET} /current_operator 返回现在操作者的信息
+@api {GET} /operators/current 返回现在操作者的信息
 @apiGroup operator
-@apiName 返回现在操作者的信息
 
 @apiParam (Login) {String} login 登录才可以访问
 
@@ -453,7 +447,7 @@ def get_operator_now():
     HTTP/1.1 200 OK
     {
         operators:[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
@@ -465,7 +459,7 @@ def get_operator_now():
 """
 
 
-@operator_blueprint.route('/current_operator/password', methods = ['POST'])
+@operator_blueprint.route('/operators/current/password', methods = ['POST'])
 @login_required
 def operator_password():
     params_dict = {
@@ -501,12 +495,11 @@ def operator_password():
         })
 
 """
-@api {POST} /current_operator/password 验证现在操作者输入密码是否正确
+@api {POST} /operators/current/password 验证现在操作者输入密码是否正确
 @apiGroup operator
-@apiName 验证现在操作者输入密码是是否正确
 
-@apiParam (params) {String} password 登录密码
-@apiParam (params) {String} operator_name 操作者姓名
+@apiParam (json) {String} password 登录密码
+@apiParam (json) {String} operator_name 操作者姓名
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} operators 返回现在操作者的信息
@@ -515,7 +508,7 @@ def operator_password():
     HTTP/1.1 200 OK
     {
         operators:[{
-            "url":"医生地址",
+            "operator_id":"医生id",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
@@ -523,7 +516,7 @@ def operator_password():
         }],
         "status":"success",
         "reason":"the password is right"
-    }
+    }   
     密码错误
     {
         "status":"fail",

@@ -2,8 +2,9 @@ from app.accuchek import accuchek_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
 from app.models import Accuchek, Bed
-from sqlalchemy.exc import OperationalError,IntegrityError
+from sqlalchemy.exc import IntegrityError,IntegrityError
 from flask_login import login_required
+from app.models import InvalidUsage
 import json
 from marshmallow.exceptions import ValidationError
 from app.form_model import GetAccuchekValidation, AccuchekValidation, ChangeAccuchekValidation
@@ -25,7 +26,8 @@ def get_accucheks():
         'sn': request.args.get('sn', None, type=str),
         'per_page': request.args.get('per_page', None, type=int),
         'limit': request.args.get('limit', None, type=int),
-        'bed_id': request.args.get('bed_id', None, type=int)
+        'bed_id': request.args.get('bed_id', None, type=int),
+        'page': request.args.get('page', None, type=int)
     }
     try:
         GetAccuchekValidation().load(params_dict)
@@ -77,6 +79,7 @@ def get_accucheks():
 @apiParam (params) {Int} accuchek_id 血糖仪号码
 @apiParam (params) {Int} limit 查询总数量
 @apiParam (params) {Int} per_page 每一页的数量
+@apiParam (params) {Int} page 查询页数
 @apiParam (Login) {String} login 登录才可以访问
 
 @apiSuccess {Array} accucheks 返回所有根据条件查询到的血糖仪信息
@@ -123,12 +126,12 @@ def new_accuchek():
         if may_accuchek:
             return jsonify({
                 'status': 'fail',
-                'reason': 'the sn has been used'
+                'reason': '这个sn码已经被使用了'
             })
     else:
         return jsonify({
             'status': 'fail',
-            'reason': 'there is no sn'
+            'reason': '没有sn码被发送了'
         })
     if 'bed_id' in request.json:
         bed_id = request.json['bed_id']
@@ -136,30 +139,23 @@ def new_accuchek():
         if bed is None:
             return jsonify({
                 'status': 'fail',
-                'reason': 'the bed does not exist'
+                'reason': '床位不存在'
             })
     for k in request.json:
         if hasattr(accuchek, k):
             try:
                 setattr(accuchek, k, request.json[k])
             except IntegrityError as e:
-                return jsonify({
-                    'status': 'fail',
-                    'reason': e
-                })
+                raise InvalidUsage(message=str(e), status_code=500)
     try:
         db.session.add(accuchek)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': accuchek.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        "accukces": [accuchek.to_json()],
+        "accuchek": accuchek.to_json(),
         "status": "success",
-        "reason": "the data has been added"
+        "reason": "数据已经被添加"
     })
 
 """
@@ -175,11 +171,11 @@ def new_accuchek():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "accucheks":[{
+        "accuchek":{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
             "accuchek_id":"血糖仪id"   
-        }],
+        },
         "status":"success",
         "reason":"the data has been added"
     }
@@ -194,9 +190,9 @@ def new_accuchek():
 def get_accuchek(id):
     accuchek = Accuchek.query.get_or_404(id)
     return jsonify({
-        "accukces":[accuchek.to_json()],
+        "accuchek":accuchek.to_json(),
         "status":"success",
-        "reason":"there is the data"
+        "reason":"这里是查询到的数据"
     })
 
 """
@@ -211,11 +207,11 @@ def get_accuchek(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "accucheks":[{
+        "accuchek":{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
             "accuchek_id":"血糖仪id"   
-        }],
+        },
         "status":"success",
         "reason":"there is the data"
     }
@@ -238,14 +234,11 @@ def delete_accuchek(id):
     try:
         db.session.delete(accuchek)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         "status": "success",
-        "reason": "the data has been deleted"
+        "reason": "数据已经被删除了"
     })
 
 """
@@ -296,7 +289,7 @@ def change_accuchek(id):
         if may_accuchek is not None and may_accuchek.accuchek_id != id:
             return jsonify({
                 'status':'fail',
-                'reason':'the sn has been used'
+                'reason':'这个sn码已经被使用了'
             })
     if 'bed_id' in request.json:
         bed_id = request.json['bed_id']
@@ -312,13 +305,10 @@ def change_accuchek(id):
     try:
         db.session.add(accuchek)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        "accukces": [accuchek.to_json()],
+        "accuchek": accuchek.to_json(),
         "status": "success",
         "reason": "the data has been changed"
     })
@@ -337,11 +327,11 @@ def change_accuchek(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "accucheks":[{
+        "accuchek":{
             "bed_id":"床位号",
             "sn":"血糖仪sn码",
             "accuchek_id":"血糖仪id"   
-        }],
+        },
         "status":"success",
         "reason":"the data has been changed"
     }

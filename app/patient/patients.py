@@ -2,8 +2,9 @@ from app.patient import patient_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
 from app.models import Patient, Data, Bed
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, IntegrityError
 from flask_login import login_required
+from app.models import InvalidUsage
 import json
 from app.form_model import PatientValidation, GetPatientValidation, ChangePatientValidation, PatientDataValidation, PatientHistoryValidation
 from marshmallow.exceptions import ValidationError
@@ -47,14 +48,10 @@ def new_patient():
     try:
         db.session.add(patient)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':patient.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'patients':[patient.to_json()],
+        'patient':patient.to_json(),
         'status':'success',
         'reason':'the data has been added'
     })
@@ -77,7 +74,7 @@ def new_patient():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "patients":[{
+        "patient":{
             "patient_name":"病人姓名",
             "sex":"病人性别",
             "tel":"病人电话",
@@ -86,7 +83,7 @@ def new_patient():
             "doctor_id":"医生号码",
             "id_number":"医保卡号",
             "datas":"病人数据地址"
-        }],
+        },
         "status":"success",
         "reason":"the data has been added"
     }
@@ -235,14 +232,10 @@ def change_patient(id):
     try:
         db.session.add(patient)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':patient.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'patients': [patient.to_json()],
+        'patient': patient.to_json(),
         'status': 'success',
         'reason': 'the data has been changed'
     })
@@ -265,7 +258,7 @@ def change_patient(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "patients":[{
+        "patient":{
             "patient_name":"病人姓名",
             "sex":"病人性别",
             "tel":"病人电话",
@@ -274,7 +267,7 @@ def change_patient(id):
             "doctor_id":"医生号码",
             "id_number":"医保卡号",
             "datas":"病人数据地址"
-        }],
+        },
         "status":"success",
         "reason":"the data has been changed"
     }
@@ -295,7 +288,7 @@ def change_patient(id):
 def get_patient(id):
     patient = Patient.query.get_or_404(id)
     return jsonify({
-        'patients': [patient.to_json()],
+        'patient': patient.to_json(),
         'status': 'success',
         'reason': 'there is the data'
     })
@@ -312,7 +305,7 @@ def get_patient(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "patients":[{
+        "patient":{
             "patient_name":"病人姓名",
             "sex":"病人性别",
             "tel":"病人电话",
@@ -321,7 +314,7 @@ def get_patient(id):
             "doctor_id":"医生号码",
             "id_number":"医保卡号",
             "datas":"病人数据地址"
-        }],
+        },
         "status":"success",
         "reason":"there is the data"
     }
@@ -340,23 +333,14 @@ def delete_patients(id):
         try:
             db.session.delete(data)
             db.session.commit()
-        except OperationalError as e:
-            return jsonify({
-                'status':'fail',
-                'reason':e,
-                'data':data.to_json()
-            })
+        except IntegrityError as e:
+            raise InvalidUsage(message=str(e), status_code=500)
     try:
         db.session.delete(patient)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': patient.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'patients':[patient.to_json()],
         'status':'success',
         'reason':'the data has been deleted'
     })
@@ -368,21 +352,11 @@ def delete_patients(id):
 @apiParam (params) {Int} id 病人id 
 @apiParam (Login) {String} login 登录才可以访问
 
-@apiSuccess {Array} patients 返回删除后的病人信息
+@apiSuccess {Array} status 返回删除状态
 
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "patients":[{
-            "patient_id":"病人id",
-            "patient_name":"病人姓名",
-            "sex":"病人性别",
-            "tel":"病人电话",
-            "age":"病人年龄",
-            "doctor_id":"医生号码",
-            "id_number":"医保卡号",
-            "datas":"病人数据地址"
-        }],
         "status":"success",
         "reason":"the data has been deleted"
     }
@@ -393,54 +367,22 @@ def delete_patients(id):
 """
 
 
-@patient_blueprint.route('/patients/get_from_id')
-@login_required
-def get_from_id():
-    id_number = request.args.get('id_number')
-    patient = Patient.query.filter(Patient.id_number == id_number).first()
-    if patient:
-        return jsonify({
-            'patients': [patient.to_json()],
-            'status': 'success',
-            'reason': 'there is the data'
-        })
-    else:
-        return jsonify({
-            'status':'fail',
-            'reason':'the patient does not exist'
-        })
-
-"""
-@api {GET} /patients/get_from_id 根据医疗卡号获取病人信息
-@apiGroup patients
-
-@apiParam (params) {String} id_number 医疗卡号 
-@apiParam (Login) {String} login 登录才可以访问
-
-@apiSuccess {Array} patients 返回根据医疗卡号获取的病人信息
-
-@apiSuccessExample Success-Response:
-    HTTP/1.1 200 OK
-    {
-        "patients":[{
-            "patient_id": "病人id",
-            "patient_name":"病人姓名",
-            "sex":"病人性别",
-            "tel":"病人电话",
-            "age":"病人年龄",
-            "doctor_id":"医生号码",
-            "id_number":"医保卡号",
-            "datas":"病人数据地址"
-        }],
-        "status":"success",
-        "reason":"there is the data"
-    }
-    这个医疗卡号没有注册过
-    {
-        "status":"fail",
-        "reason":"the patient does not exist"
-    }  
-"""
+# @patient_blueprint.route('/patients/get_from_id')
+# @login_required
+# def get_from_id():
+#     id_number = request.args.get('id_number')
+#     patient = Patient.query.filter(Patient.id_number == id_number).first()
+#     if patient:
+#         return jsonify({
+#             'patients': [patient.to_json()],
+#             'status': 'success',
+#             'reason': 'there is the data'
+#         })
+#     else:
+#         return jsonify({
+#             'status':'fail',
+#             'reason':'the patient does not exist'
+#         })
 
 
 @patient_blueprint.route('/patients/<int:id>/datas')
@@ -487,7 +429,7 @@ def get_patient_datas(id):
     if pagination.has_next:
         next = url_for('patient_blueprint.get_patient_datas', page=page + 1)
     return jsonify({
-        'datas': [data.to_json() for data in datas],
+        'datas': [data.to_json_without_patient() for data in datas],
         'prev': prev,
         'next': next,
         'has_prev':pagination.has_prev,
@@ -518,16 +460,6 @@ def get_patient_datas(id):
             "date": "数据日期",
             "glucose": "血糖值",
             "id_number": "患者医疗卡号",
-            "patient": {
-                "age": "患者年龄",
-                "datas": "患者全部数据地址",
-                "doctor": "医生名字",
-                "id_number": "患者医疗卡号",
-                "patient_id": "患者id",
-                "patient_name": "患者姓名",
-                "sex": "患者性别",
-                "tel": "患者电话"
-            },
             "sn": "血糖仪sn码",
             "time": "数据时间"
         }]，

@@ -39,6 +39,7 @@ class GetOperatorValidation(Schema):
     office = fields.String(allow_none=True)
     limit = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
+    page = fields.Integer(allow_none=True)
 
     @validates('password')
     def validate_password(self, value):
@@ -95,6 +96,7 @@ class GetAccuchekValidation(Schema):
     bed_id = fields.Integer(allow_none=True)
     limit = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
+    page = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
@@ -137,6 +139,7 @@ class GetBedValidation(Schema):
     sn = fields.String(allow_none=True)
     limit = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
+    page = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
@@ -185,6 +188,7 @@ class BedMoreDataValidation(Schema):
     hidden = fields.Boolean(allow_none=True)
     limit = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
+    page = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
@@ -230,6 +234,7 @@ class GetPatientValidation(Schema):
     doctor_name = fields.String(allow_none=True)
     per_page = fields.Integer(allow_none=True)
     limit = fields.Integer(allow_none=True)
+    page = fields.Integer(allow_none=True)
 
     @validates('tel')
     def validate_tel(self, value):
@@ -278,6 +283,7 @@ class PatientDataValidation(Schema):
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     limit = fields.Integer(allow_none=True)
+    page = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
 
     @validates('sn')
@@ -307,6 +313,7 @@ class PatientHistoryValidation(Schema):
     end_time = fields.String(allow_none=True)
     begin_date = fields.Date(allow_none=True)
     end_date = fields.Date(allow_none=True)
+    page = fields.Integer(allow_none=True)
     max_age = fields.Integer(allow_none=True)
     min_age = fields.Integer(allow_none=True)
 
@@ -352,6 +359,7 @@ class GetBedHistoryValidation(Schema):
     bed_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
+    page = fields.Integer(allow_none=True)
     limit = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
 
@@ -447,6 +455,7 @@ class GetDataValidation(Schema):
     id_number = fields.String(allow_none=True)
     time = fields.Time(allow_none=True)
     date = fields.Date(allow_none=True)
+    page = fields.Integer(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     per_page = fields.Integer(allow_none=True)
     limit = fields.Integer(allow_none=True)
@@ -467,6 +476,7 @@ class GetSpareDataValidation(Schema):
     doctor = fields.String(allow_none=True)
     time = fields.Time(allow_none=True)
     date = fields.Date(allow_none=True)
+    page = fields.Integer(allow_none=True)
     glucose = fields.Float(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
     limit = fields.Integer(allow_none=True)

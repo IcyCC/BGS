@@ -2,8 +2,9 @@ from app.data import data_blueprint
 from app import db
 from flask import request, jsonify, url_for, current_app
 from app.models import Patient, Data, Accuchek, SpareData
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError
 from flask_login import login_required
+from app.models import InvalidUsage
 import json
 from app.form_model import DataValidation, DataArtificialValidation, GetDataValidation, GetSpareDataValidation, ChangeSpareDataValidation, ChangeDataValidation
 from marshmallow.exceptions import ValidationError
@@ -59,14 +60,11 @@ def new_data_auto():
         try:
             db.session.add(data)
             db.session.commit()
-        except OperationalError as e:
-            return jsonify({
-                'status': 'fail',
-                'reason': e,
-                'data': data.to_json()
-            })
+        except IntegrityError as e:
+            raise InvalidUsage(message=str(e), status_code=500)
         return jsonify({
-            'datas': [data.to_json()],
+            'patient':data.patient.to_json_patient(),
+            'data': data.to_json_without_patient(),
             'status': 'success',
             'reason': 'the data has been added'
         })
@@ -83,13 +81,10 @@ def new_data_auto():
         try:
             db.session.add(data)
             db.session.commit()
-        except OperationalError as e:
-            return jsonify({
-                'status': 'fail',
-                'reason': str(e)
-            })
+        except IntegrityError as e:
+            raise InvalidUsage(message=str(e), status_code=500)
         return jsonify({
-            'datas': [data.to_full_json()],
+            'data': data.to_full_json(),
             'status': 'success',
             'reason': 'the data has been added'
         })
@@ -113,7 +108,7 @@ def new_data_auto():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "datas":[{
+        "data":{
             "patient_name":"患者姓名",
             "age":"患者年龄",
             "tel":"患者电话",
@@ -124,30 +119,29 @@ def new_data_auto():
             "sn":"血糖仪sn码",
             "data_id":"数据id",
             "glucose":"血糖值"
-        }],
+        },
         "status":"success",
         "reason":"the data has been added"
     } 
     HTTP/1.1 200 OK
     {
-        "datas":[{
+        "data":{
             'data_id':"数据id",
-            "patient":{
-                'patient_id': "病人id",
-                'patient_name':"病人姓名",
-                'sex':"病人性别",
-                'tel':"病人电话",
-                'age':"病人年龄",
-                'doctor':"医生姓名",
-                'id_number':"病人医疗卡号",
-                'datas':"病人数据地址"
-            },
             'sn':"血糖仪sn码",
             'id_number':"患者医疗卡号",
             'time':"数据时间",
             'date':"数据日期",
             'glucose':"血糖值"
-        }],
+        },
+        "patient":{
+            'patient_id': "病人id",
+            'patient_name':"病人姓名",
+            'sex':"病人性别",
+            'tel':"病人电话",
+            'age':"病人年龄",
+            'doctor':"医生姓名",
+            'id_number':"病人医疗卡号"
+        },
         "status":"success",
         "reason":"the data has been added"
     } 
@@ -204,23 +198,15 @@ def new_data_artificial():
     try:
         db.session.add(patient)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': data.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     try:
         db.session.add(data)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': data.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'datas': [data.to_json()],
+        'data': data.to_json_without_patient(),
         'status': 'success',
         'reason': 'the data has been added'
     })
@@ -500,7 +486,7 @@ def get_datas_sparedata():
 def get_data(id):
     data = Data.query.get_or_404(id)
     return jsonify({
-        'datas': [data.to_json()],
+        'data': data.to_json(),
         'status': 'success',
         'reason': 'the data has been added'
     })
@@ -518,7 +504,7 @@ def get_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "datas":[{
+        "data":{
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
@@ -534,7 +520,7 @@ def get_data(id):
             },
             "sn":"血糖仪sn码",
             "data_id":"数据id"
-        }],
+        },
         "status":"success",
         "reason":"there is the data"
     }
@@ -573,14 +559,10 @@ def change_sparedata_data(id):
     try:
         db.session.add(data)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e,
-            'data': []
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'sparedatas':[data.to_full_json()],
+        'sparedata':data.to_full_json(),
         'status':'success',
         'reason':''
     })
@@ -608,7 +590,7 @@ def change_sparedata_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "sparedatas":[{
+        "sparedatas":{
             "data_id":"备用机数据号",
             "patient_name":"患者姓名",
             "age":"患者年龄",
@@ -620,7 +602,7 @@ def change_sparedata_data(id):
             "sn":"血糖仪sn码",
             "data_id":"数据id",
             "glucose":"血糖值"
-        }],
+        },
         "status":"success",
         "reason":"there is the data"
     }
@@ -638,11 +620,8 @@ def delete_sparedata_data(id):
     try:
         db.session.delete(data)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status':'success',
         'reason':''
@@ -673,7 +652,7 @@ def get_sparedata_data(id):
     return jsonify({
         'status':'success',
         'reason':'',
-        'sparedatas': [data.to_full_json()]
+        'sparedata': data.to_full_json()
     })
 
 """
@@ -688,7 +667,7 @@ def get_sparedata_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "sparedatas":[{
+        "sparedatas":{
             "data_id":"备用机数据号",
             "patient_name":"患者姓名",
             "age":"患者年龄",
@@ -700,7 +679,7 @@ def get_sparedata_data(id):
             "sn":"血糖仪sn码",
             "data_id":"数据id",
             "glucose":"血糖值"
-        }],
+        },
         "status":"success",
         "reason":"there is the data"
     }
@@ -733,14 +712,14 @@ def change_data(id):
     try:
         db.session.add(data)
         db.session.commit()
-    except OperationalError as e:
+    except IntegrityError as e:
         return jsonify({
             'status': 'fail',
             'reason': e,
             'data': data.to_json()
         })
     return jsonify({
-        'datas': [data.to_full_json()],
+        'data': data.to_full_json(),
         'status': 'success',
         'reason': 'the data has been changed'
     }), 200
@@ -766,7 +745,7 @@ def change_data(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        "datas":[{
+        "datas":{
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
@@ -778,7 +757,7 @@ def change_data(id):
             "glucose":"血糖值",
             "sex":"患者性别",
             "doctor":"医生姓名"
-        }],
+        },
         "status":"success",
         "reason":"the data has been changed"
     }
@@ -797,11 +776,8 @@ def delete_data(id):
     try:
         db.session.delete(data)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': e
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status': 'success',
         'reason': 'the data has been deleted'

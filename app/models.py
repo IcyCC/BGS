@@ -11,14 +11,13 @@ from datetime import datetime
 class Operator(db.Model, UserMixin):
     __tablename__ = 'operators'
     id = db.Column(db.Integer, primary_key=True)
-    operator_name = db.Column(db.String(64), nullable=False)
+    operator_name = db.Column(db.String(64), nullable=False, unique=True)
     password_hash = db.Column(db.String(128), nullable=False)
     hospital = db.Column(db.String(128), nullable=False)
     office = db.Column(db.String(128), nullable=False)
     lesion = db.Column(db.String(128))
     tel = db.Column(db.String(16), nullable=False, unique=True)
     mail = db.Column(db.String(64))
-    active = db.Column(db.Boolean, default=False)
 
     @property
     def password(self):
@@ -51,14 +50,16 @@ class Operator(db.Model, UserMixin):
         operator.password = json_post['password']
         return operator
 
+
     def to_json(self):
         json_operator = {
+            'mail': self.mail,
+            'tel':self.tel,
             'operator_id':self.id,
             'hospital':self.hospital,
             'office':self.office,
             'lesion':self.lesion,
-            'operator_name':self.operator_name,
-            'active':self.active
+            'operator_name':self.operator_name
         }
         return json_operator
 login_manager.anonymous_user = AnonymousUserMixin
@@ -96,6 +97,30 @@ class Patient(db.Model):
             if hasattr(patient, k):
                 setattr(patient, k, json_post[k])
         return patient
+    def to_json_bed(self):
+        json_patient = {
+            'patient_id': self.patient_id,
+            'patient_name': self.patient_name,
+            'sex': self.sex,
+            'tel': self.tel,
+            'age': self.age,
+            'doctor': self.doctor_name,
+            'id_number': self.id_number,
+            'datas': [data.to_json_without_patient() for data in self.datas]
+        }
+        return json_patient
+
+    def to_json_patient(self):
+        json_patient={
+            'patient_id':self.patient_id,
+            'patient_name':self.patient_name,
+            'sex':self.sex,
+            'tel':self.tel,
+            'age':self.age,
+            'doctor_name':self.doctor_name,
+            'id_number':self.id_number
+        }
+        return json_patient
 
     def to_json(self):
         json_patient = {
@@ -115,6 +140,7 @@ class Data(db.Model):
     data_id = db.Column(db.Integer, primary_key=True)
     sn = db.Column(db.String(32), nullable=False)
     id_number = db.Column(db.String(32))
+    patient_id = db.Column(db.Integer, nullable=True)
     time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     glucose = db.Column(db.Float, nullable=False)
@@ -146,6 +172,17 @@ class Data(db.Model):
             'time':str(self.time)[0:5],
             'date':str(self.date),
             'glucose':self.glucose
+        }
+        return json_data
+
+    def to_json_without_patient(self):
+        json_data = {
+            'data_id': self.data_id,
+            'sn': self.sn,
+            'id_number': self.id_number,
+            'time': str(self.time)[0:5],
+            'date': str(self.date),
+            'glucose': self.glucose
         }
         return json_data
 
@@ -274,17 +311,12 @@ class Bed(db.Model):
 
     def bed_full_data(self):
         #返回所有数据
-        patient = self.patient
         json_bed_information = {
             'bed_id':self.bed_id,
             'sn':self.sn,
-            'sex': patient.sex if patient is not None else None,
-            'tel': patient.tel if patient is not None else None,
-            'age': patient.age if patient is not None else None,
-            'patient_name':patient.patient_name if patient is not None else None,
-            'doctor': patient.doctor_name if patient is not None else None,
-            'id_number':patient.id_number if patient is not None else None,
-            'datas':[current_data.to_json() for current_data in self.datas]
+            'id_number':self.id_number,
+            'patient': self.patient.to_json_patient(),
+            'datas': [data.to_json_without_patient() for data in self.datas]
         }
         return json_bed_information
 
@@ -391,6 +423,16 @@ def load_user_from_request(request):
             return user
         else:
             return None
+
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=400):
+        Exception.__init__(self)
+        self.message = message
+        self.status_code = status_code
+
+
 
 
 from app.operator.authentication import jwtDecoding, jwtEncoding

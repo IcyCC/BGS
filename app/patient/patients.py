@@ -520,7 +520,7 @@ def patients_history():
     limit = None
     data_field = [i for i in Data.__table__.c._data]
     per_page = current_app.config['PATIENTS_PRE_PAGE']
-    for k, v in request.args.items():
+    for k, v in std_json(request.args).items():
         if k in patient_field:
             if hasattr(Patient, k):
                 field = getattr(Patient, k)

@@ -400,7 +400,7 @@ def get_datas_sparedata():
     per_page = current_app.config['PATIENTS_PRE_PAGE']
     limit = None
     datas = SpareData.query.order_by(SpareData.date.desc(), SpareData.time.desc())
-    for k, v in request.args.items():
+    for k, v in std_json(request.args).items():
         if k in fields:
             datas = datas.filter_by(**{k: v})
         if k == 'per_page':

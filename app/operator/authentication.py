@@ -29,7 +29,6 @@ def jwtDecoding(token, aud='webkit'):
 def login():
     operator_name = request.json.get("operator_name", None)
     password = request.json.get("password", None)
-    hospital = request.json.get("hospital", None)
     operator = Operator.query.filter(Operator.operator_name==operator_name).first()
 
     if operator is None or not operator.verify_password(password=password):

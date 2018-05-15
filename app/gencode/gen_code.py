@@ -8,7 +8,13 @@ from ..decorators import allow_cross_domain
 """
 @api {GET} /api/v1.0/code/route 获得设置wifi网络的二维码
 @apiGroup gen_code
-@apiName 设置server
+@apiName 设置wifi
+@apiParam (params) {String} ssid wifi名字 
+@apiParam (params) {String} password wifi密码
+@apiParam (params) {String} auth_method wifi认证方式 默认WPA2PSK
+@apiParam (params) {String} crypto_method wifi加密方式 默认AES
+
+@apiSuccess {Array} image 设置服务网络的的图片
 """
 
 @gencode_blueprint.route('/code/route', methods=['GET','POST'])
@@ -16,8 +22,8 @@ from ..decorators import allow_cross_domain
 def gen_code_route():
     ssid = request.form.get("ssid")
     password = request.form.get("password")
-    auth_method = request.form.get("auth_method")
-    crypto_method = request.form.get("crypto_method")
+    auth_method = request.form.get("auth_method", "WPA2PSK")
+    crypto_method = request.form.get("crypto_method", "AES")
     print("arg", request.args.items())
     qr = qrcode.QRCode(
         version=1,
@@ -43,7 +49,7 @@ def gen_code_route():
 """
 @api {GET} /api/v1.0/code/server 获得设置端口和host的二维码
 @apiGroup gen_code
-@apiName 设置网络
+@apiName 设置服务器
 """
 
 @gencode_blueprint.route('/code/server', methods=['GET'])
@@ -82,10 +88,10 @@ def gen_code_sh():
     sn = request.args.get('sn')
 
     if sn is None:
-        return "sn can`t be None"
+        return "sn 不能为空"
 
     if len(sn) != 8:
-        return "sn must 8 length"
+        return "sn 长度必须为8"
 
     qr = qrcode.QRCode(
         version=1,

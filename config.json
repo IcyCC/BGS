@@ -1,11 +1,11 @@
 {
   "net": {
-    "host": "192.168.1.69",
+    "host": "192.168.0.7",
     "port": 36751,
-    "ssid":"vis_ap",
+    "ssid":"suWIFI",
     "auth_method":"WPA2PSK",
     "crypto_method":"AES",
-    "password":"sadasd"
+    "password":"objectSU110"
   },
   "server": {
     "port": 8080

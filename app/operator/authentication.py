@@ -2,7 +2,7 @@ from flask import g, jsonify, request, url_for, abort
 from flask_httpauth import HTTPBasicAuth
 from flask_login import login_user
 from app.models import Operator, InvalidUsage
-
+import random
 from app.operator import operator_blueprint
 from sqlalchemy.exc import IntegrityError
 from flask_login import current_user, login_required, logout_user
@@ -104,7 +104,7 @@ def logout():
 @operator_blueprint.route('/operator/password', methods = ['PUT'])
 def change_password():
     operator_name  =request.json['operator_name']
-    password = request.json['password']
+    password = "".join(random.sample('1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',8))
     operator = Operator.query.filter(Operator.operator_name == operator_name).first()
     operator.password = password
     try:
@@ -115,6 +115,7 @@ def change_password():
     return jsonify({
         'status':'success',
         'reason':'',
+        'new_password':password,
         'operator':operator.to_json()
     })
 
@@ -123,7 +124,6 @@ def change_password():
 @apiGroup operator
 
 @apiParam (json) {String} operator_name 操作员姓名
-@apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} operators 更改后的操作者信息
 
@@ -137,6 +137,7 @@ def change_password():
             "lesion":"医生分区",
             "operator_name":"医生姓名"
         }],
+        "new_password":"新的密码"
         "status":"success",
         "reason":''
     }

@@ -88,10 +88,10 @@ def gen_code_sh():
     sn = request.args.get('sn')
 
     if sn is None:
-        return "sn can`t be None"
+        return "sn 不能为空"
 
     if len(sn) != 8:
-        return "sn must 8 length"
+        return "sn 长度必须为8"
 
     qr = qrcode.QRCode(
         version=1,

@@ -105,7 +105,7 @@ def logout():
 def change_password():
     operator_name  =request.json['operator_name']
     password = request.json['password']
-    operator = Operator.query.filter(Operator.operator_name == operator_name)
+    operator = Operator.query.filter(Operator.operator_name == operator_name).first()
     operator.password = password
     try:
         db.session.add(operator)

@@ -103,20 +103,9 @@ def logout():
 
 @operator_blueprint.route('/operator/password', methods = ['PUT'])
 def change_password():
-    hospital = request.json['hospital']
-    office = request.json['office']
+    operator_name  =request.json['operator_name']
     password = request.json['password']
-    operator = Operator.query.first()
-    if hospital != operator.hospital:
-        return jsonify({
-            'status':'fail',
-            'reason':'the hospital is wrong'
-        })
-    if office != operator.office:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'the office is wrong'
-        })
+    operator = Operator.query.filter(Operator.operator_name == operator_name)
     operator.password = password
     try:
         db.session.add(operator)
@@ -133,8 +122,7 @@ def change_password():
 @api {PUT} /operator/password 修改密码(json数据)
 @apiGroup operator
 
-@apiParam (json) {String} hospital 医院名称
-@apiParam (json) {String} office 科室
+@apiParam (json) {String} operator_name 操作员姓名
 @apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} operators 更改后的操作者信息
@@ -155,7 +143,6 @@ def change_password():
     更改失败
     {
         "status":"fail",
-        "reason":"",
-        "operators":[]
+        "reason":""
     }
 """

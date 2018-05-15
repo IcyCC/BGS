@@ -6,7 +6,7 @@ import time
 from ..decorators import allow_cross_domain
 
 """
-@api {GET} /api/v1.0/code/route 获得设置wifi网络的二维码
+@api {GET} /code/route 获得设置wifi网络的二维码
 @apiGroup gen_code
 @apiName 设置wifi
 @apiParam (params) {String} ssid wifi名字 
@@ -47,7 +47,7 @@ def gen_code_route():
     return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
 
 """
-@api {GET} /api/v1.0/code/server 获得设置端口和host的二维码
+@api {GET} /code/server 获得设置端口和host的二维码
 @apiGroup gen_code
 @apiName 设置服务器
 """
@@ -76,7 +76,7 @@ def gen_code_server():
     return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
 
 """
-@api {GET} /api/v1.0/code/sn 获得设置sn的二维码
+@api {GET} code/sn 获得设置sn的二维码
 @apiGroup gen_code
 @apiName 设置sn
 @apiParam (params) {String} sn 8位sn码 会自动转换成大写.

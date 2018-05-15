@@ -106,6 +106,11 @@ def change_password():
     operator_name  =request.json['operator_name']
     password = "".join(random.sample('1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',8))
     operator = Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator is None:
+        return jsonify({
+            'status':'fail',
+            'reason':'the user does not exist'
+        })
     operator.password = password
     try:
         db.session.add(operator)

@@ -1,5 +1,6 @@
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, make_response
 from app.error import error_blueprint
+from app.models import InvalidUsage
 
 
 @error_blueprint.app_errorhandler(403)
@@ -21,4 +22,11 @@ def page_not_found(e):
 def internal_server_error(e):
     response = jsonify({'error': 'internal server error', 'status':'fail', 'reason':str(e)})
     response.status_code = 500
+    return response
+
+
+@error_blueprint.app_errorhandler(InvalidUsage)
+def invalid_usage(error):
+    response = make_response(jsonify(status='fail', reason=error.message))
+    response.status_code = error.status_code
     return response

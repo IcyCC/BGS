@@ -4,10 +4,11 @@ from marshmallow.exceptions import ValidationError
 from app import db, mail
 from flask import request, jsonify, g, url_for, current_app, make_response
 from app.models import Operator
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError
 from flask_login import login_required, current_user, logout_user
 from flask_mail import Mail, Message
 import requests
+from app.models import InvalidUsage
 from app.form_model import OperatorValidation, ChangeOperatorValidation, GetOperatorValidation, OperatorPasswordValidation
 import json
 
@@ -30,7 +31,6 @@ def new_operator():
         'hospital': request.json.get('hospital', None),
         'lesion': request.json.get('lesion', None),
         'email': request.json.get('email', None),
-        'active':request.json.get('active', None),
         'office':request.json.get('office', None)
     }
     try:
@@ -41,6 +41,13 @@ def new_operator():
             'reason':str(e)
         })
     tel = request.json['tel']
+    operator_name = request.json['operator_name']
+    operator = Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator:
+        return jsonify({
+            'status':'fail',
+            'reason':'the operator_name has been used'
+        })
     operator = Operator.query.filter(Operator.tel == tel).first()
     if operator:
         return jsonify({
@@ -48,55 +55,41 @@ def new_operator():
             'reason':'the tel or the mail has been used'
         })
     operator = Operator.from_json(request.json)
+    # req = requests.session()
+    # try:
+    #     res = req.get('http://www.baidu.com')
+    #     if res.status_code != 200:
+    #         return jsonify({
+    #             'status': 'fail',
+    #             'reason': 'the web does not connect to the outer net',
+    #             'operators': []
+    #         })
+    # except:
+    #     return jsonify({
+    #         'status': 'fail',
+    #         'reason': 'the web does not connect to the outer net',
+    #         'operators': []
+    #     })
+    # msg = Message('Operator active', sender='1468767640@qq.com', recipients=['1468767640@qq.com'])
+    # host = 'http://101.200.52.233:8080'
+    # msg.body = 'the operator name is %s, the operator id is%id, the operator url is %s%s' % (
+    # operator.operator_name, operator.id, host, url_for('operator_blueprint.get_operator', id=operator.id))
+    # # mail.send(msg)
+    # try:
+    #     mail.send(msg)
+    # except:
+    #     return jsonify({
+    #         'status': 'fail',
+    #         'reason': 'the mail has been posted failed',
+    #         'operators': []
+    #     })
     try:
         db.session.add(operator)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':operator.to_json()
-        })
-    req = requests.session()
-    try:
-        res = req.get('http://www.baidu.com')
-        if res.status_code != 200:
-            return jsonify({
-                'status': 'fail',
-                'reason': 'the web does not connect to the outer net',
-                'operators': []
-            })
-    except:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'the web does not connect to the outer net',
-            'operators': []
-        })
-    msg = Message('Operator active', sender='1468767640@qq.com', recipients=['1468767640@qq.com'])
-    host = 'http://101.200.52.233:8080'
-    msg.body = 'the operator name is %s, the operator id is%id, the operator url is %s%s' % (
-    operator.operator_name, operator.id, host, url_for('operator_blueprint.get_operator', id=operator.id))
-    # mail.send(msg)
-    try:
-        mail.send(msg)
-    except:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'the mail has been posted failed',
-            'operators': []
-        })
-    try:
-        operator.active = True
-        db.session.add(operator)
-        db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'reason': str(e),
-            'data': []
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'operators':[operator.to_json()],
+        'operator':operator.to_json(),
         'status':'success',
         'reason':'the data has been added'
     })
@@ -118,13 +111,15 @@ def new_operator():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        operators:[{
+        "operator":{
             "operator_id":"医生id",
+            "mail":"医生邮箱",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
-            "operator_name":"医生姓名"
-        }],
+            "operator_name":"医生姓名".
+            "tel":"医生电话"
+        },
         "status":"success",
         "reason":"the data has been added"
     }
@@ -159,7 +154,6 @@ def get_operators():
         'hospital': request.args.get('hospital', None),
         'lesion': request.args.get('lesion', None),
         'email': request.args.get('email', None),
-        'active': request.args.get('active', None, type=bool),
         'office': request.args.get('office', None),
         'limit': request.args.get('limit', None, type= int),
         'per_page': request.args.get('per_page', None, type=int)
@@ -193,7 +187,7 @@ def get_operators():
     if pagination.has_next:
         next = url_for('operator.get_operators', page=page + 1)
     return jsonify({
-        'operators': [operator.to_json() for operator in operators],
+        'operator': [operator.to_json() for operator in operators],
         'prev': prev,
         'next': next,
         'has_prev':pagination.has_prev,
@@ -227,11 +221,12 @@ def get_operators():
     {
         "operators":[{
             "operator_id":"医生id",
+            "mail":"医生邮箱",
             "hospital":"医生医院名称",
             "office":"医生科室",
-            "active":"是否被激活",
             "lesion":"医生分区",
-            "operator_name":"医生姓名"
+            "operator_name":"医生姓名".
+            "tel":"医生电话"
         }],
         "prev":"上一页地址",
         "next":"下一页地址",
@@ -252,7 +247,7 @@ def get_operators():
 def get_operator(id):
     operator = Operator.query.get_or_404(id)
     return jsonify({
-        'operators': [operator.to_json()],
+        'operators': operator.to_json(),
         'status': 'success',
         'reason': 'there is the data'
     })
@@ -269,13 +264,15 @@ def get_operator(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        operators:[{
+        "operator":{
             "operator_id":"医生id",
+            "mail":"医生邮箱",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
-            "operator_name":"医生姓名"
-        }],
+            "operator_name":"医生姓名".
+            "tel":"医生电话"
+        },
         "status":"success",
         "reason":"there is the data"
     }
@@ -297,14 +294,9 @@ def delete_operator(id):
     try:
         db.session.delete(operator)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e,
-            'data':operator.to_json()
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'operators': [operator.to_json()],
         'status': 'success',
         'reason': 'the data has been deleted'
     }), 200
@@ -321,13 +313,6 @@ def delete_operator(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        operators:[{
-            "operator_id":"医生id",
-            "hospital":"医生医院名称",
-            "office":"医生科室",
-            "lesion":"医生分区",
-            "operator_name":"医生姓名"
-        }],
         "status":"success",
         "reason":"the data has been deleted"
     }
@@ -354,7 +339,6 @@ def change_operator(id):
         'hospital': request.json.get('hospital', None),
         'lesion': request.json.get('lesion', None),
         'email': request.json.get('email', None),
-        'active': request.json.get('active', None),
         'office': request.json.get('office', None)
     }
     try:
@@ -375,13 +359,10 @@ def change_operator(id):
     try:
         db.session.add(operator)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status':'fail',
-            'reason':e
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
-        'operators': [operator.to_json()],
+        'operator': operator.to_json(),
         'status': 'success',
         'reason': 'the data has been changed'
     }), 200
@@ -403,13 +384,15 @@ def change_operator(id):
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        operators:[{
+        "operator":{
             "operator_id":"医生id",
+            "mail":"医生邮箱",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
-            "operator_name":"医生姓名"
-        }],
+            "operator_name":"医生姓名".
+            "tel":"医生电话"
+        },
         "status":"success",
         "reason":"the data has been changed"
     }
@@ -430,7 +413,7 @@ def change_operator(id):
 def get_operator_now():
     operator = current_user
     return jsonify({
-        'operators': [operator.to_json()],
+        'operator': operator.to_json(),
         'status': 'success',
         'reason': 'there is the data'
     })
@@ -446,13 +429,15 @@ def get_operator_now():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        operators:[{
+        "operator":{
             "operator_id":"医生id",
+            "mail":"医生邮箱",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
-            "operator_name":"医生姓名"
-        }],
+            "operator_name":"医生姓名".
+            "tel":"医生电话"
+        },
         "status":"success",
         "reason":"there is the data"
     } 
@@ -483,7 +468,7 @@ def operator_password():
     operator = current_user if operator_name is None else Operator.query.filter(Operator.operator_name == operator_name).first()
     if operator.verify_password(password):
         json = {
-            'operators': [operator.to_json()],
+            'operator': operator.to_json(),
             'status': 'success',
             'reason': 'the password is right'
         }
@@ -507,13 +492,15 @@ def operator_password():
 @apiSuccessExample Success-Response:
     HTTP/1.1 200 OK
     {
-        operators:[{
+        "operator":{
             "operator_id":"医生id",
+            "mail":"医生邮箱",
             "hospital":"医生医院名称",
             "office":"医生科室",
             "lesion":"医生分区",
-            "operator_name":"医生姓名"
-        }],
+            "operator_name":"医生姓名".
+            "tel":"医生电话"
+        },
         "status":"success",
         "reason":"the password is right"
     }   

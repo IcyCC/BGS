@@ -87,6 +87,7 @@ def datas(count=1000):
             time = fake.time(),
             date = fake.date(),
             id_number=p.id_number,
+            patient_id = p.patient_id,
             glucose=randint(10, 20)
         )
         db.session.add(d)

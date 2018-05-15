@@ -1,10 +1,10 @@
-from flask import g, jsonify, request, url_for
+from flask import g, jsonify, request, url_for, abort
 from flask_httpauth import HTTPBasicAuth
 from flask_login import login_user
-from app.models import Operator
+from app.models import Operator, InvalidUsage
 
 from app.operator import operator_blueprint
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError
 from flask_login import current_user, login_required, logout_user
 
 from app import mail, db
@@ -27,10 +27,9 @@ def jwtDecoding(token, aud='webkit'):
 
 @operator_blueprint.route('/login', methods=['POST'])
 def login():
-    username = request.json.get("username", None)
+    operator_name = request.json.get("operator_name", None)
     password = request.json.get("password", None)
-    hospital = request.json.get("hospital", None)
-    operator = Operator.query.filter(Operator.operator_name==username).first()
+    operator = Operator.query.filter(Operator.operator_name==operator_name).first()
 
     if operator is None or not operator.verify_password(password=password):
         return jsonify(status="fail", reason="no this user or password error", data=[])
@@ -42,13 +41,13 @@ def login():
     token = jwtEncoding(userInfo)
     login_user(operator, remember=True)
 
-    return jsonify(status="success", reason="", operators=[operator.to_json()], token = token.decode())
+    return jsonify(status="success", reason="", operator=operator.to_json(), token = token.decode())
 
 """
 @api {POST} /login 登录账号(json数据)
 @apiGroup operator
 
-@apiParam (json) {String} username 登录账号
+@apiParam (json) {String} operator_name 登录账号
 @apiParam (json) {String} password 新的密码
 
 @apiSuccess {Array} status 登陆情况
@@ -81,9 +80,11 @@ def login():
 @login_required
 def logout():
     if request.method == "GET":
-        logout_user()
-        return jsonify(status="success", reason="", operators=[])
-
+        try:
+            logout_user()
+            return jsonify(status="success", reason="")
+        except:
+            abort(500)
 """
 @api {GET} /logout 登出账号(json数据)
 @apiGroup operator
@@ -96,8 +97,7 @@ def logout():
     登出成功
     {
         "status":"success",
-        "reason":'',
-        "operators":[]
+        "reason":''
     }
 """
 
@@ -121,16 +121,12 @@ def change_password():
     try:
         db.session.add(operator)
         db.session.commit()
-    except OperationalError as e:
-        return jsonify({
-            'status': 'fail',
-            'season': e,
-            'operators': []
-        })
+    except IntegrityError as e:
+        raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status':'success',
         'reason':'',
-        'operators':[operator.to_json()]
+        'operator':operator.to_json()
     })
 
 """

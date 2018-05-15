@@ -31,6 +31,7 @@ def get_histories():
         'bed_id': request.args.get('bed_id', None, type=int),
         'limit': request.args.get('limit', None, type=int),
         'page': request.args.get('page', None, type=int),
+        'patient_id': request.args.get('patient_id', None, type=int),
         'per_page': request.args.get('per_page', None, type=int)
     }
     try:
@@ -80,6 +81,7 @@ def get_histories():
 @apiGroup bed_historys
 
 @apiParam (params) {Int} bed_id 床位id
+@apiParam (params) {Int} patient_id 患者id
 @apiParam (params) {String} date 床位历史日期_日期格式(0000-00-00)
 @apiParam (params) {String} time 床位历史时间_时间模式(00:00:00)
 @apiParam (params) {String} id_number 医疗卡号
@@ -100,7 +102,8 @@ def get_histories():
             "time":"历史信息时间",
             "date":"历史信息日期",
             "sn":"血糖仪sn码",
-            "id_number":"医疗卡号"
+            "id_number":"医疗卡号",
+            "patient_id":"患者id"
         }],
         "prev":"上一页地址",
         "next":"下一页地址",
@@ -124,7 +127,8 @@ def new_history():
         'id_number': request.json.get('id_number', None),
         'time': request.json.get('time', None),
         'date': request.json.get('date', None),
-        'bed_id': request.json.get('bed_id', None)
+        'bed_id': request.json.get('bed_id', None),
+        'patient_id': request.json.get('patient_id', None)
     }
     try:
         BedHistoryValidation().load(params_dict)
@@ -231,7 +235,8 @@ def change_history(id):
         'id_number': request.json.get('id_number', None),
         'time': request.json.get('time', None),
         'date': request.json.get('date', None),
-        'bed_id': request.json.get('bed_id', None)
+        'bed_id': request.json.get('bed_id', None),
+        'patient_id': request.json.get('patient_id',None)
     }
     try:
         ChangeBedHistoryValidation().load(params_dict)
@@ -261,6 +266,7 @@ def change_history(id):
 @apiGroup bed_historys
 
 @apiParam (json) {Int} bed_id 床位id
+@apiParam (json) {Int} patient_id 患者id
 @apiParam (json) {Date} date 床位历史日期_日期格式(0000-00-00)
 @apiParam (json) {Time} time 床位历史时间_时间模式(00:00:00)
 @apiParam (json) {String} id_number 医疗卡号

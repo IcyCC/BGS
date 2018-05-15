@@ -25,6 +25,7 @@ def new_data_auto():
     params_dict = {
         'data_id': request.json.get('data_id', None),
         'sn': request.json.get('sn', None),
+        'patient_id': request.json.get('patient_id',None),
         'glucose': request.json.get('glucose', None),
         'id_number': request.json.get('id_number', None),
         'time': request.json.get('time', None),
@@ -56,7 +57,9 @@ def new_data_auto():
         bed = accuchek.bed if accuchek is not None else None
         patient = bed.patient if bed is not None else None
         id_number = patient.id_number if patient is not None else None
+        patient_id = patient.patient_id if patient is not None else None
         data.id_number = id_number
+        data.patient_id = patient_id
         try:
             db.session.add(data)
             db.session.commit()
@@ -96,6 +99,7 @@ def new_data_auto():
 @apiGroup datas
 
 @apiParam (params) {String} sn 血糖仪sn码 
+@apiParam (params) {Int} patient_id 患者id
 @apiParam (params) {String} id_number 患者医疗卡号
 @apiParam (params) {Date} date 数据日期_日期格式(0000-00-00)
 @apiParam (params) {Time} time 数据时间_时间格式(00:00:00)
@@ -115,7 +119,7 @@ def new_data_auto():
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
-            "patient":"病人地址",
+            "doctor_name":"医生姓名",
             "sn":"血糖仪sn码",
             "data_id":"数据id",
             "glucose":"血糖值"
@@ -130,6 +134,7 @@ def new_data_auto():
             'sn':"血糖仪sn码",
             'id_number':"患者医疗卡号",
             'time':"数据时间",
+            'patient_id':"患者id",
             'date':"数据日期",
             'glucose':"血糖值"
         },
@@ -139,7 +144,7 @@ def new_data_auto():
             'sex':"病人性别",
             'tel':"病人电话",
             'age':"病人年龄",
-            'doctor':"医生姓名",
+            'doctor_name':"医生姓名",
             'id_number':"病人医疗卡号"
         },
         "status":"success",
@@ -188,8 +193,8 @@ def new_data_artificial():
         data.date = datetime.utcnow().date()
     if 'time' not in request.json:
         data.time = datetime.utcnow().time()
-    id_number = request.json['id_number']
-    patient = Patient.query.filter(Patient.id_number == id_number).first()
+    patient_id = request.json['patient_id']
+    patient = Patient.query.filter(Patient.patient_id == patient_id).first()
     if patient is None:
         patient = Patient()
     for k in request.json:
@@ -218,7 +223,9 @@ def new_data_artificial():
 
 @apiParam (json) {String} id_number 医疗卡号
 @apiParam (json) {String} patient_name 病人姓名
+@apiParam (json) {Int} patient_id 患者id
 @apiParam (json) {String} sex 病人性别
+@apiParam (json) {Int} patient_id 患者id
 @apiParam (json) {String} tel 病人电话
 @apiParam (json) {Int} age 病人年龄
 @apiParam (json) {String} doctor_name 医生姓名
@@ -241,7 +248,7 @@ def new_data_artificial():
                 'sex':"病人性别",
                 'tel':"病人电话",
                 'age':"病人年龄",
-                'doctor':"医生姓名",
+                'doctor_name':"医生姓名",
                 'id_number':"病人医疗卡号",
                 'datas':"病人数据地址"
             },
@@ -262,6 +269,7 @@ def new_data_artificial():
 def get_datas():
     params_dict = {
         'data_id': request.args.get('data_id', None, type=int),
+        'patient_id': request.args.get('patient_id', None, type=int),
         'sn': request.args.get('sn', None, type=str),
         'glucose': request.args.get('glucose', None, type=float),
         'id_number': request.args.get('id_number', None, type=str),
@@ -319,6 +327,7 @@ def get_datas():
 
 @apiParam (params) {String} sn 血糖仪sn码 
 @apiParam (params) {Int} limit 查询总数量
+@apiParam (params) {Int} patient_id 患者id
 @apiParam (params) {Int} per_page 每一页的数量
 @apiParam (params) {Date} date 数据日期_日期格式(0000-00-00)
 @apiParam (params) {Time} time 数据时间_时间格式(00:00:00)
@@ -344,7 +353,7 @@ def get_datas():
                 'sex':"病人性别",
                 'tel':"病人电话",
                 'age':"病人年龄",
-                'doctor':"医生姓名",
+                'doctor_name':"医生姓名",
                 'id_number':"病人医疗卡号",
                 'datas':"病人数据地址"
             },
@@ -377,7 +386,7 @@ def get_datas_sparedata():
         'sex': request.args.get('sex', None, type=str),
         'tel': request.args.get('tel', None, type=str),
         'age': request.args.get('age', None, type=int),
-        'doctor': request.args.get('doctor', None, type=str),
+        'doctor_name': request.args.get('doctor_name', None, type=str),
         'time': request.args.get('time', None, type=str),
         'date': request.args.get('date', None, type=str),
         'hidden': request.args.get('hidden', None, type=bool),
@@ -438,7 +447,7 @@ def get_datas_sparedata():
 @apiParam (params) {String} patient_name 患者姓名
 @apiParam (params) {String} sex 患者性别
 @apiParam (params) {String} tel 患者电话
-@apiParam (params) {String} doctor 医生姓名
+@apiParam (params) {String} doctor_name 医生姓名
 @apiParam (params) {Int} age 患者年龄
 @apiParam (params) {String} id_number 医疗卡号 
 @apiParam (params) {Bool} hidden 是否隐藏 
@@ -514,7 +523,7 @@ def get_data(id):
                 'sex':"病人性别",
                 'tel':"病人电话",
                 'age':"病人年龄",
-                'doctor':"医生姓名",
+                'doctor_name':"医生姓名",
                 'id_number':"病人医疗卡号",
                 'datas':"病人数据地址"
             },
@@ -538,7 +547,7 @@ def change_sparedata_data(id):
         'time': request.json.get('time', None),
         'date': request.json.get('date', None),
         'hidden': request.json.get('hidden', None),
-        'doctor': request.json.get('doctor', None),
+        'doctor_name': request.json.get('doctor_name', None),
         'sex': request.json.get('sex', None),
         'patient_name': request.json.get('patient_name', None),
         'age': request.json.get('age', None),
@@ -576,7 +585,7 @@ def change_sparedata_data(id):
 @apiParam (json) {String} id_number 患者医疗卡号
 @apiParam (json) {Time} time 数据时间
 @apiParam (json) {Date} date 数据日期
-@apiParam (json) {String} doctor 医生姓名
+@apiParam (json) {String} doctor_name 医生姓名
 @apiParam (json) {Float} glucose 血糖值
 @apiParam (json) {String} sex 患者性别
 @apiParam (json) {String} patient_name 患者姓名
@@ -675,7 +684,7 @@ def get_sparedata_data(id):
             "date":"数据添加日期",
             "time":"数据添加时间",
             "id_number":"医疗卡号",
-            "patient":"病人地址",
+            "doctor_name":"医生姓名",
             "sn":"血糖仪sn码",
             "data_id":"数据id",
             "glucose":"血糖值"
@@ -696,6 +705,7 @@ def change_data(id):
         'id_number': request.json.get('id_number', None),
         'time': request.json.get('time', None),
         'date': request.json.get('date', None),
+        'patient_id': request.json.get('patient_id', None),
         'hidden': request.json.get('hidden', None)
     }
     try:
@@ -730,6 +740,7 @@ def change_data(id):
 @apiGroup datas
 
 @apiParam (params) {Int} id 数据id
+@apiParam (json) {Int} patient_id 患者id
 @apiParam (json) {String} id_number 医疗卡号
 @apiParam (json) {String} sn 血糖仪sn码 
 @apiParam (json) {Date} date 数据日期_日期格式(0000-00-00)
@@ -756,7 +767,7 @@ def change_data(id):
             "data_id":"数据id",
             "glucose":"血糖值",
             "sex":"患者性别",
-            "doctor":"医生姓名"
+            "doctor_name":"医生姓名"
         },
         "status":"success",
         "reason":"the data has been changed"

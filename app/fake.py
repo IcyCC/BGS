@@ -65,7 +65,7 @@ def accucheks(count=112):
             db.session.rollback()
 
         b = Bed(
-            id_number = p.id_number,
+            patient_id = p.patient_id,
             sn = a.sn
         )
         db.session.add(b)

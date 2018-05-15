@@ -135,11 +135,11 @@ class ChangeAccuchekValidation(Schema):
 
 class GetBedValidation(Schema):
     bed_id = fields.Integer(allow_none=True)
-    id_number = fields.String(allow_none=True)
     sn = fields.String(allow_none=True)
     limit = fields.Integer(allow_none=True)
     per_page = fields.Integer(allow_none=True)
     page = fields.Integer(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
@@ -148,8 +148,8 @@ class GetBedValidation(Schema):
 
 class BedValidation(Schema):
     bed_id = fields.Integer(allow_none=True)
-    id_number = fields.String(allow_none=True)
     sn = fields.String(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
@@ -163,7 +163,7 @@ class BedValidation(Schema):
 
 class ChangeBedValidation(Schema):
     bed_id = fields.Integer(allow_none=True)
-    id_number = fields.String(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
 
 
@@ -179,6 +179,7 @@ class ChangeBedValidation(Schema):
 
         
 class BedMoreDataValidation(Schema):
+    patient_id = fields.Integer(allow_none=True)
     data_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
@@ -338,6 +339,7 @@ class BedHistoryValidation(Schema):
     history_id = fields.Integer(allow_none=True)
     time = fields.Time(allow_none=True)
     date = fields.Date(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
     bed_id = fields.Integer(required=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
@@ -356,6 +358,7 @@ class GetBedHistoryValidation(Schema):
     history_id = fields.Integer(allow_none=True)
     time = fields.Time(allow_none=True)
     date = fields.Date(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
     bed_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     id_number = fields.String(allow_none=True)
@@ -376,6 +379,7 @@ class GetBedHistoryValidation(Schema):
 class ChangeBedHistoryValidation(Schema):
     history_id = fields.Integer(allow_none=True)
     time = fields.Time(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
     date = fields.Date(allow_none=True)
     bed_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
@@ -400,6 +404,7 @@ class DataValidation(Schema):
     time = fields.Time(allow_none=True)
     date = fields.Date(allow_none=True)
     hidden = fields.Boolean(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
 
     @validates('sn')
     def validate_sn(self, value):
@@ -542,6 +547,7 @@ class ChangeDataValidation(Schema):
     data_id = fields.Integer(allow_none=True)
     sn = fields.String(allow_none=True)
     glucose = fields.Float(allow_none=True)
+    patient_id = fields.Integer(allow_none=True)
     id_number = fields.String(allow_none=True)
     time = fields.Time(allow_none=True)
     date = fields.Date(allow_none=True)

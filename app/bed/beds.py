@@ -23,12 +23,12 @@ def std_json(d):
 @login_required
 def get_beds():
     params_dict = {
-        'id_number': request.args.get('id_number', None, type=str),
         'sn': request.args.get('sn', None, type=str),
         'per_page': request.args.get('per_page', None, type=int),
         'limit': request.args.get('limit', None, type=int),
         'bed_id': request.args.get('bed_id', None, type=int),
-        'page': request.args.get('page', None, type=int)
+        'page': request.args.get('page', None, type=int),
+        'patient_id': request.args.get('patient_id',None, type=int)
     }
     try:
         GetBedValidation().load(params_dict)
@@ -78,9 +78,9 @@ def get_beds():
 @apiGroup beds
 
 @apiParam (params) {Int} bed_id 病床号码
+@apiParam (params) {Int} patient_id 病人id
 @apiParam (params) {Int} limit 查询总数量
 @apiParam (params) {Int} per_page 每页数量
-@apiParam (params) {String} id_number 医疗卡号
 @apiParam (params) {String} sn 血糖仪sn码  
 @apiParam (params) {Int} page 当前页数
 @apiParam (Login) {String} login 登录才可以访问
@@ -92,10 +92,10 @@ def get_beds():
     {
         "beds":[{
                 "bed_id": "床位id",
-                "id_number": "病人医疗卡号",
+                "patient_id": "病人id",
                 "sn": "血糖仪sn码",
                 "patient":{
-                    "doctor": "医生姓名",
+                    "doctor_name": "医生姓名",
                     "id_number": "患者医疗卡号",
                     "patient_id": "患者id",
                     "patient_name": "患者姓名",
@@ -107,6 +107,7 @@ def get_beds():
                     "data_id": "数据id",
                     "date": "数据日期",
                     "glucose": "血糖值",
+                    "patient_id":"患者id",
                     "id_number": "患者医疗卡号",
                     "sn": "血糖仪sn码",
                     "time": "数据时间"
@@ -133,9 +134,9 @@ def get_beds():
 @login_required
 def new_bed():
     params_dict = {
-        'id_number': request.json.get('id_number', None),
         'sn': request.json.get('sn', None),
-        'bed_id': request.json.get('bed_id', None)
+        'bed_id': request.json.get('bed_id', None),
+        'patient_id': request.json.get('patient_id', None)
     }
     try:
         BedValidation().load(params_dict)
@@ -154,16 +155,16 @@ def new_bed():
                 'status': 'fail',
                 'reason': 'the accu_chek has been used on the other bed'
             })
-    if 'id_number' in request.json:
-        id_number = request.json['id_number']
-        mayed_id = bed.query.filter(Bed.id_number == id_number).first()
+    if 'patient_id' in request.json:
+        patient_id = request.json['patient_id']
+        mayed_id = bed.query.filter(Bed.patient_id == patient_id).first()
         if mayed_id:
             return jsonify({
                 'status': 'fail',
                 'reason': 'the patient has been placed on the other bed'
             })
         else:
-            bedhistory.id_number = id_number
+            bedhistory.patient_id = patient_id
             for k in request.json:
                 if hasattr(bedhistory, k):
                     setattr(bedhistory, k, request.json[k])
@@ -195,7 +196,7 @@ def new_bed():
 @api {POST} /beds 添加新的床位信息(json数据)
 @apiGroup beds
 
-@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {Int} patient_id 病人id
 @apiParam (json) {String} sn 血糖仪sn码  
 @apiParam (Login) {String} login 登录才可以访问
 
@@ -205,7 +206,7 @@ def new_bed():
     HTTP/1.1 200 OK
     {
         "bed":{
-            "id_number":"患者医疗卡号",
+            "patient_id":"患者id",
             "sn":"血糖仪sn码",
             "bed_id":"床位数据地址"  
         },
@@ -252,7 +253,7 @@ def get_bed(id):
     {
         "bed":{
             'bed_id':'床位id',
-            'id_number':'病人医疗卡号',
+            'patient_id':'患者id',
             'sn':'血糖仪sn码'
         },
         "status":"success",
@@ -312,7 +313,7 @@ def delete_bed(id):
 @login_required
 def change_bed(id):
     params_dict = {
-        'id_number': request.json.get('id_number', None),
+        'patient_id': request.json.get('patient_id', None),
         'sn': request.json.get('sn', None),
         'bed_id': request.json.get('bed_id', None)
     }
@@ -333,9 +334,9 @@ def change_bed(id):
                     'status': 'fail',
                     'reason': 'the accu_chek has been used on the other bed'
                 })
-    if 'id_number' in request.json and request.json['id_number']:
-        id_number = request.json['id_number']
-        may_bed = bed.query.filter(bed.id_number == id_number).first()
+    if 'patient_id' in request.json and request.json['patient_id']:
+        patient_id = request.json['patient_id']
+        may_bed = bed.query.filter(Bed.patient_id == patient_id).first()
         if may_bed and may_bed.bed_id != bed.bed_id:
             return jsonify({
                 'status': 'fail',
@@ -378,7 +379,7 @@ def change_bed(id):
 
 @apiParam (params) {Int} id 床位号
 @apiParam (json) {String} sn 血糖仪sn码
-@apiParam (json) {String} id_number 医疗卡号
+@apiParam (json) {Int} patient_id 病人id
 @apiParam (Login) {String} login 登录才可以访问
 
 @apisuccess {Array} beds 返回更改后的beds信息
@@ -387,7 +388,7 @@ def change_bed(id):
     HTTP/1.1 200 OK
     {
         "bed":{
-            "id_number":"患者医疗卡号",
+            "patient_id":"患者id",
             "sn":"血糖仪sn码",
             "bed_id":"床位数据地址"  
         },
@@ -455,7 +456,7 @@ def get_bed_more(id):
 @login_required
 def get_bed_moredatas(id):
     params_dict = {
-        'id_number': request.args.get('id_number', None, type=str),
+        'patient_id': request.args.get('patient_id', None, type=int),
         'data_id': request.args.get('data_id', None, type=int),
         'glucose': request.args.get('glucose', None, type=float),
         'hidden': request.args.get('hidden', None, type=bool),
@@ -521,6 +522,7 @@ def get_bed_moredatas(id):
 @apiParam (params) {Int} per_page 每一页的数量
 @apiParam (params) {Bool} hidden 数据是否隐藏(0:未隐藏, 1:隐藏)
 @apiParam (params) {Int} page 当前页数
+@apiParam (params) {Int} patient_id 患者id
 @apiParam (params) {String} id_number 患者医疗卡号 
 @apiParam (params) {Int} data_id 数据id 
 @apiParam (params) {Float} glucose 血糖值
@@ -544,7 +546,7 @@ def get_bed_moredatas(id):
             "time": "血糖仪日期"
         }],
         "patient":{
-            "doctor": "医生姓名",
+            "doctor_name": "医生姓名",
             "id_number": "患者医疗卡号",
             "patient_id": "患者id",
             "patient_name": "患者姓名",

@@ -72,7 +72,7 @@ def get_histories():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是所有的数据'
     })
 
 """
@@ -153,7 +153,7 @@ def new_history():
     return jsonify({
         "bed_history":bed_history.to_json(),
         "status":"success",
-        "reason":"the data has been added"
+        "reason":"数据已经被添加"
     })
 
 """
@@ -195,7 +195,7 @@ def get_history(id):
     return jsonify({
         "bed_history": bed_history.to_json(),
         "status": "success",
-        "reason": "there is the data"
+        "reason": "这是查询到的数据"
     })
 
 """
@@ -257,7 +257,7 @@ def change_history(id):
     return jsonify({
         "bed_history": bed_history.to_json(),
         "status": "success",
-        "reason": "the data has been changed"
+        "reason": "数据已经被更改了"
     })
 
 """
@@ -310,7 +310,7 @@ def delete_history(id):
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         "status": "success",
-        "reason": "the data has been deleted"
+        "reason": "数据已经被删除了"
     })
 
 

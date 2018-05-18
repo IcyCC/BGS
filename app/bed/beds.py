@@ -68,7 +68,7 @@ def get_beds():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 
@@ -153,7 +153,7 @@ def new_bed():
         if maybed_sn:
             return jsonify({
                 'status': 'fail',
-                'reason': 'the accu_chek has been used on the other bed'
+                'reason': '血糖仪已经被使用在了其他床位'
             })
     if 'patient_id' in request.json:
         patient_id = request.json['patient_id']
@@ -161,7 +161,7 @@ def new_bed():
         if mayed_id:
             return jsonify({
                 'status': 'fail',
-                'reason': 'the patient has been placed on the other bed'
+                'reason': '病人已经被安置在其他床位'
             })
         else:
             bedhistory.patient_id = patient_id
@@ -187,7 +187,7 @@ def new_bed():
     return jsonify({
         'bed': bed.to_json(),
         'status': 'success',
-        'reason': 'the data has been added'
+        'reason': '数据已经被添加'
     })
 
 
@@ -234,7 +234,7 @@ def get_bed(id):
     return jsonify({
         'bed': bed.to_json(),
         'status': 'success',
-        'reason': 'there is the data'
+        'reason': '这是查询到的数据'
     })
 
 
@@ -282,7 +282,7 @@ def delete_bed(id):
             raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status': 'success',
-        'reason': 'the data has been deleted'
+        'reason': '数据已经被删除了'
     }), 200
 
 
@@ -332,7 +332,7 @@ def change_bed(id):
             if may_bed.bed_id != bed.bed_id:
                 return jsonify({
                     'status': 'fail',
-                    'reason': 'the accu_chek has been used on the other bed'
+                    'reason': '血糖仪已经被用在其他床位上了'
                 })
     if 'patient_id' in request.json and request.json['patient_id']:
         patient_id = request.json['patient_id']
@@ -340,10 +340,10 @@ def change_bed(id):
         if may_bed and may_bed.bed_id != bed.bed_id:
             return jsonify({
                 'status': 'fail',
-                'reason': 'the patient has been placed on the other bed'
+                'reason': '病人已经被安置在了其他床位上'
             })
     bed_history = BedHistory()
-    for k in request.json:
+    for k in    request.json:
         if hasattr(bed_history, k):
             setattr(bed_history, k, request.json[k])
     date = datetime.datetime.now().date()
@@ -368,7 +368,7 @@ def change_bed(id):
     return jsonify({
         'bed': bed.to_json(),
         'status': 'success',
-        'reason': 'the data has been changed'
+        'reason': '数据已经被更改了'
     })
 
 
@@ -417,7 +417,7 @@ def get_bed_more(id):
     return jsonify({
         'patient': patient.to_json() if patient is not None else [],
         'status': 'success',
-        'reason': 'there is the data'
+        'reason': '这里是查询到的数据'
     })
 
 
@@ -508,7 +508,7 @@ def get_bed_moredatas(id):
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 

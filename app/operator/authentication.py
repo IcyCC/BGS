@@ -32,7 +32,7 @@ def login():
     operator = Operator.query.filter(Operator.operator_name==operator_name).first()
 
     if operator is None or not operator.verify_password(password=password):
-        return jsonify(status="fail", reason="no this user or password error", data=[])
+        return jsonify(status="fail", reason="用户名或密码错误", data=[])
 
     userInfo = {
         "id": operator.id,
@@ -41,7 +41,7 @@ def login():
     token = jwtEncoding(userInfo)
     login_user(operator, remember=True)
 
-    return jsonify(status="success", reason="", operator=operator.to_json(), token = token.decode())
+    return jsonify(status="success", reason="登陆成功", operator=operator.to_json(), token = token.decode())
 
 """
 @api {POST} /login 登录账号(json数据)
@@ -82,7 +82,7 @@ def logout():
     if request.method == "GET":
         try:
             logout_user()
-            return jsonify(status="success", reason="")
+            return jsonify(status="success", reason="登出成功")
         except:
             abort(500)
 """
@@ -109,7 +109,7 @@ def change_password():
     if operator is None:
         return jsonify({
             'status':'fail',
-            'reason':'the user does not exist'
+            'reason':'用户不存在'
         })
     operator.password = password
     try:
@@ -119,7 +119,7 @@ def change_password():
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status':'success',
-        'reason':'',
+        'reason':'密码更改成功',
         'new_password':password,
         'operator':operator.to_json()
     })

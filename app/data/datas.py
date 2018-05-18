@@ -52,7 +52,7 @@ def new_data_auto():
         if accuchek is None:
             return jsonify({
                 'status':'fail',
-                'reason':'the accuchek does not exist'
+                'reason':'血糖仪不存在'
             })
         bed = accuchek.bed if accuchek is not None else None
         patient = bed.patient if bed is not None else None
@@ -69,7 +69,7 @@ def new_data_auto():
             'patient':data.patient.to_json_patient(),
             'data': data.to_json_without_patient(),
             'status': 'success',
-            'reason': 'the data has been added'
+            'reason': '数据已经被添加了'
         })
     else:
         data = SpareData()
@@ -89,7 +89,7 @@ def new_data_auto():
         return jsonify({
             'data': data.to_full_json(),
             'status': 'success',
-            'reason': 'the data has been added'
+            'reason': '数据已经被添加了'
         })
 
 
@@ -182,7 +182,7 @@ def new_data_artificial():
     if accuchek is None:
         return jsonify({
             'status': 'fail',
-            'reason': 'the accuchek does not exist'
+            'reason': '血糖仪不存在'
         })
     data = Data()
     for k in request.json:
@@ -213,7 +213,7 @@ def new_data_artificial():
     return jsonify({
         'data': data.to_json_without_patient(),
         'status': 'success',
-        'reason': 'the data has been added'
+        'reason': '数据已经被添加了'
     })
 
 
@@ -318,7 +318,7 @@ def get_datas():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -403,7 +403,7 @@ def get_datas_sparedata():
     if 'sn' not in request.args:
         return jsonify({
             'status':'fail',
-            'reason':'no sn in request'
+            'reason':'请求中没有血糖仪sn码'
         })
     fields = [i for i in SpareData.__table__.c._data]
     per_page = current_app.config['PATIENTS_PRE_PAGE']
@@ -436,7 +436,7 @@ def get_datas_sparedata():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的备用机数据'
     })
 """
 @api {GET} /sparedatas 获取备用机数据
@@ -497,7 +497,7 @@ def get_data(id):
     return jsonify({
         'data': data.to_json(),
         'status': 'success',
-        'reason': 'the data has been added'
+        'reason': '这里是查询到的数据'
     })
 
 
@@ -573,7 +573,7 @@ def change_sparedata_data(id):
     return jsonify({
         'sparedata':data.to_full_json(),
         'status':'success',
-        'reason':''
+        'reason':'备用机数据已经被修改了'
     })
 
 """
@@ -633,7 +633,7 @@ def delete_sparedata_data(id):
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status':'success',
-        'reason':''
+        'reason':'备用机数据已经被删除了'
     })
 
 """
@@ -660,7 +660,7 @@ def get_sparedata_data(id):
     data = SpareData.query.filter(SpareData.data_id == id).first()
     return jsonify({
         'status':'success',
-        'reason':'',
+        'reason':'这里是被查询的备用机数据',
         'sparedata': data.to_full_json()
     })
 
@@ -731,7 +731,7 @@ def change_data(id):
     return jsonify({
         'data': data.to_full_json(),
         'status': 'success',
-        'reason': 'the data has been changed'
+        'reason': '数据已经被修改'
     }), 200
 
 
@@ -791,7 +791,7 @@ def delete_data(id):
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status': 'success',
-        'reason': 'the data has been deleted'
+        'reason': '数据已经被删除'
     }), 200
 
 

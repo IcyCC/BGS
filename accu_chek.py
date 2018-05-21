@@ -3,7 +3,9 @@ from flask import Flask, render_template
 from flask_script import Manager, Shell
 from app import create_app, db
 from app.models import Operator
+from config import get_netcard
 import os
+import psutil
 from flask_migrate import Migrate, upgrade, MigrateCommand
 import pymysql
 
@@ -18,6 +20,10 @@ migrate = Migrate(app, db)
 
 with open('./config.json', 'r') as f:
     app.custom_net_setting = json.loads(f.read())["net"]
+    try:
+        app.custom_net_setting['host'] = get_netcard()[0][1]
+    except Exception:
+        pass
 
 def create_all():
     db.drop_all()

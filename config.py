@@ -1,7 +1,20 @@
 import os
 import json
+import psutil
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+def get_netcard():
+    """获取网卡名称和ip地址
+
+    """
+    netcard_info = []
+    info = psutil.net_if_addrs()
+    for k, v in info.items():
+        for item in v:
+            if item[0] == 2 and not item[1] == '127.0.0.1':
+                netcard_info.append((k, item[1]))
+    return netcard_info
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')or 'hard to guess string'

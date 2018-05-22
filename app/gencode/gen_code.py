@@ -76,8 +76,9 @@ def gen_code_server():
     img.save(file)
     file.seek(0)
 
-    return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
+    img_base64 = base64.b64encode(bytes(file.read()))
 
+    return jsonify(status='success', img_base64=img_base64)
 """
 @api {GET} /api/v1.0/code/sn 获得设置sn的二维码
 @apiGroup gen_code
@@ -110,4 +111,7 @@ def gen_code_sh():
 
     img.save(file)
     file.seek(0)
-    return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
+    
+    img_base64 = base64.b64encode(bytes(file.read()))
+
+    return jsonify(status='success', img_base64=img_base64)

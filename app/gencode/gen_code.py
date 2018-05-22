@@ -3,6 +3,7 @@ import qrcode
 from io import BytesIO
 from flask import request, jsonify, g, url_for, current_app,send_file
 import time
+import base64
 from ..decorators import allow_cross_domain
 
 """
@@ -14,7 +15,15 @@ from ..decorators import allow_cross_domain
 @apiParam (params) {String} auth_method wifi认证方式 默认WPA2PSK
 @apiParam (params) {String} crypto_method wifi加密方式 默认AES
 
-@apiSuccess {Array} image 设置服务网络的的图片
+@apiSuccess {Array} operators 返回二维码的base64
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+      status:'success',
+      img_base64: '图片的base64'
+         
+    }
 """
 
 @gencode_blueprint.route('/code/route', methods=['GET','POST'])
@@ -44,12 +53,23 @@ def gen_code_route():
     img.save(file)
     file.seek(0)
 
-    return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
+    img_base64 = base64.b64encode(bytes(file.read()))
+
+    return jsonify(status='success', img_base64=img_base64)
 
 """
 @api {GET} /code/server 获得设置端口和host的二维码
 @apiGroup gen_code
 @apiName 设置服务器
+@apiSuccess {Array} operators 返回二维码的base64
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+      status:'success',
+      img_base64: '图片的base64'
+         
+    }
 """
 
 @gencode_blueprint.route('/code/server', methods=['GET'])
@@ -73,13 +93,24 @@ def gen_code_server():
     img.save(file)
     file.seek(0)
 
-    return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
+    img_base64 = base64.b64encode(bytes(file.read()))
 
+    return jsonify(status='success', img_base64=img_base64)
 """
 @api {GET} code/sn 获得设置sn的二维码
 @apiGroup gen_code
 @apiName 设置sn
 @apiParam (params) {String} sn 8位sn码 会自动转换成大写.
+
+@apiSuccess {Array} operators 返回二维码的base64
+
+@apiSuccessExample Success-Response:
+    HTTP/1.1 200 OK
+    {
+      status:'success',
+      img_base64: '图片的base64'
+         
+    }
 """
 @gencode_blueprint.route('/code/sn', methods=['GET'])
 @allow_cross_domain
@@ -107,4 +138,7 @@ def gen_code_sh():
 
     img.save(file)
     file.seek(0)
-    return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
+
+    img_base64 = base64.b64encode(bytes(file.read()))
+
+    return jsonify(status='success', img_base64=img_base64)

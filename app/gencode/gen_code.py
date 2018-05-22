@@ -7,7 +7,7 @@ import base64
 from ..decorators import allow_cross_domain
 
 """
-@api {GET} /api/v1.0/code/route 获得设置wifi网络的二维码
+@api {GET} /code/route 获得设置wifi网络的二维码
 @apiGroup gen_code
 @apiName 设置wifi
 @apiParam (params) {String} ssid wifi名字 
@@ -58,7 +58,7 @@ def gen_code_route():
     return jsonify(status='success', img_base64=img_base64)
 
 """
-@api {GET} /api/v1.0/code/server 获得设置端口和host的二维码
+@api {GET} /code/server 获得设置端口和host的二维码
 @apiGroup gen_code
 @apiName 设置服务器
 @apiSuccess {Array} operators 返回二维码的base64
@@ -97,7 +97,7 @@ def gen_code_server():
 
     return jsonify(status='success', img_base64=img_base64)
 """
-@api {GET} /api/v1.0/code/sn 获得设置sn的二维码
+@api {GET} code/sn 获得设置sn的二维码
 @apiGroup gen_code
 @apiName 设置sn
 @apiParam (params) {String} sn 8位sn码 会自动转换成大写.

@@ -76,7 +76,7 @@ class Patient(db.Model):
     @property
     def bed(self):
         try:
-            bed = Bed.query.join(Patient, Patient.id_number == Bed.id_number).filter(Patient.patient_id == self.patient_id).first()
+            bed = Bed.query.join(Patient, Patient.patient_id == Bed.patient_id).filter(Patient.patient_id == self.patient_id).first()
             return bed
         except:
             return None
@@ -85,7 +85,7 @@ class Patient(db.Model):
     @property
     def datas(self):
         try:
-            datas = Data.query.join(Patient, Patient.id_number == Data.id_number).filter(Patient.patient_id == self.patient_id).filter(Data.hidden != True).order_by(Data.date.desc(), Data.time.desc())
+            datas = Data.query.join(Patient, Patient.patient_id == Data.patient_id).filter(Patient.patient_id == self.patient_id).filter(Data.hidden != True).order_by(Data.date.desc(), Data.time.desc())
             return datas
         except:
             return Data.query.filter(Data.data_id == -1)
@@ -104,7 +104,7 @@ class Patient(db.Model):
             'sex': self.sex,
             'tel': self.tel,
             'age': self.age,
-            'doctor': self.doctor_name,
+            'doctor_name': self.doctor_name,
             'id_number': self.id_number,
             'datas': [data.to_json_without_patient() for data in self.datas]
         }
@@ -129,7 +129,7 @@ class Patient(db.Model):
             'sex':self.sex,
             'tel':self.tel,
             'age':self.age,
-            'doctor':self.doctor_name,
+            'doctor_name':self.doctor_name,
             'id_number':self.id_number,
             'datas_url': url_for('patient_blueprint.get_patient_datas', id=self.patient_id)
         }
@@ -149,7 +149,7 @@ class Data(db.Model):
     @property
     def patient(self):
         try:
-            patient = Patient.query.join(Data, Data.id_number == Patient.id_number).filter(Data.data_id == self.data_id).first()
+            patient = Patient.query.join(Data, Data.patient_id == Patient.patient_id).filter(Data.data_id == self.data_id).first()
             return patient
         except:
             return None
@@ -179,6 +179,7 @@ class Data(db.Model):
         json_data = {
             'data_id': self.data_id,
             'sn': self.sn,
+            'patient_id':self.patient_id,
             'id_number': self.id_number,
             'time': str(self.time)[0:5],
             'date': str(self.date),
@@ -203,7 +204,7 @@ class Data(db.Model):
             'patient_name': patient.patient_name if patient is not None else None,
             'age': patient.age if patient is not None else None,
             'tel': patient.tel if patient is not None else None,
-            'doctor': patient.doctor_name if patient is not None else None,
+            'doctor_name': patient.doctor_name if patient is not None else None,
             'id_number': self.id_number,
             'date': str(self.date),
             'sn':self.sn,
@@ -248,13 +249,13 @@ class Accuchek(db.Model):
 class Bed(db.Model):
     __tablename__ = 'beds'
     bed_id = db.Column(db.Integer, primary_key=True)
-    id_number = db.Column(db.String(32))
+    patient_id = db.Column(db.Integer)
     sn = db.Column(db.String(24))
 
     @property
     def patient(self):
         try:
-            patient = Patient.query.join(Bed, Bed.id_number == Patient.id_number).filter(Bed.bed_id == self.bed_id).first()
+            patient = Patient.query.filter(Patient.patient_id == self.patient_id).first()
             return patient
         except:
             return Patient.query.filter(Patient.patient_id == -1).first()
@@ -303,8 +304,9 @@ class Bed(db.Model):
             'tel': patient.tel if patient is not None else None,
             'age': patient.age if patient is not None else None,
             'patient_name':patient.patient_name if patient is not None else None,
-            'doctor': patient.doctor_name if patient is not None else None,
+            'doctor_name': patient.doctor_name if patient is not None else None,
             'id_number':patient.id_number if patient is not None else None,
+            'patient_id':self.patient_id,
             'current_datas':[current_data.to_json() for current_data in self.current_datas]
         }
         return json_bed_information
@@ -314,7 +316,7 @@ class Bed(db.Model):
         json_bed_information = {
             'bed_id':self.bed_id,
             'sn':self.sn,
-            'id_number':self.id_number,
+            'patient_id':self.patient_id,
             'patient': self.patient.to_json_patient(),
             'datas': [data.to_json_without_patient() for data in self.datas]
         }
@@ -323,7 +325,7 @@ class Bed(db.Model):
     def to_json(self):
         json_bed = {
             'bed_id':self.bed_id,
-            'id_number': self.id_number,
+            'patient_id':self.patient_id,
             'sn': self.sn
         }
         return json_bed
@@ -335,12 +337,13 @@ class BedHistory(db.Model):
     date = db.Column(db.Date, nullable=True)
     bed_id = db.Column(db.Integer, nullable=True)
     sn = db.Column(db.String(32), nullable=True)
-    id_number = db.Column(db.String(64), nullable=True)
+    id_number = db.Column(db.String(64))
+    patient_id = db.Column(db.Integer)
 
     @property
     def bed(self):
         try:
-            bed = Bed.query.join(BedHistory, BedHistory.bed_id == Bed.bed_id).filter(BedHistory.history_id == self.history_id).first()
+            bed = Bed.query.filter(Bed.bed_id == self.bed_id).first()
             return bed
         except:
             return None
@@ -348,7 +351,7 @@ class BedHistory(db.Model):
     @property
     def patient(self):
         try:
-            patient = Patient.query.join(BedHistory, BedHistory.id_number == Patient.id_number).filter(BedHistory.history_id == self.history_id).first()
+            patient = Patient.query.filter(Patient.id==self.patient_id).first()
             return patient
         except:
             return None
@@ -368,7 +371,8 @@ class BedHistory(db.Model):
             'time':str(self.time)[0:5],
             'date':str(self.date),
             'sn':self.sn,
-            'id_number':self.id_number
+            'id_number':self.id_number,
+            'patient_id':self.patient_id
         }
         return json_history
 
@@ -395,7 +399,7 @@ class SpareData(db.Model):
             'sex':self.sex,
             'tel': self.tel,
             'sn': self.sn,
-            'doctor': self.doctor,
+            'doctor_name': self.doctor,
             'id_number': self.id_number,
             'date': str(self.date),
             'time': str(self.time)[0:5],

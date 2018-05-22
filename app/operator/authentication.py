@@ -2,7 +2,7 @@ from flask import g, jsonify, request, url_for, abort
 from flask_httpauth import HTTPBasicAuth
 from flask_login import login_user
 from app.models import Operator, InvalidUsage
-
+import random
 from app.operator import operator_blueprint
 from sqlalchemy.exc import IntegrityError
 from flask_login import current_user, login_required, logout_user
@@ -32,7 +32,7 @@ def login():
     operator = Operator.query.filter(Operator.operator_name==operator_name).first()
 
     if operator is None or not operator.verify_password(password=password):
-        return jsonify(status="fail", reason="no this user or password error", data=[])
+        return jsonify(status="fail", reason="用户名或密码错误", data=[])
 
     userInfo = {
         "id": operator.id,
@@ -41,7 +41,7 @@ def login():
     token = jwtEncoding(userInfo)
     login_user(operator, remember=True)
 
-    return jsonify(status="success", reason="", operator=operator.to_json(), token = token.decode())
+    return jsonify(status="success", reason="登陆成功", operator=operator.to_json(), token = token.decode())
 
 """
 @api {POST} /login 登录账号(json数据)
@@ -82,7 +82,7 @@ def logout():
     if request.method == "GET":
         try:
             logout_user()
-            return jsonify(status="success", reason="")
+            return jsonify(status="success", reason="登出成功")
         except:
             abort(500)
 """
@@ -103,19 +103,13 @@ def logout():
 
 @operator_blueprint.route('/operator/password', methods = ['PUT'])
 def change_password():
-    hospital = request.json['hospital']
-    office = request.json['office']
-    password = request.json['password']
-    operator = Operator.query.first()
-    if hospital != operator.hospital:
+    operator_name  =request.json['operator_name']
+    password = "".join(random.sample('1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',8))
+    operator = Operator.query.filter(Operator.operator_name == operator_name).first()
+    if operator is None:
         return jsonify({
             'status':'fail',
-            'reason':'the hospital is wrong'
-        })
-    if office != operator.office:
-        return jsonify({
-            'status': 'fail',
-            'reason': 'the office is wrong'
+            'reason':'用户不存在'
         })
     operator.password = password
     try:
@@ -125,7 +119,8 @@ def change_password():
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status':'success',
-        'reason':'',
+        'reason':'密码更改成功',
+        'new_password':password,
         'operator':operator.to_json()
     })
 
@@ -133,9 +128,7 @@ def change_password():
 @api {PUT} /operator/password 修改密码(json数据)
 @apiGroup operator
 
-@apiParam (json) {String} hospital 医院名称
-@apiParam (json) {String} office 科室
-@apiParam (json) {String} password 新的密码
+@apiParam (json) {String} operator_name 操作员姓名
 
 @apiSuccess {Array} operators 更改后的操作者信息
 
@@ -149,13 +142,13 @@ def change_password():
             "lesion":"医生分区",
             "operator_name":"医生姓名"
         }],
+        "new_password":"新的密码"
         "status":"success",
         "reason":''
     }
     更改失败
     {
         "status":"fail",
-        "reason":"",
-        "operators":[]
+        "reason":""
     }
 """

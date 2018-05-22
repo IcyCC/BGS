@@ -297,7 +297,7 @@ def change_accuchek(id):
         if bed is None:
             return jsonify({
                 'status': 'fail',
-                'reason': 'the bed does not exist'
+                'reason': '床位不存在'
             })
     for k in request.json:
         if hasattr(accuchek, k):
@@ -310,7 +310,7 @@ def change_accuchek(id):
     return jsonify({
         "accuchek": accuchek.to_json(),
         "status": "success",
-        "reason": "the data has been changed"
+        "reason": "数据已经被更改了"
     })
 
 """

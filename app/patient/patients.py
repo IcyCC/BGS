@@ -42,7 +42,7 @@ def new_patient():
     if patient:
         return jsonify({
             'status': 'fail',
-            'reason': 'the id_number has been used'
+            'reason': '这个医疗卡号已经被使用了'
         })
     patient = Patient.from_json(request.json)
     try:
@@ -53,7 +53,7 @@ def new_patient():
     return jsonify({
         'patient':patient.to_json(),
         'status':'success',
-        'reason':'the data has been added'
+        'reason':'数据已经被添加'
     })
 
 
@@ -148,7 +148,7 @@ def get_patients():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -224,7 +224,7 @@ def change_patient(id):
             if may_patient.patient_id != patient.patient_id:
                 return jsonify({
                     'status':'fail',
-                    'reason':'the id_number has been used'
+                    'reason':'这个医疗卡号已经被使用了'
                 })
     for k in request.json:
         if hasattr(patient, k):
@@ -237,7 +237,7 @@ def change_patient(id):
     return jsonify({
         'patient': patient.to_json(),
         'status': 'success',
-        'reason': 'the data has been changed'
+        'reason': '数据已经更改'
     })
 
 """
@@ -290,7 +290,7 @@ def get_patient(id):
     return jsonify({
         'patient': patient.to_json(),
         'status': 'success',
-        'reason': 'there is the data'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -342,7 +342,7 @@ def delete_patients(id):
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status':'success',
-        'reason':'the data has been deleted'
+        'reason':'数据已经被删除了'
     })
 
 """
@@ -438,7 +438,7 @@ def get_patient_datas(id):
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -581,7 +581,7 @@ def patients_history():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 """

@@ -46,13 +46,13 @@ def new_operator():
     if operator:
         return jsonify({
             'status':'fail',
-            'reason':'the operator_name has been used'
+            'reason':'用户名已经被使用了'
         })
     operator = Operator.query.filter(Operator.tel == tel).first()
     if operator:
         return jsonify({
             'status':'fail',
-            'reason':'the tel or the mail has been used'
+            'reason':'电话或者邮箱已经被使用了'
         })
     operator = Operator.from_json(request.json)
     # req = requests.session()
@@ -91,7 +91,7 @@ def new_operator():
     return jsonify({
         'operator':operator.to_json(),
         'status':'success',
-        'reason':'the data has been added'
+        'reason':'数据已经被添加'
     })
 
 """
@@ -196,7 +196,7 @@ def get_operators():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -249,7 +249,7 @@ def get_operator(id):
     return jsonify({
         'operators': operator.to_json(),
         'status': 'success',
-        'reason': 'there is the data'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -289,7 +289,7 @@ def delete_operator(id):
     if current_user.tel != operator.tel:
         return jsonify({
             'status':'fail',
-            'reason':'no root'
+            'reason':'没有权限'
         }), 403
     try:
         db.session.delete(operator)
@@ -298,7 +298,7 @@ def delete_operator(id):
         raise InvalidUsage(message=str(e), status_code=500)
     return jsonify({
         'status': 'success',
-        'reason': 'the data has been deleted'
+        'reason': '数据已经被删除了'
     }), 200
 
 """
@@ -364,7 +364,7 @@ def change_operator(id):
     return jsonify({
         'operator': operator.to_json(),
         'status': 'success',
-        'reason': 'the data has been changed'
+        'reason': '数据已经被更改了'
     }), 200
 
 """
@@ -415,7 +415,7 @@ def get_operator_now():
     return jsonify({
         'operator': operator.to_json(),
         'status': 'success',
-        'reason': 'there is the data'
+        'reason': '这里是正在使用的用户'
     })
 
 """
@@ -470,13 +470,13 @@ def operator_password():
         json = {
             'operator': operator.to_json(),
             'status': 'success',
-            'reason': 'the password is right'
+            'reason': '密码正确'
         }
         return jsonify(json)
     else:
         return jsonify({
             'status':'fail',
-            'reason':'wrong password'
+            'reason':'密码错误'
         })
 
 """

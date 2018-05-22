@@ -3,6 +3,7 @@ import qrcode
 from io import BytesIO
 from flask import request, jsonify, g, url_for, current_app,send_file
 import time
+import base64
 from ..decorators import allow_cross_domain
 
 """
@@ -44,7 +45,9 @@ def gen_code_route():
     img.save(file)
     file.seek(0)
 
-    return send_file(file, attachment_filename=str(int(time.time()))+".png", mimetype='image/png')
+    img_base64 = base64.b64encode(bytes(file.read()))
+
+    return jsonify(status='success', img_base64=img_base64)
 
 """
 @api {GET} /api/v1.0/code/server 获得设置端口和host的二维码

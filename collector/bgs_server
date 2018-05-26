@@ -3,21 +3,29 @@ import aiohttp
 from datetime import date, time, datetime
 
 loop = asyncio.get_event_loop()
-cookie = ""
+token = ""
 
 
 host = 'http://101.200.52.233:8080'
 async def send_data(data):
-    async with aiohttp.ClientSession() as session:
-        async with session.post(host+'/api/v1.0/datas/auto',json=data) as response:
+    global token
+
+    async with aiohttp.ClientSession(headers={"Authorization":token}) as session:
+        async with session.post(host+'/datas/auto',json=data) as response:
             if response.status != 200:
                 print("Failed")
 
 async def post_auth(info):
-    global cookie
+    global token
     async with aiohttp.ClientSession() as session:
-        async with session.post(host+'/api/v1.0/login',data=info) as response:
-            print(response.header)
+        async with session.post(host+'/login',json=info) as response:
+            json = await response.json()
+            token = json.get("token",None)
+            if token is not None:
+                print("认证成功")
+            else:
+                print("认证失败")
+                exit(0)
 
 
 class BgsServer(asyncio.Protocol):
@@ -63,8 +71,8 @@ def server(host, port):
     server_coroutine = loop.create_server(lambda: BgsServer(loop=loop),
                                           host=host, port=port)
     print("Server Start at {} ".format(str(host)+":"+str(port)))
-    # t = loop.create_task(post_auth())
-    bgs_server = loop.run_until_complete(server_coroutine)
+    t = loop.create_task(post_auth({"operator_name":"su", "password":"123456"}))
+    bgs_server = loop.run_until_complete(asyncio.gather(t, server_coroutine))
 
     try:
         loop.run_forever()

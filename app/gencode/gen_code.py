@@ -29,10 +29,10 @@ from ..decorators import allow_cross_domain
 @gencode_blueprint.route('/code/route', methods=['GET','POST'])
 @allow_cross_domain
 def gen_code_route():
-    ssid = request.form.get("ssid")
-    password = request.form.get("password")
+    ssid = request.json.get("ssid")
+    password = request.json.get("password")
     if ssid is None or password is None:
-        return jsonify(status='fail', reason='ssid or password 不能为空')
+        return jsonify(status='fail', reason='wifi名称 或者 密码 不能为空')
 
     auth_method = request.form.get("auth_method", "WPA2PSK")
     crypto_method = request.form.get("crypto_method", "AES")
@@ -125,7 +125,7 @@ def gen_code_sh():
         return jsonify(status='fail', reason='sn不能为空')
 
     if len(sn) != 8:
-        return jsonify(status='fail', reason='sn不能为空')
+        return jsonify(status='fail', reason='sn必须9位')
 
     qr = qrcode.QRCode(
         version=1,

@@ -30,7 +30,7 @@ from ..decorators import allow_cross_domain
 @allow_cross_domain
 def gen_code_route():
     ssid = request.json.get("ssid")
-    password = request.json.get("password")
+    password = request.json.get("password","")
     if ssid is None or password is None:
         return jsonify(status='fail', reason='wifi名称 或者 密码 不能为空')
 

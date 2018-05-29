@@ -6,9 +6,10 @@ from app.models import Operator
 from config import get_netcard
 import os
 import psutil
+from multiprocessing import Process
 from flask_migrate import Migrate, upgrade, MigrateCommand
 import pymysql
-
+from collector.bgs_server import server
 import json
 
 pymysql.install_as_MySQLdb()
@@ -54,4 +55,9 @@ manager.add_command('db', MigrateCommand)
 
 
 if __name__ == '__main__':
-    manager.run()
+    accuchek = Process(target=app.run, args=('0.0.0.0',8080,))
+    server = Process(target=server, args=('0.0.0.0', 36751,))
+    accuchek.start()
+    server.start()
+    accuchek.join()
+    server.join()

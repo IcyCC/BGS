@@ -6,7 +6,7 @@ loop = asyncio.get_event_loop()
 token = ""
 
 
-host = 'http://101.200.52.233:8080'
+host = 'http://localhost:8080'
 async def send_data(data):
     global token
 
@@ -71,7 +71,7 @@ def server(host, port):
     server_coroutine = loop.create_server(lambda: BgsServer(loop=loop),
                                           host=host, port=port)
     print("Server Start at {} ".format(str(host)+":"+str(port)))
-    t = loop.create_task(post_auth({"operator_name":"su", "password":"123456"}))
+    t = loop.create_task(post_auth({"operator_name":"郑湛东", "password":"wshwoaini"}))
     bgs_server = loop.run_until_complete(asyncio.gather(t, server_coroutine))
 
     try:

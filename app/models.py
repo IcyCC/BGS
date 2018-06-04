@@ -26,6 +26,7 @@ class Operator(db.Model, UserMixin):
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
+        print(self.password_hash)
 
     @property
     def patients(self):
@@ -141,7 +142,7 @@ class Data(db.Model):
     sn = db.Column(db.String(32), nullable=False)
     id_number = db.Column(db.String(32))
     patient_id = db.Column(db.Integer, nullable=True)
-    time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
+    time = db.Column(db.String(32), nullable=False, default=str(datetime.utcnow().time())[:5])
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     glucose = db.Column(db.Float, nullable=False)
     hidden = db.Column(db.Boolean, nullable=False, default=False)
@@ -333,7 +334,7 @@ class Bed(db.Model):
 class BedHistory(db.Model):
     __tablename__ = 'bedhistory'
     history_id = db.Column(db.Integer, primary_key=True)
-    time = db.Column(db.Time, nullable=True)
+    time = db.Column(db.String(32), nullable=True)
     date = db.Column(db.Date, nullable=True)
     bed_id = db.Column(db.Integer, nullable=True)
     sn = db.Column(db.String(32), nullable=True)
@@ -386,7 +387,7 @@ class SpareData(db.Model):
     age = db.Column(db.Integer)
     tel = db.Column(db.String(32))
     doctor = db.Column(db.String(64))
-    time = db.Column(db.Time, nullable=False, default=datetime.utcnow().time())
+    time = db.Column(db.String(32), nullable=False, default=str(datetime.utcnow().time())[:5])
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     glucose = db.Column(db.Float, nullable=False)
     hidden = db.Column(db.Boolean, nullable=False, default=False)

@@ -47,7 +47,12 @@ def new_data_auto():
         if 'date' not in request.json:
             data.date = datetime.utcnow().date()
         if 'time' not in request.json:
-            data.time = datetime.utcnow().time()
+            data.time = str(datetime.datetime.now().time())[0:8]
+        if 'time' in request.json:
+            time = request.json['time']
+            if len(time) < 8:
+                time = time[0:5] + ':00'
+                data.time = time
         accuchek = Accuchek.query.filter(Accuchek.sn == request.json['sn']).first()
         if accuchek is None:
             return jsonify({
@@ -80,7 +85,12 @@ def new_data_auto():
         if 'date' not in request.json:
             data.date = datetime.utcnow().date()
         if 'time' not in request.json:
-            data.time = datetime.utcnow().time()
+            data.time = str(datetime.datetime.now().time())[0:8]
+        if 'time' in request.json:
+            time = request.json['time']
+            if len(time) < 8:
+                time = time[0:5] + ':00'
+                data.time = time
         try:
             db.session.add(data)
             db.session.commit()
@@ -192,7 +202,12 @@ def new_data_artificial():
     if 'date' not in request.json:
         data.date = datetime.utcnow().date()
     if 'time' not in request.json:
-        data.time = datetime.utcnow().time()
+        data.time = str(datetime.datetime.now().time())[0:8]
+    if 'time' in request.json:
+        time = request.json['time']
+        if len(time)<8:
+            time = time[0:5]+':00'
+            data.time = time
     patient_id = request.json['patient_id']
     patient = Patient.query.filter(Patient.patient_id == patient_id).first()
     if patient is None:

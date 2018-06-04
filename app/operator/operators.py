@@ -40,6 +40,16 @@ def new_operator():
             'status':'fail',
             'reason':str(e)
         })
+    if 'tel'  not in request.json or request.json['tel'] is None:
+        return jsonify({
+            'status':'fail',
+            'reason':'需要有电话'
+        })
+    if 'operator_name'  not in request.json or request.json['operator_name'] is None:
+        return jsonify({
+            'status':'fail',
+            'reason':'需要有账户名'
+        })
     tel = request.json['tel']
     operator_name = request.json['operator_name']
     operator = Operator.query.filter(Operator.operator_name == operator_name).first()

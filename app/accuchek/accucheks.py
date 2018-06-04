@@ -67,7 +67,7 @@ def get_accucheks():
         'pages': pagination.pages,
         'per_page': per_page,
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     })
 
 """
@@ -100,7 +100,7 @@ def get_accucheks():
         'pages': '查询总页数',
         'per_page': '每一页的数量',
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     }
 """
 
@@ -177,7 +177,7 @@ def new_accuchek():
             "accuchek_id":"血糖仪id"   
         },
         "status":"success",
-        "reason":"the data has been added"
+        "reason":"数据已经被添加"
     }
     {
         "status":"fail",
@@ -213,7 +213,7 @@ def get_accuchek(id):
             "accuchek_id":"血糖仪id"   
         },
         "status":"success",
-        "reason":"there is the data"
+        "reason":"这里是查询到的数据"
     }
 
 @apiError (Error 4xx) 404 对应id的血糖仪不存在

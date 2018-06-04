@@ -35,7 +35,7 @@ def create_all():
     operator_name = "郑湛东",
     tel = "15810058975",
     mail = "1468767640",
-    password = "wshwoaini"
+    password = 'wshwoaini'
     operator = Operator(hospital= hospital, office=office, lesion=lesion, operator_name= operator_name, tel=tel, mail=mail)
     operator.password = password
     db.session.commit()

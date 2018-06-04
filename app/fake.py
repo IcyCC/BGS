@@ -6,6 +6,17 @@ from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory, SpareDat
 from datetime import datetime
 
 def man_patients(count=50):
+    # hospital = "空军总院",
+    # office = "牙科",
+    # lesion = "北京",
+    # operator_name = "admin",
+    # tel = "15810058975",
+    # mail = "1468767640",
+    # operator = Operator(hospital=hospital, office=office, lesion=lesion, operator_name=operator_name, tel=tel,
+    #                     mail=mail)
+    # operator.password = 'root'
+    # db.session.add(operator)
+    # db.session.commit()
     fake = Faker(locale='zh_CN')
     i = 0
     operator_count = Operator.query.count()

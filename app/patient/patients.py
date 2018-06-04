@@ -538,9 +538,9 @@ def patients_history():
     max_glucose = request.args.get('max_glucose')
     min_glucose = request.args.get('min_glucose')
     begin_time = request.args.get('begin_time')
-    begin_time1 = str(begin_time)[0:6]+'00'
+    begin_time1 = str(begin_time)[0:5]+':00'
     end_time = request.args.get('end_time')
-    end_time1 = str(end_time)[0:6]+'59'
+    end_time1 = str(end_time)[0:5]+':59'
     begin_date = request.args.get('begin_date')
     end_date = request.args.get('end_date')
     if max_age:

@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 import datetime
 from flask_login import login_required
 import json
-from app.models import InvalidUsage
+from app.models import InvalidUsage, Accuchek
 from marshmallow.exceptions import ValidationError
 from app.form_model import GetBedValidation, BedValidation, BedMoreDataValidation, ChangeBedValidation
 
@@ -124,7 +124,7 @@ def get_beds():
         'pages': '查询总页数',
         'per_page': '每一页的数量',
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     }
 
 """
@@ -177,7 +177,7 @@ def new_bed():
         db.session.commit()
         bedhistory.bed_id = bed.bed_id
         date = datetime.datetime.now().date()
-        time = datetime.datetime.now().time()
+        time = str(datetime.datetime.now().time())[0:8]
         bedhistory.date = date
         bedhistory.time = time
         db.session.add(bedhistory)
@@ -211,17 +211,17 @@ def new_bed():
             "bed_id":"床位数据地址"  
         },
         "status":"success",
-        "reason":"the data has been added"
+        "reason":"数据已经被修改"
     }
     病人已经被安排在其他床上
     {
         "status":"fail",
-        "reason":"the patient has been placed on the other bed"
+        "reason":"病人已经被安排在了其他床上"
     }
     血糖仪被用在其他床位
     {
         "status":"fail",
-        "reason":"the accu_chek has been used on the other bed"
+        "reason":"血糖仪已经被用在了其他床位"
     }
 
 """
@@ -257,7 +257,7 @@ def get_bed(id):
             'sn':'血糖仪sn码'
         },
         "status":"success",
-        "reason":"there is the data"
+        "reason":"这是查询到的数据"
     }
 
 """
@@ -274,7 +274,6 @@ def delete_bed(id):
     except IntegrityError as e:
         raise InvalidUsage(message=str(e), status_code=500)
     for bedhistory in bedhistorys:
-        print(bedhistory.time)
         try:
             db.session.delete(bedhistory)
             db.session.commit()
@@ -300,7 +299,7 @@ def delete_bed(id):
     HTTP/1.1 200 OK
     {
         "status":"success",
-        "reason":"the data has been deleted"
+        "reason":"数据已经被删除了"
     }
     {
         "status":"fail",
@@ -327,6 +326,12 @@ def change_bed(id):
     bed = Bed.query.get_or_404(id)
     if 'sn' in request.json and request.json['sn']:
         sn = request.json['sn']
+        accuchek = Accuchek.query.filter(Accuchek.sn == sn).first()
+        if accuchek is None:
+            return jsonify({
+                'status':'fail',
+                'reason':'血糖仪不存在'
+            })
         may_bed = bed.query.filter(Bed.sn == sn).first()
         if may_bed:
             if may_bed.bed_id != bed.bed_id:
@@ -347,7 +352,7 @@ def change_bed(id):
         if hasattr(bed_history, k):
             setattr(bed_history, k, request.json[k])
     date = datetime.datetime.now().date()
-    time = datetime.datetime.now().time()
+    time = str(datetime.datetime.now().time())[0:8]
     bed_history.bed_id = id
     bed_history.date = date
     bed_history.time = time
@@ -393,17 +398,17 @@ def change_bed(id):
             "bed_id":"床位数据地址"  
         },
         "status":"success",
-        "reason":"the data has been changed"
+        "reason":"数据已经被修改"
     }
     病人已经被安排在其他床
     {
         "status":"fail",
-        "reason":"the patient has been placed on the other bed"
+        "reason":"病人已经被安排在其他床上"
     }
     血糖仪已经被用在其他床位
     {
         "status":"fail",
-        "reason":"the accu_chek has been used on the other bed"
+        "reason":"血糖已经被用在其他床上"
     }
 """
 
@@ -445,7 +450,7 @@ def get_bed_more(id):
             "tel":"患者手机号",
             "patient_id":"患者id"
         },
-        "reason":"there is the data",
+        "reason":"这里是查询到的数据",
         "status":"success"
     }
 
@@ -487,6 +492,11 @@ def get_bed_moredatas(id):
             per_page = v
         if k == 'limit':
             limit = v
+    if 'time' in request.json:
+        time = request.json['time']
+        if len(time)<8:
+            time = time[0:5]+':00'
+            datas.filter(Data.time == time)
     datas = datas.limit(limit).from_self() if limit is not None else datas.from_self()
     page = request.args.get('page', 1, type=int)
     pagination = datas.paginate(page, per_page=per_page, error_out=False)
@@ -562,7 +572,7 @@ def get_bed_moredatas(id):
         'pages': '查询总页数',
         'per_page': '每一页的数量',
         'status': 'success',
-        'reason': 'there are datas'
+        'reason': '这里是查询到的数据'
     }
 
 """

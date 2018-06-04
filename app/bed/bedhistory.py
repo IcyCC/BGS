@@ -142,7 +142,7 @@ def new_history():
         if hasattr(bed_history, k):
             setattr(bed_history, k, request.json[k])
     date = datetime.datetime.now().date()
-    time = datetime.datetime.now().time()
+    time = str(datetime.datetime.now().time())[0:8]
     bed_history.date = date
     bed_history.time = time
     try:
@@ -249,6 +249,11 @@ def change_history(id):
     for k in request.json:
         if hasattr(bed_history, k):
             setattr(bed_history, k ,request.json[k])
+    if 'time' in request.json:
+        time = request.json['time']
+        if len(time)<8:
+            time = time[0:5]+':00'
+            bed_history.time = time
     try:
         db.session.add(bed_history)
         db.session.commit()

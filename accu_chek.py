@@ -38,7 +38,6 @@ def create_all():
     password = "wshwoaini"
     operator = Operator(hospital= hospital, office=office, lesion=lesion, operator_name= operator_name, tel=tel, mail=mail)
     operator.password = password
-    db.session.add(operator)
     db.session.commit()
     man_patients()
     woman_patients()
@@ -46,6 +45,8 @@ def create_all():
     datas()
     guard_datas()
 
+def create_database():
+    db.create_all()
 
 def make_shell_context():
     return dict(app=app, db=db, create_all= create_all, Operator=Operator)
@@ -55,9 +56,12 @@ manager.add_command('db', MigrateCommand)
 
 
 if __name__ == '__main__':
-    accuchek = Process(target=app.run, args=('0.0.0.0',8080,))
-    server = Process(target=server, args=('0.0.0.0', 36751,))
-    accuchek.start()
-    server.start()
-    accuchek.join()
-    server.join()
+    if not os.path.exists('data.sqlite'):
+        db.create_all()
+    manager.run()
+    # accuchek = Process(target=app.run, args=('0.0.0.0',8080,))
+    # server = Process(target=server, args=('0.0.0.0', 36751,))
+    # accuchek.start()
+    # server.start()
+    # accuchek.join()
+    # server.join()

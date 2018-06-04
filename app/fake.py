@@ -3,14 +3,13 @@ from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from . import db
 from .models import Operator, Accuchek, Bed, Data, Patient, BedHistory, SpareData
-
+from datetime import datetime
 
 def man_patients(count=50):
     fake = Faker(locale='zh_CN')
     i = 0
     operator_count = Operator.query.count()
     while i < count:
-        o = Operator.query.offset(randint(0, operator_count-1)).first()
         p = Patient(
             patient_name=fake.name(),
             sex = "男",
@@ -29,9 +28,7 @@ def man_patients(count=50):
 def woman_patients(count=50):
     fake = Faker(locale='zh_CN')
     i = 0
-    operator_count = Operator.query.count()
     while i < count:
-        o = Operator.query.offset(randint(0, operator_count-1)).first()
         p = Patient(
             patient_name=fake.name(),
             sex="女",
@@ -85,7 +82,7 @@ def datas(count=1000):
         d = Data(
             sn = a.sn,
             time = fake.time(),
-            date = fake.date(),
+            date = datetime.utcnow().date(),
             id_number=p.id_number,
             patient_id = p.patient_id,
             glucose=randint(10, 20)
@@ -103,8 +100,8 @@ def guard_datas(count=200):
     while i<count:
         d = SpareData(
             sn = '00000000',
-            time = fake.time(),
-            date = fake.date(),
+            time=fake.time(),
+            date=datetime.utcnow().date(),
             glucose=randint(10,20)
         )
         db.session.add(d)
@@ -117,8 +114,8 @@ def guard_datas(count=200):
     while i <count:
         d = SpareData(
             sn = '000000000',
-            time = fake.time(),
-            date = fake.date(),
+            time=fake.time(),
+            date=datetime.utcnow().date(),
             glucose=randint(10, 20),
             id_number = fake.phone_number(),
             patient_name=fake.name(),
@@ -136,8 +133,8 @@ def guard_datas(count=200):
     while i<count:
         d = SpareData(
             sn = '11111111',
-            time = fake.time(),
-            date = fake.date(),
+            time=fake.time(),
+            date=datetime.utcnow().date(),
             glucose=randint(10,20)
         )
         db.session.add(d)
@@ -150,8 +147,8 @@ def guard_datas(count=200):
     while i <count:
         d = SpareData(
             sn = '11111111',
-            time = fake.time(),
-            date = fake.date(),
+            time=fake.time(),
+            date=datetime.utcnow().date(),
             glucose=randint(10, 20),
             id_number = fake.phone_number(),
             patient_name=fake.name(),
